@@ -48,9 +48,11 @@ class DB {
         let db;
         return new Promise((resolve) => {
           db = SQLite.openDatabase(this.database_name, this.database_version, this.database_displayname, this.database_size);
-          this.create_table(db).then((res)=>{
+          this.create_table(db)
+          /*
+          .then((res)=>{
             console.log(res);
-          });
+          });*/
         });
     }
 
