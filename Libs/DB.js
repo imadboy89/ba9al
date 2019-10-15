@@ -18,69 +18,43 @@ class DB {
         this.database_displayname="ba9al Database";
         this.database_size=200000;
 
+        this.fields_name = Object.keys(module_.fields);
+        this.fields_value = Object.values(module_.fields);
+        this.fields_name_str = this.fields_name.join(",");
+        this.fields_holder = [];
+        for (let i = 0; i < this.fields_name.length; i++) {
+            this.fields_holder.push("?");
+        }
+        this.fields_holder = this.fields_holder.join(",");
+
+
+/*
+        this.db = SQLite.openDatabase(this.database_name, this.database_version, this.database_displayname, this.database_size);
+        console.log("db",this.db);
+        this.db.exec([{ sql: 'PRAGMA foreign_keys = ON;', args: [] }], false, () =>
+          console.log('Foreign keys turned on')
+        );
+        */
+
     }
+    create_table(db){
+      return db.transaction(tx => {
+        tx.executeSql('CREATE TABLE IF NOT EXISTS '+this.module.table_name+' ('+this.fields_name_str+')' );
+      });
+    }
+
     initDB() {
+
         let db;
         return new Promise((resolve) => {
-          console.log("Plugin integrity check ...");
-          /*
-          SQLite.echoTest()
-            .then(() => {
-                */
-              console.log("Integrity check passed ...");
-              console.log("Opening database ...");
-              SQLite.openDatabase(
-                this.database_name,
-                this.database_version,
-                this.database_displayname,
-                this.database_size
-              )
-                .then(DB => {
-                  db = DB;
-                  console.log("Database OPEN");
-                  db.executeSql('SELECT 1 FROM Product LIMIT 1').then(() => {
-                      console.log("Database is ready ... executing query ...");
-                  }).catch((error) =>{
-                      console.log("Received error: ", error);
-                      console.log("Database not yet ready ... populating data");
-                      db.transaction((tx) => {
-                            const fields_str = this.module.fields.join(", ");
-                            tx.executeSql('CREATE TABLE IF NOT EXISTS '+this.module.table_name+' ('+fields_str+')');
-
-                      }).then(() => {
-                          console.log("Table created successfully");
-                      }).catch(error => {
-                          console.log(error);
-                      });
-                  });
-                  resolve(db);
-                })
-                .catch(error => {
-                  console.log(error);
-                });
-                /*
-            })
-            .catch(error => {
-              console.log("echoTest failed - plugin not functional == ",error);
-            });*/
+          db = SQLite.openDatabase(this.database_name, this.database_version, this.database_displayname, this.database_size);
+          this.create_table(db).then((res)=>{
+            console.log(res);
           });
-    };
-    closeDatabase(db) {
-        if (db) {
-          console.log("Closing DB");
-          db.close()
-            .then(status => {
-              console.log("Database CLOSED");
-            })
-            .catch(error => {
-              this.errorCB(error);
-            });
-        } else {
-          console.log("Database was not OPENED");
-        }
-      };
+        });
+    }
 
-    insert(prod) {
+    insertP(prod) {
         return new Promise((resolve) => {
             this.initDB().then((db) => {
             db.transaction((tx) => {
