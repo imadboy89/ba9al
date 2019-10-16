@@ -53,7 +53,7 @@ class BarcodeScanner extends React.Component {
         <Button 
           title='Fake scann'
           color="green"
-          onPress={() => this.props.setCode("type", 54645)} />
+          onPress={() => this.props.setCode("type", 1234567891234)} />
         {scanned && (
           <Button title={'Tap to Scan Again'} onPress={() => this.setState({ scanned: false })} />
         )}
