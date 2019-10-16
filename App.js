@@ -4,7 +4,7 @@ import { createAppContainer } from 'react-navigation';
 import { createStackNavigator } from 'react-navigation-stack';
 import HomeScreen  from "./Pages/Home";
 import ScanScreen  from "./Pages/Scan";
-import BarcodeScannerScreen  from "./Pages/BarcodeScanner";
+import BarcodeScanner  from "./Components/BarcodeScanner";
 import CompaniesScreen  from "./Pages/Companies";
 import ProductsScreen  from "./Pages/Products";
 
@@ -13,7 +13,7 @@ const AppNavigator = createStackNavigator(
   {
     Home : HomeScreen,
     Scan : ScanScreen,
-    BarcodeScanner : BarcodeScannerScreen,
+    BarcodeScanner : BarcodeScanner,
     Companies : CompaniesScreen,
     Products : ProductsScreen,
   },

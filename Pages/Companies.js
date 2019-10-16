@@ -1,52 +1,26 @@
 import React from 'react';
 import { StyleSheet, Text, View, Button, FlatList,TextInput,ScrollView,Modal,TouchableHighlight,Image } from 'react-native';
-import {header_style,styles_list,styles_itemRow,styles} from "../Styles/styles";
+import {header_style,styles_list,buttons_style,styles} from "../Styles/styles";
 import { withNavigation } from 'react-navigation';
 import Company from "../Libs/Company_module";
 import Translation from "../Libs/Translation";
+import ItemsList from '../Components/ItemsList';
 
 TXT = new Translation("fr").getTranslation();
-
-class ItemRow_ extends React.Component {
-    render() {
-        return (
-            <TouchableHighlight 
-            onPress={() => {this.props.openAddModal(this.props.item)}/*this.props.navigation.navigate('Company',{company:this.props.item})*/} >
-            <View  style={styles_itemRow.container} >
-                { this.props.item.fields.img!="" &&
-                <Image source={{ uri: this.props.item.fields.img }} style={styles_itemRow.image} />
-                }
-                <View style={styles_itemRow.container_text}>
-                    <Text style={styles_itemRow.title}>
-                        {this.props.item.fields.name}
-                    </Text>
-                    <Text style={styles_itemRow.description}>
-                        {this.props.item.fields.country} - {this.props.item.fields.code}
-                    </Text>
-                </View>
-    
-             </View>
-             </TouchableHighlight>
-        );
-      }
-    
-    }
-export const ItemRow = withNavigation(ItemRow_);
 
 
 class CompaniesScreen extends React.Component {
     constructor(props) {
       super(props);
       this.state = {
-        modalVisible:false,
         company_edit : null,
-        companies_list:null,
         isVisible_modal_scan : false,
         isVisible_modal_add : false,
         sql_error:null,
+        items_list :[]
       };
       this.company = new Company();
-      this.loadItems();
+      
     }
     openAddModal = (company) => {
         if(company){
@@ -57,6 +31,7 @@ class CompaniesScreen extends React.Component {
       };
 
     componentDidMount(){
+        this.loadItems();
         this.props.navigation.setParams({
             openAddModal : this.openAddModal,
             TXT  : TXT,
@@ -91,10 +66,13 @@ class CompaniesScreen extends React.Component {
 
 
     loadItems(){
-        this.setState({companies_list:[]});
+        if (this.state.items_list){
+            this.setState({items_list:[]});
+        }
         this.company.filter({}).then(output=>{
             if(output["success"]){
-              this.setState({companies_list:output["list"]});
+                console.log("loaded",output["list"].length);
+              this.setState({items_list:output["list"]});
             }else{
               this.setState({sql_error:output["error"]});
             }
@@ -113,6 +91,13 @@ class CompaniesScreen extends React.Component {
         this.state.company_edit.delete();
         this.setState({isVisible_modal_add:false});
         this.loadItems();
+    }
+
+    setItemParent = (item) => {
+        this.setState({
+            company_edit : item,
+            isVisible_modal_add : true,
+        });
     }
     render_modal(){
         if(this.state.company_edit == null){
@@ -177,6 +162,8 @@ class CompaniesScreen extends React.Component {
                 </View>
                 <View style={{flexDirection:"row",justifyContent:"center"}}>
                     <Button
+                        buttonStyle={buttons_style.modalAdd}
+                        containerStyle={buttons_style.modalAdd}
                         title={TXT.Save}
                         color="green"
                         onPress={()=>{
@@ -185,6 +172,7 @@ class CompaniesScreen extends React.Component {
                         }
                     ></Button>
                     <Button
+                        buttonStyle={buttons_style.modalAdd}
                         title={TXT.Cancel}
                         color="orange"
                         onPress={()=>{
@@ -193,7 +181,7 @@ class CompaniesScreen extends React.Component {
                         }
                     ></Button>
                     <Button
-                        style={{color:"black"}}
+                        buttonStyle={buttons_style.modalAdd}
                         title={TXT.Delete}
                         color="#e55039"
                         onPress={()=>{
@@ -210,14 +198,12 @@ class CompaniesScreen extends React.Component {
     render() {
       
         return (
-            <View style={styles.container} >
-            <ScrollView >
-                <FlatList
-                    data={this.state.companies_list}
-                    renderItem={({ item }) => <ItemRow key={item.fields.id} item={item} openAddModal={this.openAddModal} />}
-                />
-            </ScrollView>
-      
+          <View style={styles.container} >
+              <ItemsList 
+                items_list={this.state.items_list}
+                setItemParent={this.setItemParent}
+                ItemClass={Company}
+                 />
             {this.render_modal()}
           </View>
         );

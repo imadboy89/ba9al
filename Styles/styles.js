@@ -100,6 +100,11 @@ const header_style = StyleSheet.create({
  
  });
  const buttons_style = StyleSheet.create({
+    modalAdd : {
+        fontSize:11,
+        color:"white",
+        margin:5
+    },
      button:{
          padding:5,
          fontSize:26,

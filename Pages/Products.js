@@ -4,59 +4,36 @@ import {header_style,styles_list,styles_itemRow,styles} from "../Styles/styles";
 import { withNavigation } from 'react-navigation';
 import Product from "../Libs/Product_module";
 import Translation from "../Libs/Translation";
+import ItemsList from '../Components/ItemsList';
+import BarcodeScanner from "../Components/BarcodeScanner";
+
 
 TXT = new Translation("fr").getTranslation();
-
-class ItemRow_ extends React.Component {
-    render() {
-        return (
-            <TouchableHighlight 
-            onPress={() => {this.props.openAddModal(this.props.item)}/*this.props.navigation.navigate('Company',{company:this.props.item})*/} >
-            <View  style={styles_itemRow.container} >
-                { this.props.item.fields.img!="" &&
-                <Image source={{ uri: this.props.item.fields.img }} style={styles_itemRow.image} />
-                }
-                <View style={styles_itemRow.container_text}>
-                    <Text style={styles_itemRow.title}>
-                        {this.props.item.fields.name}
-                    </Text>
-                    <Text style={styles_itemRow.description}>
-                        {this.props.item.fields.country} - {this.props.item.fields.code}
-                    </Text>
-                </View>
-    
-             </View>
-             </TouchableHighlight>
-        );
-      }
-    
-    }
-export const ItemRow = withNavigation(ItemRow_);
 
 
 class ProductsScreen extends React.Component {
     constructor(props) {
       super(props);
       this.state = {
-        modalVisible:false,
         product_edit : null,
-        products_list:null,
         isVisible_modal_scan : false,
         isVisible_modal_add : false,
         sql_error:null,
+        items_list :[],
       };
       this.product = new Product();
-      this.loadItems();
+      
     }
     openAddModal = (product) => {
         if(product){
             this.setState({isVisible_modal_add:true,product_edit:product});
         }else{
-            this.setState({isVisible_modal_add:true,product_edit:new Product()});
+            this.setState({isVisible_modal_scan:true,product_edit:new Product()});
         }
       };
 
     componentDidMount(){
+        this.loadItems();
         this.props.navigation.setParams({
             openAddModal : this.openAddModal,
             TXT  : TXT,
@@ -91,18 +68,25 @@ class ProductsScreen extends React.Component {
 
 
     loadItems(){
-        this.setState({products_list:[]});
+        if (this.state.items_list){
+            this.setState({items_list:[]});
+        }
         this.product.filter({}).then(output=>{
             if(output["success"]){
-              this.setState({products_list:output["list"]});
+                console.log("loaded",output["list"].length);
+              this.setState({items_list:output["list"]});
             }else{
-              this.setState({sql_error:output["error"],});
+              this.setState({sql_error:output["error"]});
             }
         });
     }
-    setCode(type,code){
+    setCode = (type,code) => {
         this.state.product_edit.fields.code= ""+code;
-        this.state.product_edit.fields.code = this.state.product_edit.fields.code.slice(1,7);
+        this.state.product_edit.fields.company = this.state.product_edit.fields.code.slice(1,7);
+        this.setState({
+            isVisible_modal_scan : false,
+            isVisible_modal_add : true,
+        });
     }
     save(){
         this.state.product_edit.save();
@@ -113,6 +97,26 @@ class ProductsScreen extends React.Component {
         this.state.product_edit.delete();
         this.setState({isVisible_modal_add:false});
         this.loadItems();
+    }
+
+    setItemParent = (item) => {
+        this.setState({
+            product_edit : item,
+            isVisible_modal_add : true,
+        });
+
+    }
+    render_modal_BarcodeScanner(){
+        return (
+            <Modal 
+            animationType="slide"
+            transparent={true}
+            visible={this.state.isVisible_modal_scan}
+            onRequestClose={() => { this.setState({ isVisible_modal_scan:false,}); } }
+          >
+              <BarcodeScanner setCode={this.setCode}></BarcodeScanner>
+          </Modal>
+        );
     }
     render_modal(){
         if(this.state.product_edit == null){
@@ -152,10 +156,10 @@ class ProductsScreen extends React.Component {
                             placeholder={TXT.Company+" .. "}
                             placeholderTextColor="#ecf0f1"
                             onChangeText ={newValue=>{
-                                this.state.product_edit.fields.company=newValue;
+                                this.state.product_edit.fields.company=newValue+"";
                                 this.setState({});
                             }}
-                            value={this.state.product_edit.fields.company}
+                            value={this.state.product_edit.fields.company ? this.state.product_edit.fields.company+"": ""}
                         />
                         </View>
                     </View>
@@ -219,6 +223,7 @@ class ProductsScreen extends React.Component {
                 </View>
                 </View>
                 <View style={{flex:1,backgroundColor:"#2c3e5066"}}></View>
+
             </Modal>
         );
     }
@@ -226,14 +231,13 @@ class ProductsScreen extends React.Component {
       
         return (
           <View style={styles.container} >
-            <ScrollView >
-                <FlatList
-                    data={this.state.products_list}
-                    renderItem={({ item }) => <ItemRow key={item.fields.id} item={item} openAddModal={this.openAddModal} />}
-                />
-            </ScrollView>
-      
+              <ItemsList 
+                items_list={this.state.items_list}
+                setItemParent={this.setItemParent}
+                ItemClass={Product}
+                 />
             {this.render_modal()}
+            {this.render_modal_BarcodeScanner()}
           </View>
         );
       }

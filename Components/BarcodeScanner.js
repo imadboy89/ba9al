@@ -5,7 +5,7 @@ import * as Permissions from 'expo-permissions';
 
 import { BarCodeScanner } from 'expo-barcode-scanner';
 
-class BarcodeScannerScreen extends React.Component {
+class BarcodeScanner extends React.Component {
 
   constructor(props) {
     super(props);
@@ -42,15 +42,18 @@ class BarcodeScannerScreen extends React.Component {
     return (
       <View
         style={{
-          flex: .9,
+          flex: .8,
           flexDirection: 'column',
-          justifyContent: 'flex-start',
+          justifyContent: 'flex-end',
         }}>
         <BarCodeScanner
           onBarCodeScanned={scanned ? undefined : this.handleBarCodeScanned}
-          style={StyleSheet.absoluteFillObject}
+          style={{width:"95%",height:"80%"}}
         />
-        <Text>BarCodeScanner</Text>
+        <Button 
+          title='Fake scann'
+          color="green"
+          onPress={() => this.props.setCode("type", 54645)} />
         {scanned && (
           <Button title={'Tap to Scan Again'} onPress={() => this.setState({ scanned: false })} />
         )}
@@ -59,11 +62,11 @@ class BarcodeScannerScreen extends React.Component {
   }
 
   handleBarCodeScanned = ({ type, data }) => {
+    this.props.setCode(type, data);
     this.setState({ scanned: true });
-    this.props.setCode(type,data);
     alert(`Bar code with type ${type} and data ${data} has been scanned!`);
   };
 }
 
 
-export default BarcodeScannerScreen;
+export default BarcodeScanner;
