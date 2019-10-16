@@ -6,7 +6,7 @@ import HomeScreen  from "./Pages/Home";
 import ScanScreen  from "./Pages/Scan";
 import BarcodeScannerScreen  from "./Pages/BarcodeScanner";
 import CompaniesScreen  from "./Pages/Companies";
-import ProductsScreen  from "./Pages/BarcodeScanner";
+import ProductsScreen  from "./Pages/Products";
 
 console.disableYellowBox = true;
 const AppNavigator = createStackNavigator(

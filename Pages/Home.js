@@ -37,6 +37,13 @@ class HomeScreen extends React.Component {
                   this.props.navigation.navigate('Companies',{});
                 }}
               ></Button>     
+              <Button
+                color="black"
+                title="Products"
+                onPress={()=>{
+                  this.props.navigation.navigate('Products',{});
+                }}
+              ></Button>  
           </View>
         );
       }

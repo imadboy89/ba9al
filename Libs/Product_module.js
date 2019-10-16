@@ -1,23 +1,22 @@
 import DB from "./DB";
 
-class Company {
+class Product {
     constructor() {
-        let list = [];
-        this.table_name = "companies2";
+        this.table_name = "products";
         this.fields = {
-            "id":null,"name":null,"desc":null,"img":null,"country":null,"code":null,
+            "id":null,"name":null,"desc":null,"img":null,"code":null,"company":null,  "price":null
         };
         this.fields_defenition = [
             "id INTEGER PRIMARY KEY AUTOINCREMENT",
             "name text",
             "desc text",
             "img text",
-            "country text",
+            "company INTEGER",
             "code INTEGER",
+            "price REAL",
         ];
         this.fields_defenition_str = this.fields_defenition.join(",")
         this.DB = new DB(this);
-        //console.log("company");
     }
     save(){
         return this.DB.save();
@@ -29,9 +28,9 @@ class Company {
         return this.DB.get(where);
     }
     filter(where={}){
-       return  this.DB.filter(Company,where);
+       return  this.DB.filter(Product,where);
     }
 }
 
 
-export default Company;
+export default Product;
