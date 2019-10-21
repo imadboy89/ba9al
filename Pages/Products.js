@@ -1,12 +1,12 @@
 import React from 'react';
-import { StyleSheet, Text, View, Button, FlatList,TextInput,ScrollView,Modal,TouchableHighlight,Image } from 'react-native';
+import { StyleSheet, Text, View, Button, FlatList,TextInput,Image,Modal,TouchableHighlight,Alert } from 'react-native';
 import {header_style,styles_list,styles_itemRow,styles} from "../Styles/styles";
 import { withNavigation } from 'react-navigation';
 import Product from "../Libs/Product_module";
 import Translation from "../Libs/Translation";
 import ItemsList from '../Components/ItemsList';
 import BarcodeScanner from "../Components/BarcodeScanner";
-
+import getCountry from "../Libs/Countries";
 
 TXT = new Translation("fr").getTranslation();
 
@@ -22,12 +22,13 @@ class ProductsScreen extends React.Component {
         items_list :[],
       };
       this.product = new Product();
-      
+      //this.product.DB.changetable();
     }
     openAddModal = (product) => {
         if(product){
             this.setState({isVisible_modal_add:true,product_edit:product});
         }else{
+            this.props.navigation.setParams({disable:true});
             this.setState({isVisible_modal_scan:true,product_edit:new Product()});
         }
       };
@@ -37,18 +38,10 @@ class ProductsScreen extends React.Component {
         this.props.navigation.setParams({
             openAddModal : this.openAddModal,
             TXT  : TXT,
+            disable:false,
          })
       }
     static navigationOptions =  ({ navigation  }) => ({
-        headerStyle: header_style.header,
-        headerTitle: a=>{
-          const {params = {}} = navigation.state;
-          return (
-            <View style={{flex:1,flexDirection:"row"}}>
-              <Text style={header_style.title_home}>{navigation.getParam("cat")}</Text>
-            </View>
-          )
-          },
         headerRight: a=>{
           const {params = {}} = navigation.state;
           let Add_str = "";
@@ -58,6 +51,7 @@ class ProductsScreen extends React.Component {
           }
           return (
               <Button
+                disabled={params.disable}
                 name = "plus"
                 onPress={ () => params.openAddModal() }
                 title={Add_str}
@@ -73,25 +67,82 @@ class ProductsScreen extends React.Component {
         }
         this.product.filter({}).then(output=>{
             if(output["success"]){
-                console.log("loaded",output["list"].length);
               this.setState({items_list:output["list"]});
             }else{
               this.setState({sql_error:output["error"]});
             }
         });
     }
-    setCode = (type,code) => {
-        this.state.product_edit.fields.code= ""+code;
-        this.state.product_edit.fields.company = this.state.product_edit.fields.code.slice(1,7);
+    setImgB64 = (imgBs64) => {
+        console.log(imgBs64["width"],imgBs64["height"],imgBs64["base64"].length);
+        this.state.product_edit.photo_data = "data:image/jpg;base64,"+imgBs64["base64"];
         this.setState({
-            isVisible_modal_scan : false,
-            isVisible_modal_add : true,
+            isVisible_modal_camera : false,
         });
     }
+    setCode = (type, code, country,company,product) => {
+        this.props.navigation.setParams({disable:false});
+        this.state.product_edit.fields.id= code;
+        this.state.product_edit.get({"id":code}).then((output)=>{
+            if (output["res"]==false){
+                this.state.product_edit.fields.company = this.state.product_edit.fields.id.slice(0,7);
+                this.setState({
+                    isVisible_modal_scan : false,
+                    isVisible_modal_add : true,
+                });
+
+            }else{
+                Alert.alert(
+                    TXT.Product_found,
+                    output["res"].name+" : "+output["res"].price+" DH",
+                    [
+                      {
+                        text: TXT.Update,
+                        onPress: () => {
+                            this.setState({
+                                isVisible_modal_scan : false,
+                                isVisible_modal_add : true,
+                            });
+                        },
+                        
+                      },
+                      {
+                        text: TXT.Cancel, 
+                        onPress: () => {
+                            this.setState({
+                                isVisible_modal_scan : false,
+                                isVisible_modal_add : false,
+                                product_edit:null
+                            });
+                        },
+                        style: 'cancel',
+                      },
+                      {
+                        text: TXT.Add_another_one, 
+                        onPress: () => {
+                            this.setState({
+                                isVisible_modal_scan : true,
+                                isVisible_modal_add : false,
+                                product_edit:new Product()
+                            });
+                        },
+                      },
+                    ],
+                  );
+
+            }
+        });
+
+    }
     save(){
-        this.state.product_edit.save();
+        this.state.product_edit.save().then((output)=>{
+            if(output==-1){
+                alert(TXT.Product_found,TXT.Product_already_Exist+"!");
+            }
+            this.loadItems();
+        });
         this.setState({isVisible_modal_add:false});
-        this.loadItems();
+        
     }
     delete(){
         this.state.product_edit.delete();
@@ -110,11 +161,32 @@ class ProductsScreen extends React.Component {
         return (
             <Modal 
             animationType="slide"
-            transparent={true}
+            transparent={false}
             visible={this.state.isVisible_modal_scan}
-            onRequestClose={() => { this.setState({ isVisible_modal_scan:false,}); } }
+            onRequestClose={() => { 
+                this.props.navigation.setParams({disable:false});
+                this.setState({ isVisible_modal_scan:false,});
+             } }
           >
               <BarcodeScanner setCode={this.setCode}></BarcodeScanner>
+          </Modal>
+        );
+    }
+    render_modal_Camera(){
+        if(this.state.isVisible_modal_camera!=true){
+            return null;
+        }
+        return (
+            <Modal 
+            animationType="slide"
+            transparent={false}
+            visible={this.state.isVisible_modal_camera}
+            onRequestClose={() => { 
+                this.props.navigation.setParams({disable:false});
+                this.setState({ isVisible_modal_camera:false,});
+             } }
+          >
+              <BarcodeScanner setImgB64={this.setImgB64}></BarcodeScanner>
           </Modal>
         );
     }
@@ -122,6 +194,16 @@ class ProductsScreen extends React.Component {
         if(this.state.product_edit == null){
             return null;
         }
+        /*
+        let img_source = ( this.state.product_edit.photo_ob && this.state.product_edit.photo_ob.data && ["",null,undefined].indexOf(this.state.product_edit.photo_ob.data)<0 )
+                ? { uri:this.state.product_edit.photo_ob.data} 
+                : require('../assets/camera.png');*/
+        let img_source = ( this.state.product_edit.photo_ob && ["",null,undefined].indexOf(this.state.product_edit.photo_ob.fields.data)<0 )
+                ? { uri:this.state.product_edit.photo_ob.fields.data} 
+                : require('../assets/camera.png');
+        img_source = ( this.state.product_edit && ["",null,undefined].indexOf(this.state.product_edit.photo_data)<0 )
+                ? { uri:this.state.product_edit.photo_data} 
+                : img_source;
         return (
             <Modal 
             animationType="slide"
@@ -130,8 +212,18 @@ class ProductsScreen extends React.Component {
             onRequestClose={() => { this.setState({ isVisible_modal_add:false,}); } }
           >
             <View style={{flex:.5,backgroundColor:"#2c3e5066"}}></View>
-            <View style={{height:300,width:"99%",backgroundColor:"#7f8c8d"}}>
+            <View style={{height:450,width:"99%",backgroundColor:"#7f8c8d"}}>
                 <View style={styles_list.container}>
+                    <TouchableHighlight onPress={()=>{
+                        this.setState({
+                            isVisible_modal_camera:true,
+                        });
+                    }}>
+                        <View style={{width:200,height:150,backgroundColor:"#bdc3c7",alignSelf:"center"}}>
+                            <Image  source={img_source} resizeMode="contain" style={{ flex: 1, height: undefined, width: undefined }} />
+                        </View>
+                    </TouchableHighlight>
+
                     <View style={styles_list.row_view}>
                         <Text style={styles_list.text_k}> {TXT.Name}  :</Text>
                         <View style={styles_list.text_v}>
@@ -144,22 +236,6 @@ class ProductsScreen extends React.Component {
                                 this.setState({});
                             }}
                             value={this.state.product_edit.fields.name}
-                        />
-                        </View>
-                    </View>
-
-                    <View style={styles_list.row_view}>
-                        <Text style={styles_list.text_k}> {TXT.Company}  :</Text>
-                        <View style={styles_list.text_v}>
-                        <TextInput
-                            style={styles_list.TextInput}
-                            placeholder={TXT.Company+" .. "}
-                            placeholderTextColor="#ecf0f1"
-                            onChangeText ={newValue=>{
-                                this.state.product_edit.fields.company=newValue+"";
-                                this.setState({});
-                            }}
-                            value={this.state.product_edit.fields.company ? this.state.product_edit.fields.company+"": ""}
                         />
                         </View>
                     </View>
@@ -179,6 +255,21 @@ class ProductsScreen extends React.Component {
                         </View>
                     </View>
                     <View style={styles_list.row_view}>
+                        <Text style={styles_list.text_k}> {TXT.Company}  :</Text>
+                        <View style={styles_list.text_v}>
+                        <TextInput
+                            style={styles_list.TextInput}
+                            placeholder={TXT.Company+" .. "}
+                            placeholderTextColor="#ecf0f1"
+                            onChangeText ={newValue=>{
+                                this.state.product_edit.fields.company=newValue+"";
+                                this.setState({});
+                            }}
+                            value={this.state.product_edit.fields.company ? this.state.product_edit.fields.company+"": ""}
+                        />
+                        </View>
+                    </View>
+                    <View style={styles_list.row_view}>
                         <Text style={styles_list.text_k}> {TXT.Code}  :</Text>
                         <View style={styles_list.text_v}>
                         <TextInput
@@ -186,10 +277,10 @@ class ProductsScreen extends React.Component {
                             placeholder={TXT.Code+" .. "}
                             placeholderTextColor="#ecf0f1"
                             onChangeText ={newValue=>{
-                                this.state.product_edit.fields.code=newValue;
+                                this.state.product_edit.fields.id=newValue;
                                 this.setState({});
                             }}
-                            value={this.state.product_edit.fields.code ? this.state.product_edit.fields.code+"": ""}
+                            value={this.state.product_edit.fields.id ? this.state.product_edit.fields.id+"": ""}
                         />
                         </View>
                     </View>
@@ -238,6 +329,7 @@ class ProductsScreen extends React.Component {
                  />
             {this.render_modal()}
             {this.render_modal_BarcodeScanner()}
+            {this.render_modal_Camera()}
           </View>
         );
       }

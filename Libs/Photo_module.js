@@ -1,33 +1,26 @@
 import DB from "./DB";
-import getCountry from "./Countries";
 
-class Company {
+class Photo {
     constructor() {
         let list = [];
-        this.table_name = "companies";
+        this.table_name = "photo";
         this.fields = {
-            "id":null,"name":null,"desc":null,"img":null,"country":null,
+            "id":null,"data":null,
         };
         this.fields_defenition = [
-            "id INTEGER PRIMARY KEY AUTOINCREMENT",
-            "name text",
-            "desc text",
-            "img text",
-            "country text",
+            "id INTEGER PRIMARY KEY",
+            "data BLOB",
         ];
         this.fields_defenition_str = this.fields_defenition.join(",")
         this.DB = new DB(this);
-        //console.log("company");
     }
     doesExist(where){
         return this.DB.doesExist(where);
     }
     save(){
-        this.fields.country = this.fields.country>0 ? getCountry(this.fields.country) : this.fields.country;
         return this.doesExist({"id":this.fields.id}).then((res)=>{
             if (res["doesExist"]==false){
                 return this.DB.insert();
-
             }else{
                 return this.DB.update();
             }
@@ -40,9 +33,9 @@ class Company {
         return this.DB.get(where);
     }
     filter(where={}){
-       return  this.DB.filter(Company,where);
+       return  this.DB.filter(Photo,where);
     }
 }
 
 
-export default Company;
+export default Photo;

@@ -27,7 +27,36 @@ class DB {
 
         this.db = SQLite.openDatabase(this.database_name, this.database_version, this.database_displayname, this.database_size);
         this.create_table();
+        /*
+        "DROP TABLE companies;"
+        this.executeSql("ALTER TABLE companies2 RENAME TO companies;",[]).then(out=>{
+          console.log(out) ;
+        }) ; 
+        this.db = null;
+        */
+        //"ALTER TABLE companies2 RENAME TO companies;"
+    }
+    changetable = async ()=>{
+      return;
+      await this.executeSql("drop table companies;",[]);
+      await this.executeSql("ALTER TABLE companies2 RENAME TO companies;",[]);
+      
+      return;
+      let out_ss = await this.executeSql("drop table products2;",[]);
+      let out = await this.executeSql('CREATE TABLE IF NOT EXISTS products2 ('+this.module.fields_defenition_str+')' ,[]);
+      console.log(out);
 
+      let out_s = await this.executeSql("select * from products;",[]);
+      console.log(out);
+      const res_arr = out_s["ResultSet"]["rows"]["_array"] ;
+      //"id":null,"name":null,"desc":null,"img":null,"company":null,  "price":null
+      //"id":null,"name":null,"desc":null,"img":null,"company":null,  "price":null
+      for (let i = 0; i < res_arr.length; i++) {
+        const comp = res_arr[i];
+        let values = [ comp["code"],comp["name"],comp["desc"],comp["img"],comp["company"],comp["price"] ];
+        await this.executeSql("INSERT INTO products2 values(?,?,?,?,?,?);",values);
+      }
+      console.log(await this.executeSql("select count(*) from products2;",values));
     }
     create_table(){
       return this.db.transaction(tx => {
@@ -35,8 +64,10 @@ class DB {
           'CREATE TABLE IF NOT EXISTS '+this.module.table_name+' ('+this.module.fields_defenition_str+')' ,
           [],
           (res,res1)=>{
+            //console.log(res,res1);
           },
           (res,res1)=>{
+            //console.log(res,res1);
           }
           );
       });
@@ -52,25 +83,45 @@ class DB {
     delete(){
       if (this.module.fields.id!=null){
         const query = "DELETE FROM "+this.module.table_name+" WHERE id=?";
-        console.log(query,[this.module.fields.id,]);
         return this.executeSql(query,[this.module.fields.id,]);
       }
     }
     get(where){
         return this.select( where)
         .then(output=>{
+            let res = false;
             if(output["success"] && output["ResultSet"]["rows"]["_array"].length==1){
-                const res = output["ResultSet"]["rows"]["_array"][0];
+                res = output["ResultSet"]["rows"]["_array"][0];
                 res_keys = Object.keys(res);
                 for (let i = 0; i < res_keys.length; i++) {
                     const key = res_keys[i];
                     this.module.fields[key] = res[key];
                 }
             }
-
+            output["success"] = true;
+            delete output["ResultSet"];
+            output["res"] = res ;
+            return output;
         });
     }
+    doesExist(where){
+      return this.select( where)
+      .then(output=>{ 
+          let res=false;
+          if(output["success"] && output["ResultSet"]["rows"]["_array"].length==1){
+              res = output["ResultSet"]["rows"]["_array"][0];
+              res_keys = Object.keys(res);
+              
+          }else{
 
+          }
+          output["success"] = true;
+          delete output["ResultSet"];
+          output["doesExist"] = res==false ? false : res ;
+          return output;
+
+      });
+    }
     filter(Module,where={}){
       return  this.select(where)
        .then(output=>{
@@ -95,15 +146,6 @@ class DB {
            return output;
        });
    }
-
-
-
-
-
-
-
-
-
 
 
 
@@ -165,7 +207,6 @@ class DB {
               },
               (Transaction,ResultSet)=>{
                 output["error"] = ResultSet;
-                console.log("DB.ERROR : ",ResultSet);
                 resolve(output);
               }
               );

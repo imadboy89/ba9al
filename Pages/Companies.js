@@ -1,10 +1,12 @@
 import React from 'react';
-import { StyleSheet, Text, View, Button, FlatList,TextInput,ScrollView,Modal,TouchableHighlight,Image } from 'react-native';
+import { Alert, Text, View, Button, FlatList,TextInput,ScrollView,Modal,TouchableHighlight,Image } from 'react-native';
 import {header_style,styles_list,buttons_style,styles} from "../Styles/styles";
 import { withNavigation } from 'react-navigation';
 import Company from "../Libs/Company_module";
 import Translation from "../Libs/Translation";
 import ItemsList from '../Components/ItemsList';
+import BarcodeScanner from "../Components/BarcodeScanner";
+import getCountry from "../Libs/Countries";
 
 TXT = new Translation("fr").getTranslation();
 
@@ -26,7 +28,8 @@ class CompaniesScreen extends React.Component {
         if(company){
             this.setState({isVisible_modal_add:true,company_edit:company});
         }else{
-            this.setState({isVisible_modal_add:true,company_edit:new Company()});
+            this.props.navigation.setParams({disable:true});
+            this.setState({isVisible_modal_scan:true,company_edit:new Company()});
         }
       };
 
@@ -35,18 +38,10 @@ class CompaniesScreen extends React.Component {
         this.props.navigation.setParams({
             openAddModal : this.openAddModal,
             TXT  : TXT,
+            disable:false,
          })
       }
     static navigationOptions =  ({ navigation  }) => ({
-        headerStyle: header_style.header,
-        headerTitle: a=>{
-          const {params = {}} = navigation.state;
-          return (
-            <View style={{flex:1,flexDirection:"row"}}>
-              <Text style={header_style.title_home}>{navigation.getParam("cat")}</Text>
-            </View>
-          )
-          },
         headerRight: a=>{
           const {params = {}} = navigation.state;
           let Add_str = "";
@@ -56,6 +51,7 @@ class CompaniesScreen extends React.Component {
           }
           return (
               <Button
+                disabled={params.disable}
                 name = "plus"
                 onPress={ () => params.openAddModal() }
                 title={Add_str}
@@ -71,21 +67,74 @@ class CompaniesScreen extends React.Component {
         }
         this.company.filter({}).then(output=>{
             if(output["success"]){
-                console.log("loaded",output["list"].length);
               this.setState({items_list:output["list"]});
             }else{
               this.setState({sql_error:output["error"]});
             }
         });
     }
-    setCode(type,code){
-        this.state.company_edit.fields.code= ""+code;
-        this.state.company_edit.fields.code = this.state.company_edit.fields.code.slice(1,7);
+    setCode = (type, code, country,company,product) => {
+        this.props.navigation.setParams({disable:false});
+        this.state.company_edit.fields.id= code.slice(0,7);
+
+        this.state.company_edit.get({"code":country+""+company}).then((output)=>{
+            if (output["res"]==false){
+                this.state.company_edit.fields.country = getCountry(country);
+                this.setState({
+                    isVisible_modal_scan : false,
+                    isVisible_modal_add : true,
+                });
+
+            }else{
+                Alert.alert(
+                    TXT.Company_found,
+                    TXT.Company_already_Exist+" : "+output["res"].name+" = "+output["res"].price+" DH",
+                    [
+                      {
+                        text: TXT.Update,
+                        onPress: () => {
+                            this.setState({
+                                isVisible_modal_scan : false,
+                                isVisible_modal_add : true,
+                            });
+                        },
+                        
+                      },
+                      {
+                        text: TXT.Cancel, 
+                        onPress: () => {
+                            this.setState({
+                                isVisible_modal_scan : false,
+                                isVisible_modal_add : false,
+                                company_edit:null
+                            });
+                        },
+                        style: 'cancel',
+                      },
+                      {
+                        text: TXT.Add_another_one, 
+                        onPress: () => {
+                            this.setState({
+                                isVisible_modal_scan : true,
+                                isVisible_modal_add : false,
+                                company_edit:new Company()
+                            });
+                        },
+                      },
+                    ],
+                  );
+
+            }
+        });
     }
     save(){
-        this.state.company_edit.save();
+        this.state.company_edit.save().then((output)=>{
+            if(output==-1){
+                alert(TXT.Company_found,TXT.Company_already_Exist);
+            }
+            this.loadItems();
+        });
         this.setState({isVisible_modal_add:false});
-        this.loadItems();
     }
     delete(){
         this.state.company_edit.delete();
@@ -98,6 +147,21 @@ class CompaniesScreen extends React.Component {
             company_edit : item,
             isVisible_modal_add : true,
         });
+    }
+    render_modal_BarcodeScanner(){
+        return (
+            <Modal 
+            animationType="slide"
+            transparent={false}
+            visible={this.state.isVisible_modal_scan}
+            onRequestClose={() => { 
+                this.setState({ isVisible_modal_scan:false,});
+                this.props.navigation.setParams({disable:false});
+             } }
+          >
+              <BarcodeScanner setCode={this.setCode}></BarcodeScanner>
+          </Modal>
+        );
     }
     render_modal(){
         if(this.state.company_edit == null){
@@ -152,10 +216,10 @@ class CompaniesScreen extends React.Component {
                             placeholder={TXT.Code+" .. "}
                             placeholderTextColor="#ecf0f1"
                             onChangeText ={newValue=>{
-                                this.state.company_edit.fields.code=newValue;
+                                this.state.company_edit.fields.id=newValue;
                                 this.setState({});
                             }}
-                            value={this.state.company_edit.fields.code ? this.state.company_edit.fields.code+"": ""}
+                            value={this.state.company_edit.fields.id ? this.state.company_edit.fields.id+"": ""}
                         />
                         </View>
                     </View>
@@ -205,6 +269,7 @@ class CompaniesScreen extends React.Component {
                 ItemClass={Company}
                  />
             {this.render_modal()}
+            {this.render_modal_BarcodeScanner()}
           </View>
         );
       }

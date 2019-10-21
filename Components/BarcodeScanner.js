@@ -1,9 +1,14 @@
 import * as React from 'react';
-import { Text, View, StyleSheet, Button } from 'react-native';
+import { Text, View, Button, ActivityIndicator, Modal } from 'react-native';
 import Constants from 'expo-constants';
 import * as Permissions from 'expo-permissions';
-
 import { BarCodeScanner } from 'expo-barcode-scanner';
+import { Camera } from 'expo-camera';
+import Translation from "../Libs/Translation";
+import * as ImageManipulator from 'expo-image-manipulator';
+
+
+TXT = new Translation("fr").getTranslation();
 
 class BarcodeScanner extends React.Component {
 
@@ -13,8 +18,8 @@ class BarcodeScanner extends React.Component {
       openSidMenu: false,
       cat:"movies",
       modalVisible:false,
+      snaping : false
     };
-    console.log("BarCodeScanner");
   }
   state = {
     hasCameraPermission: null,
@@ -29,7 +34,23 @@ class BarcodeScanner extends React.Component {
     const { status } = await Permissions.askAsync(Permissions.CAMERA);
     this.setState({ hasCameraPermission: status === 'granted' });
   };
-
+  getLoadingModal(){
+    return (
+      <Modal 
+      animationType="slide"
+      transparent={true}
+      visible={this.state.snaping}
+      onRequestClose={() => { this.setState({ snaping:false,}); } }
+      >
+        <View style={{flex:.9,backgroundColor:"#00000099"}}></View>
+        <View style={{height:100,width:"100%",justifyContent:"center",backgroundColor:"black"}}>
+          <ActivityIndicator size="large" color="#00ff00" />
+          <Text style={{color:"#7f8c8d",textAlign:"center",width:"100%"}}>{this.state.cameraStatus}</Text>
+        </View>
+        <View style={{flex:.9,backgroundColor:"#00000099"}}></View>
+      </Modal>
+    );
+  }
   render() {
     const { hasCameraPermission, scanned } = this.state;
 
@@ -42,29 +63,78 @@ class BarcodeScanner extends React.Component {
     return (
       <View
         style={{
-          flex: .8,
+          flex: 1,
           flexDirection: 'column',
           justifyContent: 'flex-end',
         }}>
-        <BarCodeScanner
-          onBarCodeScanned={scanned ? undefined : this.handleBarCodeScanned}
-          style={{width:"95%",height:"80%"}}
+          <Text style={{fontSize:25,width:"100%",textAlign:"center",color:"#f1c40f",margin:10,backgroundColor:"#2c3e50",textDecorationStyle:"solid"}}> {TXT.Scan_product_bare_code} </Text>
+        <Camera
+          onBarCodeScanned={ (scanned && this.props.setCode ) ? undefined : this.handleBarCodeScanned}
+          style={{width:"100%",height:"70%"}}
+          ref={ref => {
+            this.camera = ref;
+          }}
         />
         <Button 
           title='Fake scann'
           color="green"
-          onPress={() => this.props.setCode("type", 1234567891234)} />
-        {scanned && (
-          <Button title={'Tap to Scan Again'} onPress={() => this.setState({ scanned: false })} />
-        )}
+          onPress={() => this.handleBarCodeScanned({"type":"dddtype", "data":1234567891234})} />
+          <View style={{justifyContent:"center",flex:1,alignContent:"center",flexDirection:"row"}}>
+            <View style={{width:60,height:50}}>
+              {this.props.setCode && 
+              <Button 
+                title={'Scan'} 
+                disabled={!scanned}
+                onPress={() => this.setState({ scanned: false })} />
+              }
+              {this.props.setImgB64 && 
+              <Button 
+                disabled={this.state.snaping}
+                title={'Snap'} 
+                onPress={() => this.snap()} />
+              }
+
+            </View>
+          </View>
+          {this.getLoadingModal()}
       </View>
     );
   }
+  _resize = async (photo) => {
+    const X = photo.width / 300 ;
+    const width = photo.width/X;
+    const height = photo.height/X;
 
+    const manipResult = await ImageManipulator.manipulateAsync(
+      photo.uri,
+      [ {resize :{ width:width, height:height }} ],
+      { compress: 0.2, format: ImageManipulator.SaveFormat.JPEG , base64 :true }
+    );
+    return manipResult ;
+  };
+
+  snap = async () => {
+    this.setState({snaping:true,cameraStatus:"Snapping picture"});
+    const options= {
+      quality : 0.2,
+      //base64  : true
+    };
+    if (this.camera) {
+      let photo = await this.camera.takePictureAsync(options);
+      this.setState({cameraStatus:"Adjusting picture"});
+      const final_photo = await this._resize(photo) ;
+      this.setState({snaping:false});
+      this.props.setImgB64(  final_photo  );
+    }
+  };
   handleBarCodeScanned = ({ type, data }) => {
-    this.props.setCode(type, data);
+    data = ""+data;
+    const country = data.slice(0,3)
+    const company = data.slice(3,7)
+    const product = data.slice(7)
     this.setState({ scanned: true });
-    alert(`Bar code with type ${type} and data ${data} has been scanned!`);
+    this.props.setCode(type, data, country,company,product); 
+
   };
 }
 
