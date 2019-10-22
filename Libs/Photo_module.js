@@ -1,12 +1,20 @@
 import DB from "./DB";
 
 class Photo {
-    constructor() {
+    constructor(fields=null) {
         let list = [];
         this.table_name = "photo";
         this.fields = {
             "id":null,"data":null,
         };
+        if (fields){
+            this.fields = fields;
+            for(let key in fields){
+                if (key in this.fields){
+                    this.fields[key] = fields[key];
+                }
+            }
+        }
         this.fields_defenition = [
             "id INTEGER PRIMARY KEY",
             "data BLOB",

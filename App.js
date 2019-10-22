@@ -10,8 +10,10 @@ import ProductsScreen  from "./Pages/Products";
 import {header_style} from "./Styles/styles";
 import Icon from 'react-native-vector-icons/FontAwesome';
 import Translation from "./Libs/Translation";
+import LocalStorage from "./Libs/LocalStorage";
 
-TXT = new Translation("fr").getTranslation();
+LS = new LocalStorage();
+TXT = new Translation(LS.settings["language"]).getTranslation();
 
 const tabBarOptions= {
   activeTintColor: '#ecf0f1',
@@ -71,7 +73,7 @@ const Products_Stack = createStackNavigator({ Products: {
   
 const AppNavigator = createBottomTabNavigator(
   {
-    Home      : {screen : Home_Stack,navigationOptions :{ tabBarLabel:TXT.Home,tabBarIcon:(({tintColor}) => (<Icon name="home"   color={tintColor} size={24} /> )) }} ,
+    Home      : {screen : Home_Stack,screenProps : LS,navigationOptions :{ tabBarLabel:TXT.Home,tabBarIcon:(({tintColor}) => (<Icon name="home"   color={tintColor} size={24} /> )) }} ,
     Scan      : {screen : Scan_Stack,navigationOptions :{ tabBarLabel:TXT.Scan,tabBarIcon:(({tintColor}) => (<Icon name="barcode"   color={tintColor} size={24} /> ))}} ,
     Companies : {screen : Companies_Stack,navigationOptions :{ tabBarLabel:TXT.Companies,tabBarIcon:(({tintColor}) => (<Icon name="folder-open"   color={tintColor} size={24} /> ))}} ,
     Products  : {screen : Products_Stack,navigationOptions :{ tabBarLabel:TXT.Products,tabBarIcon:(({tintColor}) => (<Icon name="cube"   color={tintColor} size={24} /> ))}} ,

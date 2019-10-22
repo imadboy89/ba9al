@@ -1,14 +1,14 @@
 import React from 'react';
-import { Alert, Text, View, Button, FlatList,TextInput,ScrollView,Modal,TouchableHighlight,Image } from 'react-native';
-import {header_style,styles_list,buttons_style,styles} from "../Styles/styles";
-import { withNavigation } from 'react-navigation';
+import { Alert, Text, View, Button,TextInput,Modal } from 'react-native';
+import {styles_list,buttons_style,styles} from "../Styles/styles";
 import Company from "../Libs/Company_module";
 import Translation from "../Libs/Translation";
 import ItemsList from '../Components/ItemsList';
 import BarcodeScanner from "../Components/BarcodeScanner";
 import getCountry from "../Libs/Countries";
+import HeaderButton from "../Components/HeaderButton";
 
-TXT = new Translation("fr").getTranslation();
+TXT = null;
 
 
 class CompaniesScreen extends React.Component {
@@ -22,7 +22,20 @@ class CompaniesScreen extends React.Component {
         items_list :[]
       };
       this.company = new Company();
-      
+      new Translation().getTranslation().then(tr=>{
+        TXT = tr;
+        this.setState({});
+      });
+      const didBlurSubscription = this.props.navigation.addListener(
+        'didFocus',
+        payload => {
+          new Translation().getTranslation().then(tr=>{
+            TXT = tr;
+            this.setState({});
+            this.props.navigation.setParams({TXT  : TXT});
+          });
+        }
+      );
     }
     openAddModal = (company) => {
         if(company){
@@ -50,12 +63,13 @@ class CompaniesScreen extends React.Component {
           } catch (error) {
           }
           return (
-              <Button
-                disabled={params.disable}
-                name = "plus"
-                onPress={ () => params.openAddModal() }
-                title={Add_str}
-              />
+            <HeaderButton 
+            name="plus-square"
+            disabled={params.disable}
+            onPress={()=>params.openAddModal()}
+            size={28} 
+            color="#ecf0f1"
+          />
           )
           },
       });

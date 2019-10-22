@@ -145,9 +145,7 @@ class DB {
            output["list"] = list ;
            return output;
        });
-   }
-
-
+    }
 
 
 
@@ -178,6 +176,17 @@ class DB {
       const query = 'INSERT INTO '+this.module.table_name+' ('+fields_name_str+') VALUES ('+fields_holder+')';
       return this.executeSql(query, fields_value);
 
+    }
+
+    build_where(where){
+      const where_values = Object.values(where);
+      const where_keys   = Object.keys(where);
+      let fields_holder = [];
+      for (let i = 0; i < where_keys.length; i++) {
+          fields_holder.push(where_keys[i]+"=?");
+      }
+      fields_holder = fields_holder.length>0 ? " WHERE "+fields_holder.join(" AND ") : "";
+      return [fields_holder,where_values];
     }
     select(where){
       const where_values = Object.values(where);

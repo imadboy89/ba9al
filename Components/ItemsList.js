@@ -76,7 +76,7 @@ class ItemsList extends React.Component {
 
         return (
         <View style={styles.container} >
-            <Text style={{color:"white",fontSize:18}}> Items count : {this.props.items_list.length}</Text>
+            <Text style={{color:"white",fontSize:18}}> {TXT.Items_count} : {this.props.items_list.length}</Text>
             <ScrollView >
                 <FlatList
                     data={this.props.items_list}

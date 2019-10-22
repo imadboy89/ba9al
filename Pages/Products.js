@@ -1,14 +1,13 @@
 import React from 'react';
-import { StyleSheet, Text, View, Button, FlatList,TextInput,Image,Modal,TouchableHighlight,Alert } from 'react-native';
+import { Text, View, Button,TextInput,Image,Modal,TouchableHighlight,Alert } from 'react-native';
 import {header_style,styles_list,styles_itemRow,styles} from "../Styles/styles";
-import { withNavigation } from 'react-navigation';
 import Product from "../Libs/Product_module";
 import Translation from "../Libs/Translation";
 import ItemsList from '../Components/ItemsList';
 import BarcodeScanner from "../Components/BarcodeScanner";
-import getCountry from "../Libs/Countries";
+import HeaderButton from "../Components/HeaderButton";
 
-TXT = new Translation("fr").getTranslation();
+TXT = null;
 
 
 class ProductsScreen extends React.Component {
@@ -23,13 +22,23 @@ class ProductsScreen extends React.Component {
       };
       this.product = new Product();
       //this.product.DB.changetable();
+      const didBlurSubscription = this.props.navigation.addListener(
+        'didFocus',
+        payload => {
+          new Translation().getTranslation().then(tr=>{
+            TXT = tr;
+            this.setState({});
+          });
+        }
+      );
+      
     }
     openAddModal = (product) => {
         if(product){
-            this.setState({isVisible_modal_add:true,product_edit:product});
+            this.setState({isVisible_modal_add:true,product_edit:product,});
         }else{
             this.props.navigation.setParams({disable:true});
-            this.setState({isVisible_modal_scan:true,product_edit:new Product()});
+            this.setState({isVisible_modal_scan:true,product_edit:new Product() });
         }
       };
 
@@ -39,7 +48,7 @@ class ProductsScreen extends React.Component {
             openAddModal : this.openAddModal,
             TXT  : TXT,
             disable:false,
-         })
+         });
       }
     static navigationOptions =  ({ navigation  }) => ({
         headerRight: a=>{
@@ -50,11 +59,12 @@ class ProductsScreen extends React.Component {
           } catch (error) {
           }
           return (
-              <Button
+              <HeaderButton 
+                name="plus-square"
                 disabled={params.disable}
-                name = "plus"
-                onPress={ () => params.openAddModal() }
-                title={Add_str}
+                onPress={()=>params.openAddModal()}
+                size={28} 
+                color="#ecf0f1"
               />
           )
           },
@@ -65,7 +75,8 @@ class ProductsScreen extends React.Component {
         if (this.state.items_list){
             this.setState({items_list:[]});
         }
-        this.product.filter({}).then(output=>{
+        this.product.filterWithExtra().then(output=>{
+        //this.product.filter({}).then(output=>{
             if(output["success"]){
               this.setState({items_list:output["list"]});
             }else{
@@ -74,7 +85,7 @@ class ProductsScreen extends React.Component {
         });
     }
     setImgB64 = (imgBs64) => {
-        console.log(imgBs64["width"],imgBs64["height"],imgBs64["base64"].length);
+        //console.log(imgBs64["width"],imgBs64["height"],imgBs64["base64"].length);
         this.state.product_edit.photo_data = "data:image/jpg;base64,"+imgBs64["base64"];
         this.setState({
             isVisible_modal_camera : false,
