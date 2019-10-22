@@ -1,6 +1,6 @@
 {
   "expo": {
-    "name": "ba9al app 2  10-21",
+    "name": "ba9al app 2  10-22",
     "slug": "Ba9al2",
     "privacy": "public",
     "sdkVersion": "35.0.0",
@@ -25,6 +25,9 @@
     ],
     "ios": {
       "supportsTablet": true
+    },
+    "android": {
+      "package": "com.imadboss.ba9al"
     },
     "description": ""
   }
