@@ -30,9 +30,10 @@ class CompaniesScreen extends React.Component {
         'didFocus',
         payload => {
           new Translation().getTranslation().then(tr=>{
-            TXT = tr;
-            this.setState({});
-            this.props.navigation.setParams({TXT  : TXT});
+            if(TXT != tr){
+                TXT = tr;
+                this.props.navigation.setParams({title:TXT.Companies});
+              }
           });
         }
       );
@@ -55,13 +56,9 @@ class CompaniesScreen extends React.Component {
          })
       }
     static navigationOptions =  ({ navigation  }) => ({
+        title : navigation.getParam("title"),
         headerRight: a=>{
           const {params = {}} = navigation.state;
-          let Add_str = "";
-          try {
-            Add_str = params.TXT.Add;
-          } catch (error) {
-          }
           return (
             <HeaderButton 
             name="plus-square"
@@ -73,13 +70,20 @@ class CompaniesScreen extends React.Component {
           )
           },
       });
-
-
+    setItemParent = (item) => {
+        this.setState({
+            company_edit : item,
+            isVisible_modal_add : true,
+        });
+    }
+    showProducts = (company) => {
+        this.props.navigation.navigate('Products_',{company:company, });
+    }
     loadItems(){
         if (this.state.items_list){
             this.setState({items_list:[]});
         }
-        this.company.filter({}).then(output=>{
+        this.company.filterWithExtra({}).then(output=>{
             if(output["success"]){
               this.setState({items_list:output["list"]});
             }else{
@@ -156,12 +160,6 @@ class CompaniesScreen extends React.Component {
         this.loadItems();
     }
 
-    setItemParent = (item) => {
-        this.setState({
-            company_edit : item,
-            isVisible_modal_add : true,
-        });
-    }
     render_modal_BarcodeScanner(){
         return (
             <Modal 
@@ -173,7 +171,7 @@ class CompaniesScreen extends React.Component {
                 this.props.navigation.setParams({disable:false});
              } }
           >
-              <BarcodeScanner setCode={this.setCode}></BarcodeScanner>
+              <BarcodeScanner setCode={this.setCode} TXT={TXT}></BarcodeScanner>
           </Modal>
         );
     }
@@ -280,6 +278,7 @@ class CompaniesScreen extends React.Component {
               <ItemsList 
                 items_list={this.state.items_list}
                 setItemParent={this.setItemParent}
+                showProducts={this.showProducts}
                 ItemClass={Company}
                  />
             {this.render_modal()}

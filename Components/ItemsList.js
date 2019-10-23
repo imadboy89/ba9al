@@ -19,12 +19,14 @@ class ItemRow_ extends React.Component {
           leftTxt = this.props.item.fields.price;
         }else{
           name += this.props.isCalculate ? " x"+this.props.item.quantity : "" ;
-          desc = this.props.item.fields.country +" - " +this.props.item.fields.id;
-          leftTxt = "";
+          const prodects_count  = this.props.item.Products_count>0 ? this.props.item.Products_count + " products" : "";
+          desc = this.props.item.fields.country +" - " + prodects_count;
+          leftTxt = "["+this.props.item.Products_count+"]";
         }
         const img_source = ( this.props.item.photo_ob && ["",null,undefined].indexOf(this.props.item.photo_ob.fields.data)<0 )
                 ? { uri:this.props.item.photo_ob.fields.data} 
                 : require('../assets/camera.png');
+        
         return (
             <TouchableOpacity 
             activeOpacity={0.7}
@@ -47,7 +49,25 @@ class ItemRow_ extends React.Component {
                       </Text>
                       <Text style={styles_itemRow.description}>{desc}</Text>
                     </View>
-                    <Text style={styles_itemRow.leftTxt}>{leftTxt}</Text>
+                    {this.props.showProducts==undefined && 
+                      <Text style={styles_itemRow.leftTxt}>{leftTxt}</Text>
+                    }
+                    {this.props.showProducts && 
+                      <TouchableOpacity 
+                      activeOpacity={0.7}
+                      onPress={(e) => {
+                        if(this.props.showProducts){
+                          this.props.showProducts(this.props.item)}
+                        }
+                        } 
+                        style={[styles_itemRow.leftTxt,{backgroundColor:"#4694c885"}]}
+                        >
+                          <Text style={{color:"white",fontSize:20,textAlign:"right",alignSelf: 'stretch'}} >
+                            {leftTxt}
+                          </Text>
+                      </TouchableOpacity>
+                      
+                    }
                 </View>
     
              </View>
@@ -81,7 +101,12 @@ class ItemsList extends React.Component {
                 <FlatList
                     data={this.props.items_list}
                     renderItem={({ item }) =>{
-                      return (<ItemRow item={item} setItemParent={this.setItemParent} isCalculate={this.props.isCalculate} />);
+                      return (<ItemRow 
+                                item={item} 
+                                setItemParent={this.setItemParent} 
+                                isCalculate={this.props.isCalculate} 
+                                showProducts={this.props.showProducts}
+                              />);
                     }}
                     keyExtractor={item => {
                       return this.props.isCalculate ? item.rand+""+item.quantity : item.fields.id+"-"+item.fields.name ;

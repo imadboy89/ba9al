@@ -3,15 +3,15 @@ import { Platform, AsyncStorage } from 'react-native';
 
 class LocalStorage{
     constructor() {
-        this.settings = {"language":"en","image_quality":0.2}
+        this.settings = {"language":"en","image_quality":0.2,"ratio":"4:3","autoFocus":true,"availableRatios":[]}
 
         //this.settings = this.getSettings();
         this.languages = {"fr":"Français","en":"English","dr":"Darija","ar":"العربية"}
-        this.imageQualities = {"Low":0.1,"Meduim":0.2,"High":0.4}
+        this.imageQualities = {"Low":0.1,"Meduim":0.2,"High":0.4};
     }
     getSettings = async key => {
         let settings = await AsyncStorage.getItem('settings');
-        if(settings){
+        if(settings && settings!="[]"){
             settings = JSON.parse(settings);
         }else{
             await AsyncStorage.setItem('settings', JSON.stringify(this.settings));
@@ -19,9 +19,22 @@ class LocalStorage{
         }
         
         if (key) {
-            console.log(key,key in settings ? settings[key] : -1);
-            return key in settings ? settings[key] : -1;
+            if(key in settings){
+                return settings[key] ;
+            }else{
+                settings[key] = this.settings[key];
+                await AsyncStorage.setItem('settings', JSON.stringify(settings));
+                return settings[key];
+            }
         } else {
+            const settings_keys = Object.keys(this.settings);
+            for (let i = 0; i < settings_keys.length; i++) {
+                const key = settings_keys[i];
+                if( !(key in settings) ){
+                    settings[key] = this.settings[key];
+                }
+            }
+            await AsyncStorage.setItem('settings', JSON.stringify(settings));
             return settings;
         }
     };

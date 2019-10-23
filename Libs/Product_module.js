@@ -102,28 +102,6 @@ class Product {
         await this.getPhoto();
         return output;
     }
-    filter_origin = async (where={})=>{
-        return await   this.DB.filter(Product,where).then(output=>{
-            if(output["success"]){
-                output["list"].forEach(prod => {
-                    prod.getCompany();
-                    prod.getPhoto();
-                });
-            }
-            return output;
-        });
-    }
-    getExtra(list){
-        return new Promise((resolve) => {
-            for (let index = 0; index < list.length; index++) {
-                const prod = list[index];
-                
-                prod.getCompany();
-                prod.getPhoto();
-            }
-            resolve(list);
-        });
-    }
     filter = async (where={})=>{
         let output = await   this.DB.filter(Product,where);
         if(output["success"]){
@@ -151,34 +129,55 @@ class Product {
         }
         
     }
-    getProduct(id){
-        let query = "select products."+this.fields_defenition.join(",prudcts.")+
-                    ",photos.data where products.id=?";
-        this.DB.executeSql(query, [id,]).then(output=>{
-        }) ; 
+    getMaxBarCode_noBarCode(){
+        const query = "SELECT max(id) AS max_id FROM "+this.table_name+" WHERE desc=?";
+        let max_id= 0;
+        return this.DB.executeSql(query, ["NoBarCode",]).then(output=>{
+            let list = [];
+            let dara_rows = output["ResultSet"]["rows"]["_array"] ;
+            if(output["success"] && dara_rows.length==1){
+                dara_rows.forEach(res => {
+                    res["data"] ;
+                });
+                max_id = dara_rows[0]["max_id"] ? dara_rows[0]["max_id"] : 6119999900001;
+            }
+            output["success"] = list.length>0 ? true : false;
+            delete output["ResultSet"];
+            output["maxId"] = max_id ;
+            return output;
+        });
     }
     filterWithExtra(where={},limit){
-        console.log("filterWithExtra");
         const where_build = this.DB.build_where(where);
         const fields_name = Object.keys(this.fields);
         let query = "select products."+fields_name.join(",products.")+
               //",photos.data where products.id=photos.id limit 1";
-              ",photo.data from products LEFT JOIN photo ON products.id=photo.id "+where_build[0];
+              ",photo.data,companies.name AS company_name "+
+              " FROM "+this.table_name+
+              " LEFT JOIN photo ON products.id=photo.id"+
+              " LEFT JOIN companies ON products.company=companies.id "+where_build[0];
         return this.DB.executeSql(query, where_build[1]).then(output=>{
             let list = [];
             let dara_rows = output["ResultSet"]["rows"]["_array"] ;
             if(output["success"] && dara_rows.length>=1){
                 dara_rows.forEach(res => {
                     let _module = new Product();
-                    _module.photo_data = res["data"];
+                    //_module.photo_data = res["data"];
+                    //////////////////////////////////  PHOTO
                     _module.photo_ob = new Photo({id:res["id"],"data":res["data"]});
                     delete res["data"] ;
+                    //////////////////////////////////  COMPANY
+                    _module.company_ob = new Company({id:res["company"],name:res["company_name"]});
+                    delete res["company_name"] ;
+                    ///////////////////////////////////////////
                     res_keys = Object.keys(res);
                     for (let i = 0; i < res_keys.length; i++) {
                         const key = res_keys[i];
                         _module.fields[key] = res[key];
                     }
                     list.push(_module);
+
+
                 });
 
             }

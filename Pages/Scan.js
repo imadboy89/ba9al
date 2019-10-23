@@ -10,7 +10,7 @@ import BarcodeScanner from "../Components/BarcodeScanner";
 import Icon from 'react-native-vector-icons/FontAwesome';
 import HeaderButton from "../Components/HeaderButton";
 import LocalStorage from "../Libs/LocalStorage";
-TXT = new Translation("fr").getTranslation();
+TXT = null;
 
 
 class ScanScreen extends React.Component {
@@ -34,6 +34,18 @@ class ScanScreen extends React.Component {
       this.product = new Product();
       this.continue_list=[];
       this.LS = new LocalStorage();
+
+      const didBlurSubscription = this.props.navigation.addListener(
+        'didFocus',
+        payload => {
+          new Translation().getTranslation().then(tr=>{
+            if(TXT != tr){
+              TXT = tr;
+              this.props.navigation.setParams({title:TXT.Scan});
+            }
+          });
+        }
+      );
     }
     saveLS(){
       let items_list = [];
@@ -49,13 +61,12 @@ class ScanScreen extends React.Component {
       });
     }
     getDateTime(){
-      const that = this;
-      const date = new Date().getDate(); //Current Date
-      const month = new Date().getMonth() + 1; //Current Month
-      const year = new Date().getFullYear(); //Current Year
-      const hours = new Date().getHours(); //Current Hours
-      const min = new Date().getMinutes(); //Current Minutes
-      const sec = new Date().getSeconds(); //Current Seconds
+      const date = new Date().getDate();
+      const month = new Date().getMonth() + 1;
+      const year = new Date().getFullYear();
+      const hours = new Date().getHours();
+      const min = new Date().getMinutes();
+      const sec = new Date().getSeconds();
       return year + '/' + month + '/' + date + ' ' + hours + ':' + min;
     }
     componentDidMount(){
@@ -82,6 +93,7 @@ class ScanScreen extends React.Component {
        })
     }
   static navigationOptions =  ({ navigation  }) => ({
+      title : navigation.getParam("title"),
       headerRight: a=>{
         const {params = {}} = navigation.state;
         let Add_str = "";
@@ -175,7 +187,7 @@ class ScanScreen extends React.Component {
         }
       }
       this.setState({scanned:null,Total:total,isVisible_modal_scan:false});
-      this.props.navigation.setParams({showSaveBtn : this.state.items_list[0].is_hist==undefined ,});
+      this.props.navigation.setParams({showSaveBtn : this.state.items_list.length>0 && this.state.items_list[0].is_hist==undefined ,});
     }
     setCode = (type, code, country,company,product) => {
         this.setState({disable_btns:false});
@@ -316,7 +328,7 @@ class ScanScreen extends React.Component {
                 this.Total();
              } }
           >
-              <BarcodeScanner setCode={this.setCode}></BarcodeScanner>
+              <BarcodeScanner setCode={this.setCode} TXT={TXT}></BarcodeScanner>
           </Modal>
         );
     }

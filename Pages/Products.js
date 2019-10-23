@@ -6,6 +6,7 @@ import Translation from "../Libs/Translation";
 import ItemsList from '../Components/ItemsList';
 import BarcodeScanner from "../Components/BarcodeScanner";
 import HeaderButton from "../Components/HeaderButton";
+import { TouchableOpacity } from 'react-native-gesture-handler';
 
 TXT = null;
 
@@ -26,13 +27,23 @@ class ProductsScreen extends React.Component {
         'didFocus',
         payload => {
           new Translation().getTranslation().then(tr=>{
-            TXT = tr;
-            this.setState({});
+            if(TXT != tr){
+                TXT = tr;
+                this.props.navigation.setParams({title:TXT.Products});
+            }
+            //this.setState({});
           });
+          const company = this.props["navigation"].getParam("company");
+          if(company){
+              this.loadItems();
+          }else{
+            this.props.navigation.setParams({company:null});
+          }
         }
       );
-      
+
     }
+    
     openAddModal = (product) => {
         if(product){
             this.setState({isVisible_modal_add:true,product_edit:product,});
@@ -43,14 +54,17 @@ class ProductsScreen extends React.Component {
       };
 
     componentDidMount(){
+
         this.loadItems();
         this.props.navigation.setParams({
             openAddModal : this.openAddModal,
             TXT  : TXT,
             disable:false,
+            loadItems:this.loadItems
          });
       }
     static navigationOptions =  ({ navigation  }) => ({
+        title : navigation.getParam("title"),
         headerRight: a=>{
           const {params = {}} = navigation.state;
           let Add_str = "";
@@ -59,23 +73,41 @@ class ProductsScreen extends React.Component {
           } catch (error) {
           }
           return (
-              <HeaderButton 
-                name="plus-square"
-                disabled={params.disable}
-                onPress={()=>params.openAddModal()}
-                size={28} 
-                color="#ecf0f1"
-              />
+              <View style={{flexDirection:"row"}}>
+                {params.company && params.company.fields && params.company.fields.name &&
+                    <View style={{flexDirection:"row"}}>
+                        <Text style={{color:"white",marginRight:20,fontSize:20,}}>{params.company.fields.name}</Text>
+                        <TouchableOpacity
+                            onPress={()=>{
+                                navigation.setParams({company:null});
+                                params.loadItems(true); 
+                            }}
+                        >
+                            <Text style={{paddingLeft:5,paddingRight:5,color:"white",backgroundColor:"#425b74",marginRight:20,fontSize:20,borderRadius: 4,borderWidth: 0.5,borderColor: '#d6d7da'}}>All</Text>
+                        </TouchableOpacity>
+                    </View>
+                }
+                <HeaderButton 
+                    name="plus-square"
+                    disabled={params.disable}
+                    onPress={()=>params.openAddModal()}
+                    size={28} 
+                    color="#ecf0f1"
+                />
+              </View>
           )
           },
       });
 
+    loadItems = (switchToAll=false) => {
 
-    loadItems(){
+        let company = switchToAll ? null : this.props["navigation"].getParam("company");
+        console.log("loadItems",(company && company.fields)?company.fields.name:"nullCompany");
         if (this.state.items_list){
             this.setState({items_list:[]});
         }
-        this.product.filterWithExtra().then(output=>{
+        where = (company && company.fields) ? {company:company.fields.id}: {};
+        this.product.filterWithExtra(where).then(output=>{
         //this.product.filter({}).then(output=>{
             if(output["success"]){
               this.setState({items_list:output["list"]});
@@ -91,9 +123,10 @@ class ProductsScreen extends React.Component {
             isVisible_modal_camera : false,
         });
     }
-    setCode = (type, code, country,company,product) => {
+    setCode = (type, code, country,company,product,isNoBarCode) => {
         this.props.navigation.setParams({disable:false});
         this.state.product_edit.fields.id= code;
+        this.state.product_edit.fields.desc = isNoBarCode ? "NoBarCode" : null;
         this.state.product_edit.get({"id":code}).then((output)=>{
             if (output["res"]==false){
                 this.state.product_edit.fields.company = this.state.product_edit.fields.id.slice(0,7);
@@ -179,7 +212,7 @@ class ProductsScreen extends React.Component {
                 this.setState({ isVisible_modal_scan:false,});
              } }
           >
-              <BarcodeScanner setCode={this.setCode}></BarcodeScanner>
+              <BarcodeScanner setCode={this.setCode} TXT={TXT}></BarcodeScanner>
           </Modal>
         );
     }
@@ -197,7 +230,7 @@ class ProductsScreen extends React.Component {
                 this.setState({ isVisible_modal_camera:false,});
              } }
           >
-              <BarcodeScanner setImgB64={this.setImgB64}></BarcodeScanner>
+              <BarcodeScanner setImgB64={this.setImgB64} TXT={TXT}></BarcodeScanner>
           </Modal>
         );
     }

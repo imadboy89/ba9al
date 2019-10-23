@@ -1,14 +1,12 @@
 import * as React from 'react';
 import { Text, View, Button, ActivityIndicator, Modal } from 'react-native';
-import Constants from 'expo-constants';
 import * as Permissions from 'expo-permissions';
-import { BarCodeScanner } from 'expo-barcode-scanner';
 import { Camera } from 'expo-camera';
 import Translation from "../Libs/Translation";
 import * as ImageManipulator from 'expo-image-manipulator';
-
-
-TXT = new Translation("fr").getTranslation();
+import LocalStorage from "../Libs/LocalStorage";
+import Product from "../Libs/Product_module";
+TXT = null;
 
 class BarcodeScanner extends React.Component {
 
@@ -18,8 +16,26 @@ class BarcodeScanner extends React.Component {
       openSidMenu: false,
       cat:"movies",
       modalVisible:false,
-      snaping : false
+      snaping : false,
+      autoFocus: true,
+      ratio : "4:3",
+      image_quality:0.2,
     };
+    TXT = this.props.TXT;
+    this.getRatios = false;
+    this.LS = new LocalStorage();
+    this.LS.getSettings().then(settings=>{
+      if("availableRatios" in settings){
+        this.getRatios = false;
+      }else{
+        this.getRatios = true;
+      }
+      this.setState({
+        image_quality : settings.image_quality,
+        autoFocus     : settings.autoFocus,
+        ratio         : settings.ratio,
+      });
+    });
   }
   state = {
     hasCameraPermission: null,
@@ -71,6 +87,8 @@ class BarcodeScanner extends React.Component {
         <Camera
           onBarCodeScanned={ (scanned && this.props.setCode ) ? undefined : this.handleBarCodeScanned}
           style={{width:"100%",height:"70%"}}
+          autoFocus={this.state.autoFocus ? Camera.Constants.AutoFocus.On : Camera.Constants.AutoFocus.Off}
+          ratio={this.state.ratio}
           ref={ref => {
             this.camera = ref;
           }}
@@ -78,19 +96,25 @@ class BarcodeScanner extends React.Component {
         <Button 
           title='Fake scann'
           color="green"
-          onPress={() => this.handleBarCodeScanned({"type":"dddtype", "data":1234567891234})} />
+          onPress={() => this.handleBarCodeScanned({"type":"dddtype", "data":6119999900002})} />
           <View style={{justifyContent:"center",flex:1,alignContent:"center",flexDirection:"row"}}>
             <View style={{width:60,height:50}}>
               {this.props.setCode && 
-              <Button 
-                title={'Scan'} 
-                disabled={!scanned}
-                onPress={() => this.setState({ scanned: false })} />
+              <View>
+                <Button 
+                  title={TXT.Scan+""} 
+                  disabled={!scanned}
+                  onPress={() => this.setState({ scanned: false })} />
+                <Button 
+                  title={TXT.No_Bar_Code+""} 
+                  onPress={() => this.handleBarCodeScanned({"type":"NoBarCode", "data":-1})}
+                   />
+              </View>
               }
               {this.props.setImgB64 && 
               <Button 
                 disabled={this.state.snaping}
-                title={'Snap'} 
+                title={TXT.Snap+""} 
                 onPress={() => this.snap()} />
               }
 
@@ -114,6 +138,9 @@ class BarcodeScanner extends React.Component {
   };
 
   snap = async () => {
+    const availableRatios = await this.camera.getSupportedRatiosAsync ();
+    this.LS.setSetting("availableRatios",availableRatios);
+
     this.setState({snaping:true,cameraStatus:"Snapping picture"});
     const options= {
       quality : 0.2,
@@ -127,13 +154,22 @@ class BarcodeScanner extends React.Component {
       this.props.setImgB64(  final_photo  );
     }
   };
-  handleBarCodeScanned = ({ type, data }) => {
+  handleBarCodeScanned = async ({ type, data }) => {
+    let isNoBarCode = false;
+    if(type=="NoBarCode" && data==-1){
+      const product = new Product();
+      const output = await product.getMaxBarCode_noBarCode()
+      if( "maxId" in output && output["maxId"]>0){
+        data  = output["maxId"]+1;
+        isNoBarCode = true;
+      }
+    }
     data = ""+data;
     const country = data.slice(0,3)
     const company = data.slice(3,7)
     const product = data.slice(7)
     this.setState({ scanned: true });
-    this.props.setCode(type, data, country,company,product); 
+    this.props.setCode(type, data, country,company,product,isNoBarCode); 
 
   };
 }

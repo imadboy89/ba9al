@@ -10,10 +10,8 @@ import ProductsScreen  from "./Pages/Products";
 import {header_style} from "./Styles/styles";
 import Icon from 'react-native-vector-icons/FontAwesome';
 import Translation from "./Libs/Translation";
-import LocalStorage from "./Libs/LocalStorage";
 
-LS = new LocalStorage();
-TXT = new Translation(LS.settings["language"]).getTranslation();
+TXT = new Translation().getTranslation();
 
 const tabBarOptions= {
   activeTintColor: '#ecf0f1',
@@ -36,8 +34,6 @@ console.disableYellowBox = true;
 const Home_Stack = createStackNavigator({Home : {
   screen : HomeScreen,
   navigationOptions :{ 
-    title:"Home",
-    tabBarLabel:"Home",
     headerStyle: header_style.header,
     headerTitleStyle: headerTitleStyle,
   } 
@@ -45,8 +41,6 @@ const Home_Stack = createStackNavigator({Home : {
 const Scan_Stack = createStackNavigator({ Scan :{
   screen : ScanScreen,
   navigationOptions :{ 
-    title:"Scan",
-    tabBarLabel:"Scan",
     headerStyle: header_style.header,
     headerTitleStyle: headerTitleStyle,
   }, 
@@ -54,17 +48,13 @@ const Scan_Stack = createStackNavigator({ Scan :{
 const Companies_Stack = createStackNavigator({ Companies: {
   screen : CompaniesScreen,
   navigationOptions :{ 
-    title:"Companies",
-    tabBarLabel:"Companies",
     headerStyle: header_style.header,
     headerTitleStyle: headerTitleStyle,
   }
 } });
-const Products_Stack = createStackNavigator({ Products: {
+const Products_Stack = createStackNavigator({ Products_: {
   screen : ProductsScreen,
   navigationOptions :{ 
-    title:"Products",
-    tabBarLabel:"Products",
     headerStyle: header_style.header,
     headerTitleStyle: headerTitleStyle,
   },
@@ -73,7 +63,7 @@ const Products_Stack = createStackNavigator({ Products: {
   
 const AppNavigator = createBottomTabNavigator(
   {
-    Home      : {screen : Home_Stack,screenProps : LS,navigationOptions :{ tabBarLabel:TXT.Home,tabBarIcon:(({tintColor}) => (<Icon name="home"   color={tintColor} size={24} /> )) }} ,
+    Home      : {screen : Home_Stack,navigationOptions :{ tabBarLabel:TXT.Home,tabBarIcon:(({tintColor}) => (<Icon name="home"   color={tintColor} size={24} /> )) }} ,
     Scan      : {screen : Scan_Stack,navigationOptions :{ tabBarLabel:TXT.Scan,tabBarIcon:(({tintColor}) => (<Icon name="barcode"   color={tintColor} size={24} /> ))}} ,
     Companies : {screen : Companies_Stack,navigationOptions :{ tabBarLabel:TXT.Companies,tabBarIcon:(({tintColor}) => (<Icon name="folder-open"   color={tintColor} size={24} /> ))}} ,
     Products  : {screen : Products_Stack,navigationOptions :{ tabBarLabel:TXT.Products,tabBarIcon:(({tintColor}) => (<Icon name="cube"   color={tintColor} size={24} /> ))}} ,
