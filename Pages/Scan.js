@@ -239,6 +239,22 @@ class ScanScreen extends React.Component {
                   <Text style={styles.product_title}>{this.state.scanned.fields.name} : {this.state.scanned.fields.price} Dh</Text>
                   <Text style={styles.product_desc}>{this.state.scanned.company_ob.fields.name+" - "+this.state.scanned.company_ob.fields.country}</Text>
                 </View>
+                { this.state.scanned && this.state.scanned.scanMethod==undefined && this.state.scanned.fields.desc=="NoBarCode" &&
+                  <View style={styles_list.row_view}>
+                    <Text style={styles_list.text_k}> {TXT.Price}  :</Text>
+                    <View style={styles_list.text_v}>
+                    <TextInput
+                        style={styles_list.TextInput}
+                        placeholder={TXT.Price+" .. "}
+                        placeholderTextColor="#ecf0f1"
+                        onChangeText ={newValue=>{
+                          this.state.scanned.fields.price=newValue;
+                        }}
+                        value={this.state.scanned.fields.price}
+                    />
+                    </View>
+                </View>
+                }
                 { this.state.scanned && this.state.scanned.scanMethod==undefined && 
                 <View style={{flexDirection:"row", margin:10,justifyContent:"center",backgroundColor:"#34495e"}}>
                     <Text style={{color:"white",fontSize:20,marginRight:10}}>{TXT.Quantity} : </Text>
