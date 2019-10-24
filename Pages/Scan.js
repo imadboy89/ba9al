@@ -231,14 +231,17 @@ class ScanScreen extends React.Component {
         >
             <View style={{flex:.1,backgroundColor:"#2c3e5066"}}></View>
             <View style={{height:400,width:"100%",backgroundColor:"#646c78"}}>
-
+            { this.state.scanned && this.state.scanned.scanMethod==undefined && this.state.scanned.fields.desc=="NoBarCode" &&
+            
                 <View style={{width:200,height:150,backgroundColor:"#bdc3c7",alignSelf:"center"}}>
                     <Image  source={img_source} resizeMode="contain" style={{ flex: 1, height: undefined, width: undefined }} />
                 </View>
+            }
                 <View style={styles_list.container}>
                   <Text style={styles.product_title}>{this.state.scanned.fields.name} : {this.state.scanned.fields.price} Dh</Text>
                   <Text style={styles.product_desc}>{this.state.scanned.company_ob.fields.name+" - "+this.state.scanned.company_ob.fields.country}</Text>
                 </View>
+              }
                 { this.state.scanned && this.state.scanned.scanMethod==undefined && this.state.scanned.fields.desc=="NoBarCode" &&
                   <View style={styles_list.row_view}>
                     <Text style={styles_list.text_k}> {TXT.Price}  :</Text>

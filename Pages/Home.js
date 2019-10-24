@@ -168,7 +168,7 @@ class HomeScreen extends React.Component {
                 </Picker>
               </View>
               <View style={styles_list.row_view}>
-                <Text style={styles_list.text_k}> {TXT.autoFocus} : </Text>
+                <Text style={styles_list.text_k}> {TXT.AutoFocus} : </Text>
                 <Switch 
                   style={styles_list.small_elemnt}
                   value = {this.state.autoFocus}
