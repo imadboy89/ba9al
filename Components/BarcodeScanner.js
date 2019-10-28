@@ -31,7 +31,8 @@ class BarcodeScanner extends React.Component {
     this.getRatios = false;
     this.LS = new LocalStorage();
     this.LS.getSettings().then(settings=>{
-      if("availableRatios" in settings){
+      console.log(settings["availableRatios"]);
+      if("availableRatios" in settings && settings["availableRatios"].length > 0){
         this.getRatios = false;
       }else{
         this.getRatios = true;
@@ -57,12 +58,33 @@ class BarcodeScanner extends React.Component {
   async componentDidMount() {
     this.getPermissionsAsync();
   }
+  isValidChecksum(s){
+    var i, checksum;
+    var actual = parseInt(s.charAt(s.length-1));
+  
+    checksum=0;
+    for(i=s.length-2; i >= 0; i--)
+    {
+      if ((s.length + i) % 2 == 0)
+      {
+        checksum += 3 * parseInt(s.charAt(i));
+      }
+      else
+      {
+        checksum += parseInt(s.charAt(i));
+      }
+    }
+    checksum %= 10;
+    checksum = (10 - checksum) % 10;
+    return (actual == checksum);
+  }
+  
   playSoundBArCodeScanned = async ()=>{
     try {
       this.soundScanned.replayAsync();
       // Your sound is playing!
     } catch (error) {
-      console.log(`cannot play the sound file`, error);
+      alert(`cannot play the sound file`, error);
     }
   }
   playSoundCamera = async ()=>{
@@ -70,7 +92,7 @@ class BarcodeScanner extends React.Component {
       this.soundCamera.replayAsync();
       // Your sound is playing!
     } catch (error) {
-      console.log(`cannot play the sound file`, error);
+      alert(`cannot play the sound file`, error);
     }
   }
   getPermissionsAsync = async () => {
@@ -131,7 +153,7 @@ class BarcodeScanner extends React.Component {
           {this.props.setImgB64 ? TXT.Take_Photo+" - "+this.state.ratio : TXT.Scan_product_bar_code}
           </Text>
         <Camera
-          onBarCodeScanned={ (scanned && this.props.setCode ) ? undefined : this.handleBarCodeScanned}
+          onBarCodeScanned={ (scanned || !this.props.setCode ) ? undefined : this.handleBarCodeScanned}
           style={{width:"100%",height:"70%"}}
           autoFocus={this.state.autoFocus ? Camera.Constants.AutoFocus.on : Camera.Constants.AutoFocus.off}
           ratio={this.state.ratio}
@@ -241,6 +263,10 @@ class BarcodeScanner extends React.Component {
       }
     }else if (type=="NoBarCode" && data==-2){
       this.props.setCode(null, null, null,null,null,true); 
+      return ;
+    }
+    if(!this.isValidChecksum(str(data)) && str(data).length>12){
+      alert(TXT.Incorect_barcode_please_try_again);
       return ;
     }
     data = ""+data;

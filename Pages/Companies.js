@@ -130,7 +130,7 @@ class CompaniesScreen extends React.Component {
                         style: 'cancel',
                       },
                       {
-                        text: TXT.Add_another_one, 
+                        text: TXT.Add_another, 
                         onPress: () => {
                             this.setState({
                                 isVisible_modal_scan : true,

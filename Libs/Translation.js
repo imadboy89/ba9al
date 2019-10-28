@@ -4,6 +4,11 @@ class translation{
     constructor(LS){
         this.language = "en";
         this.translation = {
+            
+            
+            "Incorect_barcode_please_try_again"             : {"ar":"الباركود غير صحيح ، يرجى المحاولة مرة أخرى"         ,"fr":"Incorrect code a bare, essayer autre fois!","dr":"code machi s7i7, 3awd scanni mara akhra!",},
+            "Sych_Now"             : {"ar":"تزامن"         ,"fr":"Sych Now","dr":"Sych_Now",},
+            "Synchronize_data"             : {"ar":"مزامنة البيانات"         ,"fr":"synchronizer les donnes","dr":"synchronizi data",},
             "Generate"             : {"ar":"توليد"         ,"fr":"Générer","dr":"Générer",},
             "Generate_backup"             : {"ar":"توليد النسخ الاحتياطي"         ,"fr":"Générer une sauvegarde","dr":"generer l i7tiyat",},
             "calculate_more"             : {"ar":"احسب أكثر"         ,"fr":"calculer plus","dr":"zid sl3a fel 7seb",},
@@ -51,7 +56,7 @@ class translation{
             "Product_found"              : {"ar":"تم العثور على المنتج"    ,"fr":"Produit trouvé","dr":"Prodwi kayn",},
             "Company_found"              : {"ar":"وجدت الشركة"        ,"fr":"Compagnie trouvé","dr":"Charika kayna",},
             "Product_not_found"          : {"ar":"الصنف غير موجود"    ,"fr":"Produit pas trouvé","dr":"Prodwi makaynchi",},
-            "Add_another_one"            : {"ar":"أضف واحدة أخرى"    ,"fr":"Ajouter autre.","dr":"dakhal wa7ed akhor",},
+            "Add_another"            : {"ar":"أضف واحدة أخرى"    ,"fr":"Ajouter autre","dr":"dakhal akhor",},
             "Scan_product_bar_code"     : {"ar":"مسح الرمز الشريطي للمنتج" ,"fr":"Scanner code a bar de produit","dr":"Scanni code d prowi",},
                     }
 

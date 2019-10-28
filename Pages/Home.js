@@ -20,6 +20,7 @@ class HomeScreen extends React.Component {
         history_list:[],
         months_total :{},
         availableRatios:[],
+        synchronize_btn_status:true,
       };
       this.LS = new LocalStorage();
       this.firstHistoryRender = true;
@@ -38,7 +39,6 @@ class HomeScreen extends React.Component {
           this.loadHistory();
         }
       );
-
     }
     openAddModal = () => {
       
@@ -192,15 +192,17 @@ class HomeScreen extends React.Component {
               />
               </View>
               <View style={styles_list.row_view}>
-                <Text style={styles_list.text_k}> {TXT.Generate_backup} : </Text>
+                <Text style={styles_list.text_k}> {TXT.Synchronize_data} : </Text>
                 <Button 
                   style={[styles_list.small_elemnt,{marginLeft:10}]}
-                  title = {TXT.Generate}
-                  disabled={!this.state.history_list || this.state.history_list.length==0}
+                  title = {TXT.Sych_Now}
+                  disabled={!this.state.synchronize_btn_status}
                   onPress={ ()=> {
                     const backup = new backUp();
+                    this.setState({synchronize_btn_status:false});
                     backup.synchronize().then(out=>{
                       console.log(out);
+                      this.setState({synchronize_btn_status:true});
                     });
                   }}
               />

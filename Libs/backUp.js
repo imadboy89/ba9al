@@ -70,7 +70,12 @@ class BackUp{
         delete item["_id"];
         items_dict[item["id"]] = item;
         let outp = await Item_ob_check.doesExist({id:item.id});
-        const photo_cond = isPhoto && "data" in outp["doesExist"] && outp["doesExist"]["data"]==null;
+        const photo_cond=false;
+        try {
+          photo_cond = isPhoto && "data" in outp["doesExist"] && outp["doesExist"]["data"]==null;
+        } catch (error) {
+          console.log(outp,item.id);
+        }
         if (!outp["doesExist"] || photo_cond ){
           if(photo_cond){
             console.log("PH null "+item.id);
