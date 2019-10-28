@@ -3,7 +3,6 @@ import React from 'react';
 import { View, TouchableOpacity } from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome';
 
-
 class HeaderButton extends React.Component {
     constructor(props) {
       super(props);
@@ -16,9 +15,9 @@ class HeaderButton extends React.Component {
         return (
             <TouchableOpacity
                 disabled={this.props.disabled ? this.props.disabled : false}
-                activeOpacity={this.props.activeOpacity ? this.props.activeOpacity : 0.7}
+                activeOpacity={this.props.activeOpacity ? this.props.activeOpacity : 0.5}
                 onPress={this.props.onPress}
-                style={{marginRight:10}}>
+                style={{marginRight:20}}>
               <View style={{}} >
                 <Icon 
                     name={this.props.name?this.props.name:"home"} 

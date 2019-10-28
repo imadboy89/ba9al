@@ -70,16 +70,15 @@ class Product {
         });
     }
     
-    save = async ()=>{
+    save = async (ignoreExtra=false)=>{
         const res_prod = await this.doesExist({"id":this.fields.id});
-        if (res_prod["doesExist"]==false){
+        if(!ignoreExtra){
             await this.saveCompany();
             await  this.savePhoto();
+        }
+        if (res_prod["doesExist"]==false){
             return this.DB.insert();
-
         }else{
-            await  this.saveCompany();
-            await  this.savePhoto();
             return this.DB.update();
         }
     }
@@ -102,20 +101,8 @@ class Product {
         await this.getPhoto();
         return output;
     }
-    filter = async (where={})=>{
-        let output = await   this.DB.filter(Product,where);
-        if(output["success"]){
-            //output["list"].forEach(prod => {
-            for (let index = 0; index < output["list"].length; index++) {
-                const prod = output["list"][index];
-                
-                await prod.getCompany();
-                await prod.getPhoto();
-            }
-
-            
-        }
-        return output;
+    filter(where={}){
+        return this.DB.filter(Product,where);
     }
 
     getPhoto(){
@@ -158,30 +145,30 @@ class Product {
               " LEFT JOIN companies ON products.company=companies.id "+where_build[0];
         return this.DB.executeSql(query, where_build[1]).then(output=>{
             let list = [];
-            let dara_rows = output["ResultSet"]["rows"]["_array"] ;
-            if(output["success"] && dara_rows.length>=1){
-                dara_rows.forEach(res => {
-                    let _module = new Product();
-                    //_module.photo_data = res["data"];
-                    //////////////////////////////////  PHOTO
-                    _module.photo_ob = new Photo({id:res["id"],"data":res["data"]});
-                    delete res["data"] ;
-                    //////////////////////////////////  COMPANY
-                    _module.company_ob = new Company({id:res["company"],name:res["company_name"]});
-                    delete res["company_name"] ;
-                    ///////////////////////////////////////////
-                    res_keys = Object.keys(res);
-                    for (let i = 0; i < res_keys.length; i++) {
-                        const key = res_keys[i];
-                        _module.fields[key] = res[key];
-                    }
-                    list.push(_module);
-
-
-                });
-
+            if("error" in output && output["error"] && output["error"] !=""){
+                console.log(output["error"]);
+            }else{
+                let dara_rows = output["ResultSet"]["rows"]["_array"] ;
+                if(output["success"] && dara_rows.length>=1){
+                    dara_rows.forEach(res => {
+                        let _module = new Product();
+                        //_module.photo_data = res["data"];
+                        //////////////////////////////////  PHOTO
+                        _module.photo_ob = new Photo({id:res["id"],"data":res["data"]});
+                        delete res["data"] ;
+                        //////////////////////////////////  COMPANY
+                        _module.company_ob = new Company({id:res["company"],name:res["company_name"]});
+                        delete res["company_name"] ;
+                        ///////////////////////////////////////////
+                        res_keys = Object.keys(res);
+                        for (let i = 0; i < res_keys.length; i++) {
+                            const key = res_keys[i];
+                            _module.fields[key] = res[key];
+                        }
+                        list.push(_module);
+                    });
+                }
             }
-            
             output["success"] = list.length>0 ? true : false;
             delete output["ResultSet"];
             output["list"] = list ;

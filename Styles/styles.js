@@ -41,9 +41,9 @@ const styles_list = StyleSheet.create({
 
     text_k: {
       //backgroundColor:"#34495e",
-      fontSize: 16,
+      fontSize: 14,
       fontWeight: 'bold',
-      width:"30%",
+      width:"35%",
       color:"white",
       textAlign: 'right'
     },
@@ -52,7 +52,7 @@ const styles_list = StyleSheet.create({
       marginLeft:20,
       fontSize: 14,
       fontWeight: 'bold',
-      width:"65%",
+      width:"60%",
       color:"white",
       textAlign: 'left'
     },
@@ -72,6 +72,14 @@ const styles_list = StyleSheet.create({
     },
     TextInput:{
         width: "80%", 
+        borderColor: 'gray', 
+        backgroundColor:"#34495e",
+        color:"white",
+        fontSize:18,
+        marginLeft:10
+    },
+    TextInput_fullWidth:{
+        width: "100%", 
         borderColor: 'gray', 
         backgroundColor:"#34495e",
         color:"white",
@@ -209,7 +217,7 @@ const styles = StyleSheet.create({
 
 
 
-const styles_floatBtn = StyleSheet.create({
+const styles_Btn = StyleSheet.create({
     MainContainer: {
       flex: 1,
       justifyContent: 'center',
@@ -217,7 +225,7 @@ const styles_floatBtn = StyleSheet.create({
       backgroundColor: '#F5F5F5',
     },
   
-    TouchableOpacityStyle: {
+    TouchableOpacityStyle_float: {
       position: 'absolute',
       width: 50,
       height: 50,
@@ -226,13 +234,27 @@ const styles_floatBtn = StyleSheet.create({
       right: 15,
       bottom: 30,
     },
-  
-    FloatingButtonStyle: {
+    TouchableOpacityStyle: {
+        alignSelf:"center",
+        width: 60,
+        height: 60,
+        alignItems: 'center',
+        justifyContent: 'center',
+        margin:8,
+      },
+      ButtonStyle_float: {
+        resizeMode: 'contain',
+        width: 50,
+        height: 50,
+        borderRadius:30,
+        textAlign:"center",
+      },
+    ButtonStyle: {
       resizeMode: 'contain',
-      width: 50,
-      height: 50,
-      //backgroundColor:'white',
-      borderRadius:20,
+      width: 60,
+      height: 60,
+      padding:10,
+      borderRadius:30,
       textAlign:"center",
     },
   });
@@ -245,5 +267,5 @@ module.exports = {
     header_style,
     buttons_style,
     styles_itemRow,
-    styles_floatBtn
+    styles_Btn
 }

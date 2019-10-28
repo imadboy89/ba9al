@@ -3,12 +3,21 @@ import { Platform, AsyncStorage } from 'react-native';
 
 class LocalStorage{
     constructor() {
-        this.settings = {"language":"en","image_quality":0.2,"ratio":"4:3","autoFocus":true,"availableRatios":[]}
+        this.settings = {"language":"en","image_quality":0.2,"ratio":"4:3","autoFocus":true,"availableRatios":[],"LastRemovedHistory":null}
 
         //this.settings = this.getSettings();
         this.languages = {"fr":"Français","en":"English","dr":"Darija","ar":"العربية"}
         this.imageQualities = {"Low":0.1,"Meduim":0.2,"High":0.4};
     }
+    getDateTime(){
+        const date = new Date().getDate();
+        const month = new Date().getMonth() + 1;
+        const year = new Date().getFullYear();
+        const hours = new Date().getHours();
+        const min = new Date().getMinutes();
+        const sec = new Date().getSeconds();
+        return year + '/' + month + '/' + date + ' ' + hours + ':' + min;
+      }
     getSettings = async key => {
         let settings = await AsyncStorage.getItem('settings');
         if(settings && settings!="[]"){
@@ -39,6 +48,7 @@ class LocalStorage{
         }
     };
     setPurchaseHistory = async (PList) => {
+        PList["title"] = this.getDateTime();
         history = await AsyncStorage.getItem('history');
         if (history) {
             history = JSON.parse(history);
@@ -71,6 +81,18 @@ class LocalStorage{
         }
         return history;
     };
+    clearHistory= async () => {
+        await AsyncStorage.setItem('history', JSON.stringify([]));
+        return this.LastRemovedHistory(this.getDateTime());
+    };
+    LastRemovedHistory = async (date=null) =>{
+        if(date){
+            await AsyncStorage.setItem('LastRemovedHistory', date);
+        }else{
+            const out = await AsyncStorage.getItem('LastRemovedHistory');
+            return out;
+        }
+    }
     setSetting = async (key, value) => {
         this.settings = await AsyncStorage.getItem('settings');
         if (this.settings) {

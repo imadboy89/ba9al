@@ -2,9 +2,9 @@ import React from 'react';
 import { Switch, Text, View, Button, TouchableOpacity,Picker,ScrollView,Modal } from 'react-native';
 import {header_style,styles_list,styles_itemRow,styles} from "../Styles/styles";
 import Translation from "../Libs/Translation";
-import { Camera } from 'expo-camera';
 import LocalStorage from "../Libs/LocalStorage";
 import HeaderButton from "../Components/HeaderButton";
+import backUp from "../Libs/backUp";
 TXT = null;
 
 
@@ -49,16 +49,17 @@ class HomeScreen extends React.Component {
           image_quality : settings["image_quality"],
           autoFocus : settings["autoFocus"],
           availableRatios : settings["availableRatios"],
-          modalVisible:true
+          modalVisible:true,
         });
       });
     }
-    loadHistory(){
+    loadHistory = async()=>{
+      const LastRemovedHistory = await this .LS.LastRemovedHistory();
+
       this.firstHistoryRender = true;
       this.LS.getHistory().then(history=>{
-        if(history && history.length>0){
-          this.setState({history_list:history});
-        }
+        history = history? history : [];
+        this.setState({history_list:history,LastRemovedHistory:LastRemovedHistory});
       });
     }
     componentDidMount(){
@@ -177,6 +178,33 @@ class HomeScreen extends React.Component {
                   }}
               />
               </View>
+              <View style={styles_list.row_view}>
+                <Text style={styles_list.text_k}> {TXT.Clear_history} : </Text>
+                <Button 
+                  style={[styles_list.small_elemnt,{marginLeft:10}]}
+                  title = {TXT.Clear_cache}
+                  disabled={!this.state.history_list || this.state.history_list.length==0}
+                  onPress={ ()=> {
+                    this.LS.clearHistory().then(()=>{
+                      this.loadHistory();
+                    });
+                  }}
+              />
+              </View>
+              <View style={styles_list.row_view}>
+                <Text style={styles_list.text_k}> {TXT.Generate_backup} : </Text>
+                <Button 
+                  style={[styles_list.small_elemnt,{marginLeft:10}]}
+                  title = {TXT.Generate}
+                  disabled={!this.state.history_list || this.state.history_list.length==0}
+                  onPress={ ()=> {
+                    const backup = new backUp();
+                    backup.synchronize().then(out=>{
+                      console.log(out);
+                    });
+                  }}
+              />
+              </View>
               <Button 
                 title="Close"
                 onPress={()=>this.setState({modalVisible:false}) }
@@ -217,14 +245,14 @@ class HomeScreen extends React.Component {
           lastMonth = title_month;
           new_month = title_month;
           monthtotal = list["total"];
-        }else if(this.state.history_list.length-1 == i){
-          if(monthtotal!="" && !(monthtotal in this.state.months_total) ){
-            this.state.months_total[lastMonth] = monthtotal ; 
-          }
         }else{
           monthtotal += list["total"];
         }
-        
+        if(this.state.history_list.length-1 == i){
+          if(monthtotal!="" && !(monthtotal in this.state.months_total) ){
+            this.state.months_total[lastMonth] = monthtotal ; 
+          }
+        }
         return (
           <View key={list["title"]+i}  >
             { new_month &&
@@ -269,11 +297,15 @@ class HomeScreen extends React.Component {
           this.setState({});
         }, 100);
       }
+
       return (
-        <View style={{flex:1,flexDirection:"column",paddingRgith:10,marginLeft:10,}}>
+        <ScrollView style={{flex:1,flexDirection:"column",paddingRgith:10,marginLeft:10,}}>
           <Text style={{color:"white",width:"95%",paddingLeft:8,fontSize:30,}} > {TXT.History} :</Text>
           {list}
-        </View>
+          {this.state.LastRemovedHistory &&
+          <Text style={{color:"#f4caa5",fontSize:18}}>{TXT.Last_cleared_history} : {this.state.LastRemovedHistory}</Text>
+          }
+        </ScrollView>
       );
     }
     render() {

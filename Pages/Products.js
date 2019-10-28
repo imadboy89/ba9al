@@ -102,7 +102,6 @@ class ProductsScreen extends React.Component {
     loadItems = (switchToAll=false) => {
 
         let company = switchToAll ? null : this.props["navigation"].getParam("company");
-        console.log("loadItems",(company && company.fields)?company.fields.name:"nullCompany");
         if (this.state.items_list){
             this.setState({items_list:[]});
         }
@@ -117,7 +116,6 @@ class ProductsScreen extends React.Component {
         });
     }
     setImgB64 = (imgBs64) => {
-        //console.log(imgBs64["width"],imgBs64["height"],imgBs64["base64"].length);
         this.state.product_edit.photo_data = "data:image/jpg;base64,"+imgBs64["base64"];
         this.setState({
             isVisible_modal_camera : false,
@@ -248,6 +246,8 @@ class ProductsScreen extends React.Component {
         img_source = ( this.state.product_edit && ["",null,undefined].indexOf(this.state.product_edit.photo_data)<0 )
                 ? { uri:this.state.product_edit.photo_data} 
                 : img_source;
+        const img_length = this.state.product_edit && this.state.product_edit.photo_ob && this.state.product_edit.photo_ob.fields.data ? this.state.product_edit.photo_ob.fields.data.length : 0;
+        console.log("img_length",img_length);
         return (
             <Modal 
             animationType="slide"
@@ -258,6 +258,7 @@ class ProductsScreen extends React.Component {
             <View style={{flex:.5,backgroundColor:"#2c3e5066"}}></View>
             <View style={{height:450,width:"99%",backgroundColor:"#7f8c8d"}}>
                 <View style={styles_list.container}>
+                <Text>{img_length}</Text>
                     <TouchableHighlight onPress={()=>{
                         this.setState({
                             isVisible_modal_camera:true,

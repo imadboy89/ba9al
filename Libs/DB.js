@@ -36,6 +36,14 @@ class DB {
         */
         //"ALTER TABLE companies2 RENAME TO companies;"
     }
+    backup(){
+      const query = "SELECT * from "+this.module.table_name+" ";
+      return this.executeSql(query,[]).then(output=>{
+        output["data"] = output["ResultSet"]["rows"]["_array"];
+        delete output["ResultSet"];
+        return output;
+      });
+    }
     changetable = async ()=>{
       return;
       await this.executeSql("drop table companies;",[]);
@@ -108,7 +116,7 @@ class DB {
       return this.select( where)
       .then(output=>{ 
           let res=false;
-          if(output["success"] && output["ResultSet"]["rows"]["_array"].length==1){
+          if(output && output["success"] && output["ResultSet"]["rows"]["_array"].length==1){
               res = output["ResultSet"]["rows"]["_array"][0];
               res_keys = Object.keys(res);
               

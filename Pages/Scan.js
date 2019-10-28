@@ -1,6 +1,6 @@
 import React from 'react';
 import { StyleSheet, Text, View, Button, TouchableOpacity,TextInput,Image,Modal,Alert } from 'react-native';
-import {styles_floatBtn,styles_list,buttons_style,styles} from "../Styles/styles";
+import {styles_Btn,styles_list,buttons_style,styles} from "../Styles/styles";
 import { withNavigation } from 'react-navigation';
 import Company from "../Libs/Company_module";
 import Product from "../Libs/Product_module";
@@ -54,22 +54,13 @@ class ScanScreen extends React.Component {
         item.fields.quantity = item.quantity;
         items_list.push(item.fields);
       });
-      const datetime = this.getDateTime();
-      const LastP = {"list":items_list,"title":datetime,"total":this.state.Total};
+      const LastP = {"list":items_list,"title":"","total":this.state.Total};
       this.LS.setPurchaseHistory(LastP).then(PurchaseList=>{
         console.log("saving Done");
         this.props.navigation.setParams({showSaveBtn : false ,});
       });
     }
-    getDateTime(){
-      const date = new Date().getDate();
-      const month = new Date().getMonth() + 1;
-      const year = new Date().getFullYear();
-      const hours = new Date().getHours();
-      const min = new Date().getMinutes();
-      const sec = new Date().getSeconds();
-      return year + '/' + month + '/' + date + ' ' + hours + ':' + min;
-    }
+
     componentDidMount(){
       this.LS.getLastPurchaseList().then(lastPurchaseList=>{
         //console.log(lastPurchaseList);
@@ -131,14 +122,6 @@ class ScanScreen extends React.Component {
         )
         },
     });
-    openAddModal = (company) => {
-        if(company){
-            this.setState({isVisible_modal_add:true});
-        }else{
-            this.props.navigation.setParams({disable:true});
-            this.setState({isVisible_modal_scan:true,});
-        }
-      };
     startScan(method){
       if(method==2){
         this.continue_list = this.state.items_list;
@@ -166,7 +149,6 @@ class ScanScreen extends React.Component {
       this.setState({scanned:null});
     }
     Total(){
-      console.log("total");
       this.plusProd();
       const items_list = this.continue_list.concat(this.state.items_list);
       this.state.items_list = [];
@@ -190,11 +172,28 @@ class ScanScreen extends React.Component {
       this.setState({scanned:null,Total:total,isVisible_modal_scan:false});
       this.props.navigation.setParams({showSaveBtn : this.state.items_list.length>0 && this.state.items_list[0].is_hist==undefined ,});
     }
-    setCode = (type, code, country,company,product) => {
+    setCode = (type, code, country,company,product,isNoBarCode) => {
         this.setState({disable_btns:false});
+        if(isNoBarCode){
+          let new_prod = new Product();
+          new_prod.fields.desc = "PickProduct";
+          new_prod.fields.price = "";
+          new_prod.list=[]
+          new_prod.filterWithExtra({"products.desc":"NoBarCode"}).then(output=>{
+            if(output["list"] && output["list"].length > 0){
+              for (let j = 0; j < output["list"].length; j++) {
+                const prod = output["list"][j];
+                let prod_dict = {};
+                prod_dict[prod.fields.id] = prod.fields.name 
+                new_prod.list.push(prod_dict);
+              }
+            }
+            this.setState({scanned:new_prod});
+          });
+          return ;
+        }
         let new_prod = new Product();
         new_prod.get({id:code}).then((output)=>{
-          
             if(output["success"] && output["res"]!=false){
               if(this.state.method===0){
                 new_prod.scanMethod = 0 ;
@@ -204,11 +203,19 @@ class ScanScreen extends React.Component {
 
               }
             }else{
-              Alert.alert(TXT.Product_not_found,TXT.Product_does_not_exist);
+              Alert.alert(TXT.Product_not_found,TXT.Product_does_not_exist + " : "+code);
             }
 
-
         });
+
+    }
+    setNoBArCode_product = (item_id)=>{
+      let new_prod = new Product();
+      new_prod.get({id:item_id}).then((output)=>{
+        this.setState({scanned:new_prod});
+      });
+    }
+    render_nobarecode(){
 
     }
     render_modal_ScanResult(){
@@ -232,33 +239,32 @@ class ScanScreen extends React.Component {
         >
             <View style={{flex:.1,backgroundColor:"#2c3e5066"}}></View>
             <View style={{height:400,width:"100%",backgroundColor:"#646c78"}}>
-            { this.state.scanned && this.state.scanned.scanMethod==undefined && this.state.scanned.fields.desc!="NoBarCode" &&
+            { this.state.scanned && this.state.scanned.scanMethod==undefined && this.state.scanned.fields.desc!="PickProduct" &&
             
                 <View style={{width:200,height:150,backgroundColor:"#bdc3c7",alignSelf:"center"}}>
                     <Image  source={img_source} resizeMode="contain" style={{ flex: 1, height: undefined, width: undefined }} />
                 </View>
             }
-            { this.state.scanned && this.state.scanned.scanMethod==undefined && this.state.scanned.fields.desc!="NoBarCode" &&
+            { this.state.scanned && this.state.scanned.scanMethod==undefined && this.state.scanned.fields.desc!="PickProduct" &&
                 <View style={styles_list.container}>
                   <Text style={styles.product_title}>{this.state.scanned.fields.name} : {this.state.scanned.fields.price} Dh</Text>
                   <Text style={styles.product_desc}>{this.state.scanned.company_ob.fields.name+" - "+this.state.scanned.company_ob.fields.country}</Text>
                 </View>
               }
-              { this.state.scanned && this.state.scanned.scanMethod==undefined && this.state.scanned.fields.desc=="NoBarCode" &&
-                <View style={styles_list.row_view}>
+              { this.state.scanned && this.state.scanned.scanMethod==undefined && this.state.scanned.fields.desc=="PickProduct" &&
+                <View style={styles_list.row_view} >
                   <Text style={styles_list.text_k}> {TXT.Product}  :</Text>
-                  <View style={styles_list.text_v}>
                   <AutoComplite
-                      style={styles_list.TextInput}
-                      placeholder={TXT.Price+" .. "}
+                      styleTextInput={styles_list.TextInput}
+                      placeholder={TXT.Name+" .. "}
                       placeholderTextColor="#ecf0f1"
-                      options_pool={["3des","lobya","cha3riya","cha3riya2","cha3riya3","cha3riya4"]}
+                      options_pool={this.state.scanned.list}
+                      action={this.setNoBArCode_product}
                   />
-                  </View>
                 </View>
               }
                 { this.state.scanned && this.state.scanned.scanMethod==undefined && this.state.scanned.fields.desc=="NoBarCode" &&
-                  <View style={styles_list.row_view}>
+                  <View style={[styles_list.row_view,{zIndex:0}]} >
                     <Text style={styles_list.text_k}> {TXT.Price}  :</Text>
                     <View style={styles_list.text_v}>
                     <TextInput
@@ -267,6 +273,7 @@ class ScanScreen extends React.Component {
                         placeholderTextColor="#ecf0f1"
                         onChangeText ={newValue=>{
                           this.state.scanned.fields.price=newValue;
+                          this.setState({});
                         }}
                         value={this.state.scanned.fields.price+""}
                     />
@@ -304,7 +311,7 @@ class ScanScreen extends React.Component {
                 }
                 { this.state.scanned && this.state.scanned.scanMethod==undefined && 
                 <View style={{flexDirection:"row",justifyContent:"center"}}>
-                    <View style={[{ width: 60,height:40,}]}>
+                    <View style={[{ width: 80,height:40,}]}>
                      <Button
                         style={buttons_style.modalAdd}
                         title={TXT.Total}
@@ -315,7 +322,7 @@ class ScanScreen extends React.Component {
                         }
                     ></Button>
                     </View>
-                    <View style={[{ width: 60,height:40,}]}>
+                    <View style={[{ width: 80,height:40,}]}>
                       <Button
                           style={buttons_style.modalPlus}
                           title={TXT["+"]}
@@ -362,7 +369,7 @@ class ScanScreen extends React.Component {
                 this.Total();
              } }
           >
-              <BarcodeScanner setCode={this.setCode} TXT={TXT}></BarcodeScanner>
+              <BarcodeScanner setCode={this.setCode} TXT={TXT} IsCalc={true}></BarcodeScanner>
           </Modal>
         );
     }
@@ -395,8 +402,8 @@ class ScanScreen extends React.Component {
             <TouchableOpacity
               activeOpacity={0.7}
               onPress={()=>{this.startScan(2);}}
-              style={styles_floatBtn.TouchableOpacityStyle}>
-                <View style={styles_floatBtn.FloatingButtonStyle} >
+              style={styles_Btn.TouchableOpacityStyle_float}>
+                <View style={styles_Btn.ButtonStyle_float} >
                   <Icon name="plus-circle" size={50} color="#66b6eb" />
                 </View>
                 
@@ -404,6 +411,7 @@ class ScanScreen extends React.Component {
             }
             {this.render_modal_BarcodeScanner()}
             {this.render_modal_ScanResult()}
+            
           </View>
         );
       }

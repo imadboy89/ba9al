@@ -4,11 +4,18 @@ class translation{
     constructor(LS){
         this.language = "en";
         this.translation = {
+            "Generate"             : {"ar":"توليد"         ,"fr":"Générer","dr":"Générer",},
+            "Generate_backup"             : {"ar":"توليد النسخ الاحتياطي"         ,"fr":"Générer une sauvegarde","dr":"generer l i7tiyat",},
             "calculate_more"             : {"ar":"احسب أكثر"         ,"fr":"calculer plus","dr":"zid sl3a fel 7seb",},
             "No_Bar_Code"             : {"ar":"لا رمز شريط"         ,"fr":"Pas de Code a bar","dr":"Mkaynchi code a bar",},
             "AutoFocus"             : {"ar":"AutoFocus"         ,"fr":"AutoFocus","dr":"AutoFocus",},
             "Ratio"             : {"ar":"Ratio"         ,"fr":"Ratio","dr":"Ratio",},
-            "Photo_quality"             : {"ar":"Ratio"         ,"fr":"Quality de photo","dr":"quality d photo",},
+            "Photo_quality"             : {"ar":"جودة الصورة"         ,"fr":"Qualité de photo","dr":"quality d photo",},
+            "Take_Photo"             : {"ar":"التقاط صورة"         ,"fr":"Prendre une photo","dr":"Sawr prodwi",},
+            "Name"                       : {"ar":"اسم"              ,"fr":"Nom","dr":"Smiya",},
+            "Last_cleared_history"        : {"ar":"تاريخ آخر مسح"              ,"fr":"Dernier historique effacé","dr":"akhir mara tmsa7",},
+            "Clear_history"        : {"ar":"مسح التاريخ"              ,"fr":"Vider historique","dr":"msa7 sijil",},
+            "Clear_cache"      : {"ar":"مسح ذاكرة التخزين المؤقت"              ,"fr":"Vider Cache","dr":"msa7 lcache",},
             "Name"                       : {"ar":"اسم"              ,"fr":"Nom","dr":"Smiya",},
             "Snap"                       : {"ar":"Snap"              ,"fr":"Snap","dr":"Snap",},
             "Image_quality"              : {"ar":"جودة الصورة"        ,"fr":"Quality d'image","dr":"qualiti d photo",},

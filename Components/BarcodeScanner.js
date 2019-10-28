@@ -1,11 +1,16 @@
 import * as React from 'react';
-import { Text, View, Button, ActivityIndicator, Modal } from 'react-native';
+import { Text, View, Button, ActivityIndicator, Modal,TouchableOpacity  } from 'react-native';
 import * as Permissions from 'expo-permissions';
 import { Camera } from 'expo-camera';
 import Translation from "../Libs/Translation";
 import * as ImageManipulator from 'expo-image-manipulator';
 import LocalStorage from "../Libs/LocalStorage";
 import Product from "../Libs/Product_module";
+import Icon from 'react-native-vector-icons/FontAwesome';
+import {styles_Btn} from "../Styles/styles";
+import { Audio } from 'expo-av';
+
+
 TXT = null;
 
 class BarcodeScanner extends React.Component {
@@ -20,6 +25,7 @@ class BarcodeScanner extends React.Component {
       autoFocus: true,
       ratio : "4:3",
       image_quality:0.2,
+      isVisible_modal_loader:true
     };
     TXT = this.props.TXT;
     this.getRatios = false;
@@ -32,10 +38,16 @@ class BarcodeScanner extends React.Component {
       }
       this.setState({
         image_quality : settings.image_quality,
-        autoFocus     : settings.autoFocus,
+        autoFocus     : this.props.setImgB64 ? settings.autoFocus : true,
         ratio         : settings.ratio,
       });
     });
+    this.state.cameraStatus = "starting Camera ...";
+    console.log("camera start");
+    this.soundScanned = new Audio.Sound();
+    this.soundCamera = new Audio.Sound();
+    this.soundScanned.loadAsync(require('../assets/scanned.mp3'));
+    this.soundCamera.loadAsync(require('../assets/camera.mp3'));
   }
   state = {
     hasCameraPermission: null,
@@ -45,7 +57,22 @@ class BarcodeScanner extends React.Component {
   async componentDidMount() {
     this.getPermissionsAsync();
   }
-
+  playSoundBArCodeScanned = async ()=>{
+    try {
+      this.soundScanned.replayAsync();
+      // Your sound is playing!
+    } catch (error) {
+      console.log(`cannot play the sound file`, error);
+    }
+  }
+  playSoundCamera = async ()=>{
+    try {
+      this.soundCamera.replayAsync();
+      // Your sound is playing!
+    } catch (error) {
+      console.log(`cannot play the sound file`, error);
+    }
+  }
   getPermissionsAsync = async () => {
     const { status } = await Permissions.askAsync(Permissions.CAMERA);
     this.setState({ hasCameraPermission: status === 'granted' });
@@ -67,6 +94,22 @@ class BarcodeScanner extends React.Component {
       </Modal>
     );
   }
+  render_modal_Loader(){
+    return (
+      <Modal 
+      transparent={true}
+      visible={this.state.isVisible_modal_loader}
+      onRequestClose={() => { this.setState({ isVisible_modal_loader:false,}); } }
+      >
+        <View style={{flex:.9,backgroundColor:"#00000099"}}></View>
+        <View style={{height:100,width:"100%",justifyContent:"center",backgroundColor:"black"}}>
+          <ActivityIndicator size="large" color="#00ff00" />
+          <Text style={{color:"#7f8c8d",textAlign:"center",width:"100%"}}>{this.state.cameraStatus}</Text>
+        </View>
+        <View style={{flex:.9,backgroundColor:"#00000099"}}></View>
+      </Modal>
+    );
+}
   render() {
     const { hasCameraPermission, scanned } = this.state;
 
@@ -83,12 +126,24 @@ class BarcodeScanner extends React.Component {
           flexDirection: 'column',
           justifyContent: 'flex-end',
         }}>
-          <Text style={{fontSize:25,width:"100%",textAlign:"center",color:"#f1c40f",margin:10,backgroundColor:"#2c3e50",textDecorationStyle:"solid"}}> {TXT.Scan_product_bare_code} </Text>
+          
+          <Text style={{fontSize:25,width:"100%",textAlign:"center",color:"#ecf0f1",margin:10,backgroundColor:"#2c3e50",textDecorationStyle:"solid"}}> 
+          {this.props.setImgB64 ? TXT.Take_Photo+" - "+this.state.ratio : TXT.Scan_product_bar_code}
+          </Text>
         <Camera
           onBarCodeScanned={ (scanned && this.props.setCode ) ? undefined : this.handleBarCodeScanned}
           style={{width:"100%",height:"70%"}}
-          autoFocus={this.state.autoFocus ? Camera.Constants.AutoFocus.On : Camera.Constants.AutoFocus.Off}
+          autoFocus={this.state.autoFocus ? Camera.Constants.AutoFocus.on : Camera.Constants.AutoFocus.off}
           ratio={this.state.ratio}
+          onCameraReady ={async ()=>{
+            console.log("camera ready");
+            if(this.getRatios){
+              const availableRatios = await this.camera.getSupportedRatiosAsync ();
+              this.LS.setSetting("availableRatios",availableRatios);
+            }
+            this.setState({isVisible_modal_loader:false});
+            
+          }}
           ref={ref => {
             this.camera = ref;
           }}
@@ -98,29 +153,50 @@ class BarcodeScanner extends React.Component {
           color="green"
           onPress={() => this.handleBarCodeScanned({"type":"dddtype", "data":6119999900002})} />
           <View style={{justifyContent:"center",flex:1,alignContent:"center",flexDirection:"row"}}>
-            <View style={{width:60,height:50}}>
+            <View style={{flex:1,justifyContent:"center",alignContent:"center"}}>
               {this.props.setCode && 
               <View>
-                <Button 
-                  title={TXT.Scan+""} 
-                  disabled={!scanned}
-                  onPress={() => this.setState({ scanned: false })} />
-                <Button 
-                  title={TXT.No_Bar_Code+""} 
-                  onPress={() => this.handleBarCodeScanned({"type":"NoBarCode", "data":-1})}
-                   />
+                  {this.props.IsCalc != true &&
+                  <Button 
+                    title={TXT.No_Bar_Code+""} 
+                    onPress={() => this.handleBarCodeScanned({"type":"NoBarCode", "data":-1})}
+                    />
+                  }
+                  {this.props.IsCalc == true &&
+                  <Button 
+                    title={TXT.No_Bar_Code+"."} 
+                    onPress={() => this.handleBarCodeScanned({"type":"NoBarCode", "data":-2})}
+                    />
+                  }
+                  {scanned && 
+                  <TouchableOpacity  
+                    disabled={!scanned}
+                    style={styles_Btn.TouchableOpacityStyle}
+                    title={TXT.Scan+""} 
+                    onPress={() => this.setState({ scanned: false })} >
+                      <View style={[styles_Btn.ButtonStyle,{backgroundColor:'#2c3e50',}]} >
+                        <Icon name="barcode" size={40} style={{alignSelf:"center",color:"#ecf0f1"}}></Icon>
+                      </View>
+                  </TouchableOpacity>
+                  }
               </View>
               }
               {this.props.setImgB64 && 
-              <Button 
+              <TouchableOpacity  
+                style={styles_Btn.TouchableOpacityStyle}
                 disabled={this.state.snaping}
                 title={TXT.Snap+""} 
-                onPress={() => this.snap()} />
+                onPress={() => this.snap()} >
+                  <View style={[styles_Btn.ButtonStyle,{backgroundColor:'#16a085',}]} >
+                    <Icon name="camera" size={40} style={{alignSelf:"center",color:"#ecf0f1"}}></Icon>
+                  </View>
+              </TouchableOpacity>
               }
 
             </View>
           </View>
           {this.getLoadingModal()}
+          {this.render_modal_Loader()}
       </View>
     );
   }
@@ -138,8 +214,6 @@ class BarcodeScanner extends React.Component {
   };
 
   snap = async () => {
-    const availableRatios = await this.camera.getSupportedRatiosAsync ();
-    this.LS.setSetting("availableRatios",availableRatios);
 
     this.setState({snaping:true,cameraStatus:"Snapping picture"});
     const options= {
@@ -148,6 +222,7 @@ class BarcodeScanner extends React.Component {
     };
     if (this.camera) {
       let photo = await this.camera.takePictureAsync(options);
+      this.playSoundCamera();
       this.setState({cameraStatus:"Adjusting picture"});
       const final_photo = await this._resize(photo) ;
       this.setState({snaping:false});
@@ -155,6 +230,7 @@ class BarcodeScanner extends React.Component {
     }
   };
   handleBarCodeScanned = async ({ type, data }) => {
+    this.playSoundBArCodeScanned();
     let isNoBarCode = false;
     if(type=="NoBarCode" && data==-1){
       const product = new Product();
@@ -163,6 +239,9 @@ class BarcodeScanner extends React.Component {
         data  = output["maxId"]+1;
         isNoBarCode = true;
       }
+    }else if (type=="NoBarCode" && data==-2){
+      this.props.setCode(null, null, null,null,null,true); 
+      return ;
     }
     data = ""+data;
     const country = data.slice(0,3)
