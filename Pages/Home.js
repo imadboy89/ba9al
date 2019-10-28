@@ -1,5 +1,5 @@
 import React from 'react';
-import { Switch, Text, View, Button, TouchableOpacity,Picker,ScrollView,Modal } from 'react-native';
+import { Switch, Text, View, Button, TouchableOpacity,Picker,ScrollView,Modal,TextInput } from 'react-native';
 import {header_style,styles_list,styles_itemRow,styles} from "../Styles/styles";
 import Translation from "../Libs/Translation";
 import LocalStorage from "../Libs/LocalStorage";
@@ -7,6 +7,74 @@ import HeaderButton from "../Components/HeaderButton";
 import backUp from "../Libs/backUp";
 TXT = null;
 
+class Credentials extends React.Component{
+  constructor(props) {
+    super(props);
+    this.state = {
+      email:"",
+      password:""
+    };
+    this.LS = new LocalStorage();
+    this.LS.getCredentials().then(output=>{
+      this.setState({email:output.email, password:output.password});
+    });
+    }
+    saveCredentials(){
+      this.LS.setCredentials(this.state.email,this.state.password);
+      this.props.closeModal();
+    }
+    render(){
+
+      return (
+        <View style={{height:400,width:"100%",backgroundColor:"#646c78"}}>
+          <View style={styles_list.row_view}>
+          <Text style={styles_list.text_k}> {TXT.Email} : </Text>
+          <TextInput
+              style={styles_list.TextInput}
+              placeholder={TXT.Email+" .. "}
+              placeholderTextColor="#ecf0f1"
+              onChangeText ={newValue=>{
+                  this.setState({email:newValue});
+              }}
+              value={this.state.email}
+          />
+          </View>
+
+          <View style={styles_list.row_view}>
+          <Text style={styles_list.text_k}> {TXT.Password} : </Text>
+          <TextInput
+              style={styles_list.TextInput}
+              placeholder={TXT.Password+" .. "}
+              placeholderTextColor="#ecf0f1"
+              onChangeText ={newValue=>{
+                  this.setState({password:newValue});
+              }}
+              value={this.state.password}
+          />
+          </View>
+          <View style={{flexDirection:"row",justifyContent:"center"}}>
+              <Button
+                  title={TXT.Save+""}
+                  color="green"
+                  onPress={()=>{
+                    this.saveCredentials();
+                  }
+                  }
+              ></Button>
+              <Button
+                  title={TXT.Cancel+""}
+                  color="orange"
+                  onPress={()=>{
+                      this.props.closeModal();
+                  }
+                  }
+              ></Button>
+            </View>
+
+        </View>
+      );
+    }
+}
 
 class HomeScreen extends React.Component {
     constructor(props) {
@@ -21,11 +89,14 @@ class HomeScreen extends React.Component {
         months_total :{},
         availableRatios:[],
         synchronize_btn_status:true,
+        modalVisible_credentails : false,
       };
       this.LS = new LocalStorage();
       this.firstHistoryRender = true;
       this.TXT_ob = new Translation(this.LS);
-
+      this.backup = new backUp();
+      this.state.backup_lastActivity = this.backup.lastActivity;
+      this.state.backup_email = this.backup.email;
       const didBlurSubscription = this.props.navigation.addListener(
         'didFocus',
         payload => {
@@ -119,6 +190,33 @@ class HomeScreen extends React.Component {
           );
       })
     }
+    render_modal_credentials(){
+      Credentials
+      return (          
+          <Modal 
+            animationType="slide"
+            transparent={true}
+            visible={this.state.modalVisible_credentails}
+            onRequestClose={() => { 
+                this.setState({ modalVisible_credentails:false,});
+            } }
+          >
+          <View style={{flex:.4,backgroundColor:"#2c3e5066"}}></View>
+          <View style={{height:400,width:"100%",backgroundColor:"#646c78"}}>
+            <Credentials
+              closeModal={ ()=>{
+                this.setState({modalVisible_credentails:false});
+                this.backup.changeClient();
+              }}
+            >
+
+            </Credentials>
+          </View>
+          <View style={{flex:1,backgroundColor:"#2c3e5066"}}></View>
+
+          </Modal>
+          );
+    }
     render_modal_Settings(){
 
       return (
@@ -192,21 +290,34 @@ class HomeScreen extends React.Component {
               />
               </View>
               <View style={styles_list.row_view}>
-                <Text style={styles_list.text_k}> {TXT.Synchronize_data} : </Text>
+                  <Text style={styles_list.text_k}> {TXT.Synchronize_data} : </Text>
+                  <Button 
+                    style={[styles_list.small_elemnt,{marginLeft:10}]}
+                    title = {TXT.Sych_Now}
+                    disabled={!this.state.synchronize_btn_status}
+                    onPress={ ()=> {
+                      this.setState({synchronize_btn_status:false});
+                      this.backup.synchronize().then(out=>{
+                        console.log(out);
+                        alert(out.join("\n"));
+                        this.setState({
+                          synchronize_btn_status:true,
+                          backup_lastActivity:this.backup.lastActivity,
+                          backup_email:this.backup.email,
+                        });
+                      });
+                    }}
+                />
                 <Button 
-                  style={[styles_list.small_elemnt,{marginLeft:10}]}
-                  title = {TXT.Sych_Now}
-                  disabled={!this.state.synchronize_btn_status}
-                  onPress={ ()=> {
-                    const backup = new backUp();
-                    this.setState({synchronize_btn_status:false});
-                    backup.synchronize().then(out=>{
-                      console.log(out);
-                      this.setState({synchronize_btn_status:true});
-                    });
-                  }}
-              />
-              </View>
+                    style={[styles_list.small_elemnt,{marginLeft:10}]}
+                    title = {TXT.Credents}
+                    disabled={!this.state.synchronize_btn_status}
+                    color="black"
+                    onPress={ ()=> {
+                      this.setState({modalVisible_credentails:true})
+                    }}
+                />
+            </View>
               <Button 
                 title="Close"
                 onPress={()=>this.setState({modalVisible:false}) }
@@ -316,6 +427,7 @@ class HomeScreen extends React.Component {
           <View style={styles.container} >   
               {this.render_history()}
               {this.render_modal_Settings()}
+              {this.render_modal_credentials()}
           </View>
         );
       }

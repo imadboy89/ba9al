@@ -3,7 +3,7 @@ import Photo from "./Photo_module";
 import Company from './Company_module';
 import Product from "./Product_module";
 import { Linking  } from 'react-native';
-import { Stitch,RemoteMongoClient , AnonymousCredential } from "mongodb-stitch-react-native-sdk";
+import { Stitch,RemoteMongoClient , AnonymousCredential,UserPasswordCredential } from "mongodb-stitch-react-native-sdk";
 
 
 class BackUp{
@@ -13,6 +13,30 @@ class BackUp{
         this.Photo   = new Photo();
         this.LS = new LocalStorage();
         //this.initDb();
+        this.lastActivity = "";
+        this.email = "";
+        //this.setClientInfo();
+    }
+    setClientInfo(){
+      try {
+        this.client = Stitch.defaultAppClient;
+        this.lastActivity = this.client.auth.activeUserAuthInfo.lastAuthActivity;
+        this.email = this.client.auth.activeUserAuthInfo.userProfile.data.email;  
+      } catch (error) {
+        console.log(error)
+      }
+
+    }
+    changeClient = async (eml,pass)=>{
+      const app = Stitch.defaultAppClient;
+      const credents = await this.LS.getCredentials();
+      console.log("credents",credents);
+      const credential = new UserPasswordCredential(credents["email"],credents["password"]);
+
+
+      this.client = await app.auth.loginWithCredential(credential);
+      this.setClientInfo();
+       
     }
     _loadClient() {
         Stitch.initializeDefaultAppClient("ba9al-xpsly").then(client => {
@@ -20,8 +44,10 @@ class BackUp{
           this.client.auth
             .loginWithCredential(new AnonymousCredential())
             .then(user => {
-              console.log(`Successfully logged in as user ${user.id}`);
+              
               this.currentUserId = user.id;
+              this.setClientInfo();
+              console.log(`Successfully logged in as user ${user.id}` , this.lastActivity , this.email);
             })
             .catch(err => {
               console.log(`Failed to log in anonymously: ${err}`);
@@ -55,16 +81,19 @@ class BackUp{
           });
     }
     synchronize_item = async(db,Items_clss, isPhoto=false)=>{
+      let infos=[];
       let items= [];
       if (isPhoto){
         items = await this.getMDB(db,{"data":{"$ne":null} },{"projection": { "_id": 0,"data":0 }});
       }else{
         items = await this.getMDB(db);
       }
+      infos.push ("    Found : "+items.length);
       const Item_ob_check = new Items_clss();
       let items_local = await Item_ob_check.filter();
       items_local = items_local["list"];
       let items_dict = {};
+      let saved=0;
       for (let i = 0; i < items.length; i++) {
         let item = items[i];
         delete item["_id"];
@@ -90,33 +119,44 @@ class BackUp{
           const Item_ob_ = new Items_clss(item);
           Item_ob_.save(true);
           console.log("saving : "+item["id"]);
+          saved+=1;
         }
       }
+      infos.push ("    Saved : "+saved);
       let items_to_upload = [];
       for (let j = 0; j < items_local.length; j++) {
         const item_l = items_local[j];
-        if( !(item_l.fields.id in items_dict) && item_l.fields.data != null){
-          items_to_upload.push(item_l.fields);
+        if( !(item_l.fields.id in items_dict)){
+          if(!isPhoto ||  item_l.fields.data != null){
+            items_to_upload.push(item_l.fields);
+          }
         }
       }
-
-      console.log("Count to upload : "+items_to_upload.length)
-      if(items_to_upload.length>0){
+      uploaded = 0;
+      infos.push ("    Count to upload : "+items_to_upload.length);
+      if(items_to_upload.length>0 && this.email ){
         const out_up = await this.insertMany(db, items_to_upload);
-        console.log(out_up);
+        uploaded +=1;
       }
-      
+      infos.push ("    Uploaded : "+items_to_upload.length);
+      return infos;
     }
     synchronize = async()=>{
       await this.initDb();
       console.log("synch Products");
-      await this.synchronize_item(this.products_mdb, Product);
+      let info = await this.synchronize_item(this.products_mdb, Product);
+      info = ["Products :",].concat(info);
       console.log("synch Companies");
-      await this.synchronize_item(this.companies_mdb, Company);
-      console.log("synch Photos");
-      await this.synchronize_item(this.photos_mdb, Photo,true);
+      let info1 = await this.synchronize_item(this.companies_mdb, Company);
+      info1 = ["Companies :",].concat(info1);
+      let info2 = await this.synchronize_item(this.photos_mdb, Photo,true);
+      info2 = ["Photos :",].concat(info2);
+
+      info = info.concat(info1);
+      info = info.concat(info2);
+      
       //await this.synchronize_item(this.history_mdb, Product);
-      return true;
+      return info;
     }
 
     getBackupMail = async (receiver)=>{

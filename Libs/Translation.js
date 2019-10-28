@@ -8,6 +8,10 @@ class translation{
             
             "Incorect_barcode_please_try_again"             : {"ar":"الباركود غير صحيح ، يرجى المحاولة مرة أخرى"         ,"fr":"Incorrect code a bare, essayer autre fois!","dr":"code machi s7i7, 3awd scanni mara akhra!",},
             "Sych_Now"             : {"ar":"تزامن"         ,"fr":"Sych Now","dr":"Sych_Now",},
+            "Try_again"             : {"ar":"تزامن"         ,"fr":"Essay autr fois","dr":"7Awl mara akhra",},
+            "Email"             : {"ar":"البريد الإلكتروني"         ,"fr":"Email","dr":"Email",},
+            "Credents"             : {"ar":"Credents"         ,"fr":"Credents","dr":"Credents",},
+            "Password"             : {"ar":"كلمة المرور"         ,"fr":"Mot de pass","dr":"ra9m sirri",},
             "Synchronize_data"             : {"ar":"مزامنة البيانات"         ,"fr":"synchronizer les donnes","dr":"synchronizi data",},
             "Generate"             : {"ar":"توليد"         ,"fr":"Générer","dr":"Générer",},
             "Generate_backup"             : {"ar":"توليد النسخ الاحتياطي"         ,"fr":"Générer une sauvegarde","dr":"generer l i7tiyat",},

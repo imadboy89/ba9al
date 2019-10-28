@@ -93,6 +93,20 @@ class LocalStorage{
             return out;
         }
     }
+    setCredentials = async (email, password) => {
+        let crendentials = {"email":email,"password":password} ;
+        await AsyncStorage.setItem('crendentials', JSON.stringify(crendentials));
+    };
+    getCredentials = async () => {
+        let crendentials = await AsyncStorage.getItem('crendentials');
+        if(crendentials){
+            return JSON.parse(crendentials);
+        }else{
+            crendentials = {"email":"","password":""} ;
+            await this.setCredentials("","");
+            return crendentials;
+        }
+    };
     setSetting = async (key, value) => {
         this.settings = await AsyncStorage.getItem('settings');
         if (this.settings) {

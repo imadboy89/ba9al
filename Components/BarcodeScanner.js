@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Text, View, Button, ActivityIndicator, Modal,TouchableOpacity  } from 'react-native';
+import { Text, View, Button, ActivityIndicator, Modal,TouchableOpacity, Alert } from 'react-native';
 import * as Permissions from 'expo-permissions';
 import { Camera } from 'expo-camera';
 import Translation from "../Libs/Translation";
@@ -265,14 +265,36 @@ class BarcodeScanner extends React.Component {
       this.props.setCode(null, null, null,null,null,true); 
       return ;
     }
-    if(!this.isValidChecksum(str(data)) && str(data).length>12){
-      alert(TXT.Incorect_barcode_please_try_again);
-      return ;
-    }
+
     data = ""+data;
     const country = data.slice(0,3)
     const company = data.slice(3,7)
     const product = data.slice(7)
+
+
+    if(!this.isValidChecksum(data) && data.length>12){
+      Alert.alert(
+        "Scanner",
+        TXT.Incorect_barcode_please_try_again,
+        [
+          {
+            text: TXT.Ok, 
+            onPress: () => {
+              this.props.setCode(type, data, country,company,product,isNoBarCode); 
+            },
+            style: 'cancel',
+          },
+          {
+            text: TXT.Try_again, 
+            onPress: () => {
+              this.setState({ scanned: false });
+            },
+          },
+        ],
+      );
+      return ;
+    }
+    
     this.setState({ scanned: true });
     this.props.setCode(type, data, country,company,product,isNoBarCode); 
 
