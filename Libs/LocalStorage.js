@@ -97,6 +97,12 @@ class LocalStorage{
         let crendentials = {"email":email,"password":password} ;
         await AsyncStorage.setItem('crendentials', JSON.stringify(crendentials));
     };
+    set = async (key, value) => {
+        await AsyncStorage.setItem(key, value);
+    };
+    get = async (key, value) => {
+        await AsyncStorage.setItem(key, value);
+    };
     getCredentials = async () => {
         let crendentials = await AsyncStorage.getItem('crendentials');
         if(crendentials){
