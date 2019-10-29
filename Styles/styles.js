@@ -22,7 +22,20 @@ const styles_list = StyleSheet.create({
       borderWidth : 1,
       textAlign: 'right',
       width:"95%",
+      justifyContent:"center"
     },
+    nrml_view : {
+        flex: 1, 
+        flexDirection: 'column' ,
+        alignItems: 'center',
+        marginRight:20,
+        marginLeft:20,
+        marginBottom:10,
+        borderStyle : "solid",
+        borderWidth : 1,
+        textAlign: 'right',
+        width:"95%",
+      },
     row_q : {
       flex: 1, 
       flexDirection: 'column' ,

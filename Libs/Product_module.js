@@ -6,7 +6,8 @@ class Product {
     constructor(fields) {
         this.table_name = "products";
         this.fields = {
-            "id":null,"name":null,"desc":null,"img":null,"company":null,  "price":null
+            "id":null,"name":null,"desc":null,"img":null,"company":null,  "price":null,
+            "entered":null,"updated":null
         };
         if (fields){
             this.fields = fields;
@@ -24,6 +25,8 @@ class Product {
             "img text",
             "company INTEGER",
             "price REAL",
+            "entered DATETIME DEFAULT CURRENT_TIMESTAMP",
+            "updated DATETIME DEFAULT NULL"
         ];
         this.fields_defenition_str = this.fields_defenition.join(",")
         this.DB = new DB(this);
@@ -134,7 +137,13 @@ class Product {
             return output;
         });
     }
-    filterWithExtra(where={},limit){
+    filterWithExtra(where={},page,perPage){
+        
+        let limit = "";
+        if(perPage){
+            limit = "limit "+(page*perPage)+", "+perPage;
+        }
+        console.log(limit);
         const where_build = this.DB.build_where(where);
         const fields_name = Object.keys(this.fields);
         let query = "select products."+fields_name.join(",products.")+
@@ -142,7 +151,7 @@ class Product {
               ",photo.data,companies.name AS company_name "+
               " FROM "+this.table_name+
               " LEFT JOIN photo ON products.id=photo.id"+
-              " LEFT JOIN companies ON products.company=companies.id "+where_build[0];
+              " LEFT JOIN companies ON products.company=companies.id "+where_build[0] + " ORDER BY products.entered DESC "+limit  ;
         return this.DB.executeSql(query, where_build[1]).then(output=>{
             let list = [];
             if("error" in output && output["error"] && output["error"] !=""){
@@ -165,6 +174,7 @@ class Product {
                             const key = res_keys[i];
                             _module.fields[key] = res[key];
                         }
+                        console.log("_module.fields.entered",_module.fields.name,_module.fields.entered,_module.fields.updated);
                         list.push(_module);
                     });
                 }

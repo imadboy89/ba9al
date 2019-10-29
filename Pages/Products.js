@@ -7,7 +7,8 @@ import ItemsList from '../Components/ItemsList';
 import BarcodeScanner from "../Components/BarcodeScanner";
 import HeaderButton from "../Components/HeaderButton";
 import { TouchableOpacity } from 'react-native-gesture-handler';
-
+import Icon from 'react-native-vector-icons/FontAwesome';
+import Next_previous from "../Components/nex_previous";
 TXT = null;
 
 
@@ -20,7 +21,10 @@ class ProductsScreen extends React.Component {
         isVisible_modal_add : false,
         sql_error:null,
         items_list :[],
+        refreshing:false,
+        page : 0,
       };
+      this.items_number_perpage = 20;
       this.product = new Product();
       //this.product.DB.changetable();
       const didBlurSubscription = this.props.navigation.addListener(
@@ -100,18 +104,20 @@ class ProductsScreen extends React.Component {
       });
 
     loadItems = (switchToAll=false) => {
-
+        this.setState({refreshing:true});
         let company = switchToAll ? null : this.props["navigation"].getParam("company");
         if (this.state.items_list){
             this.setState({items_list:[]});
         }
         where = (company && company.fields) ? {company:company.fields.id}: {};
-        this.product.filterWithExtra(where).then(output=>{
+        this.product.filterWithExtra(where,this.state.page,this.items_number_perpage).then(output=>{
         //this.product.filter({}).then(output=>{
             if(output["success"]){
-              this.setState({items_list:output["list"]});
+                console.log(output["list"][0].fields["entered"]);
+                console.log(output["list"][0].fields["updated"]);
+              this.setState({items_list:output["list"],refreshing:false});
             }else{
-              this.setState({sql_error:output["error"]});
+              this.setState({sql_error:output["error"],refreshing:false});
             }
         });
     }
@@ -363,6 +369,10 @@ class ProductsScreen extends React.Component {
             </Modal>
         );
     }
+    next_previous_handler=(val)=>{
+        this.state.page += val;
+        this.loadItems();
+    }
     render() {
       
         return (
@@ -371,10 +381,17 @@ class ProductsScreen extends React.Component {
                 items_list={this.state.items_list}
                 setItemParent={this.setItemParent}
                 ItemClass={Product}
+                onRefresh={this.loadItems}
+                refreshing={this.state.refreshing}
                  />
+            <Next_previous 
+                previous_disabled={this.state.page<=0 || this.state.items_list==false || this.state.items_list.length==0}
+                next_disabled = {this.state.items_list.length < this.items_number_perpage}
+                next_prious_handler={this.next_previous_handler}
+            />   
             {this.render_modal()}
             {this.render_modal_BarcodeScanner()}
-            {this.render_modal_Camera()}
+            {this.render_modal_Camera()}         
           </View>
         );
       }

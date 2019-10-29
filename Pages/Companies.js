@@ -7,6 +7,7 @@ import ItemsList from '../Components/ItemsList';
 import BarcodeScanner from "../Components/BarcodeScanner";
 import getCountry from "../Libs/Countries";
 import HeaderButton from "../Components/HeaderButton";
+import Next_previous from "../Components/nex_previous";
 
 TXT = null;
 
@@ -19,8 +20,11 @@ class CompaniesScreen extends React.Component {
         isVisible_modal_scan : false,
         isVisible_modal_add : false,
         sql_error:null,
-        items_list :[]
+        items_list :[],
+        refreshing:false,
+        page : 0,
       };
+      this.items_number_perpage = 20;
       this.company = new Company();
       new Translation().getTranslation().then(tr=>{
         TXT = tr;
@@ -83,11 +87,12 @@ class CompaniesScreen extends React.Component {
         if (this.state.items_list){
             this.setState({items_list:[]});
         }
-        this.company.filterWithExtra({}).then(output=>{
+        this.setState({refreshing:true});
+        this.company.filterWithExtra({},this.state.page,this.items_number_perpage).then(output=>{
             if(output["success"]){
-              this.setState({items_list:output["list"]});
+              this.setState({items_list:output["list"],refreshing:false});
             }else{
-              this.setState({sql_error:output["error"]});
+              this.setState({sql_error:output["error"],refreshing:false});
             }
         });
     }
@@ -271,6 +276,10 @@ class CompaniesScreen extends React.Component {
             </Modal>
         );
     }
+    next_previous_handler=(val)=>{
+        this.state.page += val;
+        this.loadItems();
+    }
     render() {
       
         return (
@@ -280,9 +289,18 @@ class CompaniesScreen extends React.Component {
                 setItemParent={this.setItemParent}
                 showProducts={this.showProducts}
                 ItemClass={Company}
+                onRefresh={this.loadItems}
+                refreshing={this.state.refreshing}
                  />
+
+                <Next_previous 
+                previous_disabled={this.state.page<=0 || this.state.items_list==false || this.state.items_list.length==0}
+                next_disabled = {this.state.items_list.length < this.items_number_perpage}
+                next_prious_handler={this.next_previous_handler}
+                />   
             {this.render_modal()}
             {this.render_modal_BarcodeScanner()}
+            
           </View>
         );
       }

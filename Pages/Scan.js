@@ -54,11 +54,13 @@ class ScanScreen extends React.Component {
         item.fields.quantity = item.quantity;
         items_list.push(item.fields);
       });
+      this.state.items_list[0].is_hist = true;
       const LastP = {"list":items_list,"title":"","total":this.state.Total};
       this.LS.setPurchaseHistory(LastP).then(PurchaseList=>{
         console.log("saving Done");
         this.props.navigation.setParams({showSaveBtn : false ,});
       });
+      this.setState({});
     }
 
     componentDidMount(){
@@ -145,12 +147,19 @@ class ScanScreen extends React.Component {
       return product;
     }
     plusProd(){
+      if(this.state.scanned.fields.id==null){
+        alert(TXT.Please_fill_the_required_fields);
+        return false;
+      }
       this.state.items_list.push(this.state.scanned);
       this.setState({scanned:null});
     }
     Total(){
       this.plusProd();
       const items_list = this.continue_list.concat(this.state.items_list);
+      if(!items_list || items_list.length ==0){
+        return;
+      }
       this.state.items_list = [];
       for (let k = 0; k < items_list.length; k++) {
         const pr = items_list[k];
@@ -398,7 +407,7 @@ class ScanScreen extends React.Component {
               </Text>
                  
             }
-            { this.state.items_list.length>0 && this.state.Total>0 && this.state.items_list[0].is_hist==undefined &&
+            { this.state.items_list.length>0 && this.state.Total>0 && this.state.items_list[0].is_hist!=true &&
             <TouchableOpacity
               activeOpacity={0.7}
               onPress={()=>{this.startScan(2);}}

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Switch, Text, View, Button, TouchableOpacity,Picker,ScrollView,Modal,TextInput } from 'react-native';
+import { Switch, Text, View, Button, TouchableOpacity,Picker,ScrollView,Modal,TextInput, Alert } from 'react-native';
 import {header_style,styles_list,styles_itemRow,styles} from "../Styles/styles";
 import Translation from "../Libs/Translation";
 import LocalStorage from "../Libs/LocalStorage";
@@ -91,13 +91,17 @@ class HomeScreen extends React.Component {
         availableRatios:[],
         synchronize_btn_status:true,
         modalVisible_credentails : false,
+        backup_doClear : false,
+        backup_email : ""
       };
       this.LS = new LocalStorage();
       this.firstHistoryRender = true;
       this.TXT_ob = new Translation(this.LS);
       this.backup = new backUp();
-      this.state.backup_lastActivity = this.backup.lastActivity;
-      this.state.backup_email = this.backup.email;
+      //this.backup.Company.DB.updateTables();
+      this.backup._loadClient().then(output=>{
+        this.setState({backup_email:this.backup.email,backup_lastActivity:this.backup.lastActivity});
+      });
       const didBlurSubscription = this.props.navigation.addListener(
         'didFocus',
         payload => {
@@ -219,7 +223,6 @@ class HomeScreen extends React.Component {
           );
     }
     render_modal_Settings(){
-
       return (
           <Modal 
           animationType="slide"
@@ -291,7 +294,46 @@ class HomeScreen extends React.Component {
               />
               </View>
               <View style={styles_list.row_view}>
-                  <Text style={styles_list.text_k}> {TXT.Synchronize_data} : </Text>
+                <Text style={styles_list.text_k}> {TXT.LastBackUp} : </Text>
+                <Text style={styles_list.text_v}>{this.state.backup_lastActivity+""} </Text>
+              </View>
+              <View style={styles_list.row_view}>
+                  { this.state.backup_email!="" &&  
+                  <Switch
+                  value={this.state.backup_doClear}
+                  onValueChange={ (newValue)=> {
+                    if(newValue){
+                      Alert.alert(
+                        TXT.Confirmation,
+                        TXT.Are_you_sure_you_want_to_clear_backup+"?",
+                        [
+                          {
+                            text: TXT.Yes,
+                            onPress: () => {
+                              this.backup.doClean = newValue;
+                              this.setState({backup_doClear: newValue});
+                            },
+                            
+                          },
+                          {
+                            text: TXT.No, 
+                            onPress: () => {
+                              this.backup.doClean = false;
+                            },
+                            style: 'cancel',
+                          },
+                        ],
+                      );
+                    }else{
+                      this.backup.doClean = newValue;
+                      this.setState({backup_doClear: newValue});
+                    }
+
+
+
+                  }}
+                  />
+                  }
                   <Button 
                     style={[styles_list.small_elemnt,{marginLeft:10}]}
                     title = {TXT.Sych_Now}
@@ -318,7 +360,9 @@ class HomeScreen extends React.Component {
                       this.setState({modalVisible_credentails:true})
                     }}
                 />
+                
             </View>
+            
               <Button 
                 title="Close"
                 onPress={()=>this.setState({modalVisible:false}) }
@@ -336,12 +380,18 @@ class HomeScreen extends React.Component {
       let lastMonth = "";
       //this.state.months_total = {};
       let monthtotal = 0 ;
+      let is_OK = true;
       const list =  this.state.history_list.slice(0).reverse().map((list,i)=>{
         if(!list["list"] || !list["list"].map){
           return null;
         }
-        
+        is_OK = true;
         const list_details = list["list"].map((prod,k)=>{
+          
+          if(prod.id==null){
+            is_OK = false;
+            return <Text>Not Found</Text>;
+          }
           return (
             <Text key={list["title"]+i+prod.name+k}  style={{color:"#bdc3c7",fontSize:18}}>
               x{prod.quantity?prod.quantity:1} -{prod.name} - {prod.price} dh
@@ -366,6 +416,9 @@ class HomeScreen extends React.Component {
           if(monthtotal!="" && !(monthtotal in this.state.months_total) ){
             this.state.months_total[lastMonth] = monthtotal ; 
           }
+        }
+        if(!is_OK){
+          return null;
         }
         return (
           <View key={list["title"]+i}  >
@@ -396,7 +449,7 @@ class HomeScreen extends React.Component {
                   } 
               </View>
               <View >
-              {this.state.showDetails && this.state.showDetails==list["title"]+i && 
+              {this.state.showDetails && this.state.showDetails==list["title"]+i &&
                 list_details
                 }
               </View>
@@ -411,7 +464,6 @@ class HomeScreen extends React.Component {
           this.setState({});
         }, 100);
       }
-
       return (
         <ScrollView style={{flex:1,flexDirection:"column",paddingRgith:10,marginLeft:10,}}>
           <Text style={{color:"white",width:"95%",paddingLeft:8,fontSize:30,}} > {TXT.History} :</Text>

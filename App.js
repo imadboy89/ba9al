@@ -10,9 +10,6 @@ import ProductsScreen  from "./Pages/Products";
 import {header_style} from "./Styles/styles";
 import Icon from 'react-native-vector-icons/FontAwesome';
 import Translation from "./Libs/Translation";
-import BackUp from "./Libs/backUp"
-
-new BackUp()._loadClient();
 
 TXT = new Translation().getTranslation();
 

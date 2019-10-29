@@ -5,8 +5,13 @@ class translation{
         this.language = "en";
         this.translation = {
             
-            
-            "Incorect_barcode_please_try_again"             : {"ar":"الباركود غير صحيح ، يرجى المحاولة مرة أخرى"         ,"fr":"Incorrect code a bare, essayer autre fois!","dr":"code machi s7i7, 3awd scanni mara akhra!",},
+            "LastBackUp"             : {"ar":"النسخة الاحتياطية الاخيرة"         ,"fr":"Dernière sauvegarde","dr":"akhir backup",},
+            "Yes"             : {"ar":"نعم"         ,"fr":"Oui","dr":"Ah",},
+            "No"             : {"ar":"لا"         ,"fr":"Non","dr":"La",},
+            "Please_fill_the_required_fields"             : {"ar":"يرجى تعبئة جميع الحقول المطلوبة"         ,"fr":"Veuillez remplir les champs requis","dr":"kteb ma3lomat kamla",},
+            "Are_you_sure_you_want_to_clear_backup"             : {"ar":"هل أنت متأكد أنك تريد مسح النسخ الاحتياطي؟"         ,"fr":"Êtes-vous sûr de vouloir effacer la sauvegarde?","dr":"MtZaked baghi tmsa7 backup ?",},
+            "Confirmation"             : {"ar":"التأكيد"         ,"fr":"Confirmation","dr":"Ta2kid",},
+            "Incorect_barcode_please_try_again"             : {"ar":"الباركود غير صحيح ، يرجى المحاولة مرة أخرى"         ,"fr":"Incorrect code a bare, essayer autre fois!","dr":"Code machi s7i7, 3awd scanni mara akhra!",},
             "Sych_Now"             : {"ar":"تزامن"         ,"fr":"Sych Now","dr":"Sych_Now",},
             "Try_again"             : {"ar":"تزامن"         ,"fr":"Essay autr fois","dr":"7Awl mara akhra",},
             "Email"             : {"ar":"البريد الإلكتروني"         ,"fr":"Email","dr":"Email",},
@@ -76,7 +81,7 @@ class translation{
         this.language = await this.LS.getSettings("language");
         let trans_new = {};
         Object.keys(this.translation).forEach(key => {
-            trans_new[key] = this.language in this.translation[key] ? this.translation[key][this.language] : key.replace("_"," ") ;
+            trans_new[key] = this.language in this.translation[key] ? this.translation[key][this.language] : key.replace(/_/g," ") ;
         });            
         return  trans_new;
 

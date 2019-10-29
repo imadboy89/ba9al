@@ -1,5 +1,5 @@
 import React from 'react';
-import {  Text, View, FlatList,ScrollView,TouchableOpacity,Image } from 'react-native';
+import {  Text, View, FlatList,ScrollView,TouchableOpacity,Image,RefreshControl } from 'react-native';
 import {styles_itemRow,styles} from "../Styles/styles";
 import { withNavigation } from 'react-navigation';
 import Translation from "../Libs/Translation";
@@ -7,11 +7,20 @@ import Translation from "../Libs/Translation";
 TXT = new Translation("fr").getTranslation();
 
 class ItemRow_ extends React.Component {
-    
+    getName(name){
+      try {
+        return name.charAt(0).toLocaleUpperCase()+name.slice(1) ;
+      } catch (error) {
+        return name;
+      }
+    }
     render() {
         let desc = "";
-        let name = this.props.item.fields.name;
+        let name = this.getName(this.props.item.fields.name);
         let leftTxt ="";
+        if(this.props.item.fields.id==null){
+          return null;
+        }
         if(this.props.item.fields.company){
           const company_name = (this.props.item.company_ob && this.props.item.company_ob.fields) ? this.props.item.company_ob.fields.name : this.props.item.fields.company;
           name += this.props.isCalculate ? " x"+this.props.item.quantity : "" ;
@@ -91,13 +100,16 @@ class ItemsList extends React.Component {
       };
       this.setItemParent = this.props.setItemParent;
     }
-
     render() {
 
         return (
         <View style={styles.container} >
             <Text style={{color:"white",fontSize:18}}> {TXT.Items_count} : {this.props.items_list.length}</Text>
-            <ScrollView >
+            <ScrollView 
+              refreshControl={
+                <RefreshControl refreshing={this.props.refreshing} onRefresh={this.props.onRefresh} />
+              }
+            >
                 <FlatList
                     data={this.props.items_list}
                     renderItem={({ item }) =>{

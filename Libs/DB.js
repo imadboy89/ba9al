@@ -44,6 +44,29 @@ class DB {
         return output;
       });
     }
+    updateTables = async()=>{
+      const q1 = "ALTER TABLE companies ADD entered DATETIME DEFAULT CURRENT_TIMESTAMP DEFAULT NULL ;"
+      const q2 = "ALTER TABLE companies ADD updated DATETIME DEFAULT NULL;"
+      const q3 = "ALTER TABLE products  ADD entered DATETIME DEFAULT CURRENT_TIMESTAMP DEFAULT NULL ;"
+      const q4 = "ALTER TABLE products  ADD updated DATETIME DEFAULT NULL;"
+      const q5 = "UPDATE products SET entered='2019-10-29 09-38' ;"
+      const q6 = "UPDATE companies SET entered='2019-10-29 09-38' ;"
+
+      const q7 = "ALTER TABLE photo ADD entered DATETIME DEFAULT CURRENT_TIMESTAMP DEFAULT NULL ;"
+      const q8 = "ALTER TABLE photo ADD updated DATETIME DEFAULT NULL;"
+      const q9 = "UPDATE photo SET entered='2019-10-29 09-38' ;"
+      /*
+      out = await this.executeSql(q1,[]); console.log(out);
+      out = await this.executeSql(q2,[]);console.log(out);
+      out = await this.executeSql(q3,[]);console.log(out);
+      out = await this.executeSql(q4,[]);console.log(out);
+      out = await this.executeSql(q5,[]);console.log(out);
+      out = await this.executeSql(q6,[]);console.log(out);
+      */
+     out = await this.executeSql(q7,[]);console.log(out);
+     out = await this.executeSql(q8,[]);console.log(out);
+     out = await this.executeSql(q9,[]);console.log(out);
+    }
     changetable = async ()=>{
       return;
       await this.executeSql("drop table companies;",[]);
@@ -66,6 +89,16 @@ class DB {
       }
       console.log(await this.executeSql("select count(*) from products2;",values));
     }
+    getDateTime(){
+      const date = new Date().getDate();
+      const month = new Date().getMonth() + 1;
+      const year = new Date().getFullYear();
+      const hours = new Date().getHours();
+      const min = new Date().getMinutes();
+      const sec = new Date().getSeconds();
+      return year + '-' + month + '-' + date + ' ' + hours + ':' + min + ":" + sec;
+    }
+
     create_table(){
       return this.db.transaction(tx => {
         tx.executeSql(
@@ -159,8 +192,15 @@ class DB {
 
 
     update(){
-      const fields_name = Object.keys(this.module.fields);
-      const fields_value = Object.values(this.module.fields);
+      fields_ = Object.assign({}, this.module.fields);
+      if(fields_["entered"] == null){
+        delete fields_["entered"]
+      }
+      if(fields_["updated"] == null){
+        fields_["updated"] = this.getDateTime();
+      }
+      const fields_name = Object.keys(fields_);
+      const fields_value = Object.values(fields_);
       const fields_name_str = fields_name.join(",");
       let fields_update = [];
       for (let i = 0; i < fields_name.length; i++) {
@@ -172,8 +212,15 @@ class DB {
       return this.executeSql(query, fields_value);
     }
     insert(){
-      const fields_name = Object.keys(this.module.fields);
-      const fields_value = Object.values(this.module.fields);
+      fields_ = Object.assign({}, this.module.fields);
+      if(fields_["entered"] == null){
+        fields_["entered"] = this.getDateTime();
+      }
+      if(fields_["updated"] == null){
+        delete fields_["updated"]
+      }
+      const fields_name = Object.keys(fields_);
+      const fields_value = Object.values(fields_);
       const fields_name_str = fields_name.join(",");
       let fields_holder = [];
       for (let i = 0; i < fields_name.length; i++) {
@@ -182,6 +229,7 @@ class DB {
       fields_holder = fields_holder.join(",");
       let output = {"success":false,"error":"",output:""};
       const query = 'INSERT INTO '+this.module.table_name+' ('+fields_name_str+') VALUES ('+fields_holder+')';
+      console.log(query);
       return this.executeSql(query, fields_value);
 
     }

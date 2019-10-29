@@ -16,12 +16,26 @@ class BackUp{
         this.lastActivity = "";
         this.email = "";
         //this.setClientInfo();
+        this.doClean=false;
+        try {
+          //this.setClientInfo();
+        } catch (error) {
+          console.log(error);
+        }
+        
     }
     setClientInfo(){
       try {
+        const stitchAppClient = Stitch.defaultAppClient;
+        const mongoClient = stitchAppClient.getServiceClient(
+          RemoteMongoClient.factory,
+          "mongodb-atlas"
+        );
         this.client = Stitch.defaultAppClient;
         this.lastActivity = this.client.auth.activeUserAuthInfo.lastAuthActivity;
         this.email = this.client.auth.activeUserAuthInfo.userProfile.data.email;  
+        console.log("this.email",this.email);
+        return true;
       } catch (error) {
         console.log(error)
       }
@@ -30,7 +44,6 @@ class BackUp{
     changeClient = async (eml,pass)=>{
       const app = Stitch.defaultAppClient;
       const credents = await this.LS.getCredentials();
-      console.log("credents",credents);
       const credential = new UserPasswordCredential(credents["email"],credents["password"]);
 
 
@@ -38,21 +51,27 @@ class BackUp{
       this.setClientInfo();
        
     }
-    _loadClient() {
-        Stitch.initializeDefaultAppClient("ba9al-xpsly").then(client => {
+    _loadClient = async () => {
+        const credents = await this.LS.getCredentials();
+        const credential = new UserPasswordCredential(credents["email"],credents["password"]);
+
+        return Stitch.initializeDefaultAppClient("ba9al-xpsly").then(client => {
           this.client = client ;
-          this.client.auth
-            .loginWithCredential(new AnonymousCredential())
+          return this.client.auth
+            .loginWithCredential(credential)
             .then(user => {
               
               this.currentUserId = user.id;
               this.setClientInfo();
-              console.log(`Successfully logged in as user ${user.id}` , this.lastActivity , this.email);
+              console.log(`Successfully logged in as user ${this.email}` , this.lastActivity );
+              return user;
+              
             })
             .catch(err => {
               console.log(`Failed to log in anonymously: ${err}`);
               this.currentUserId = undefined;
             });
+
         });
       }
     
@@ -68,6 +87,39 @@ class BackUp{
         this.photos_mdb = this.db.collection("photo");
         this.history_mdb = this.db.collection("history");
     }
+
+    clean = async(db)=>{
+      if(this.email ){
+        try {
+          return await db.deleteMany({});
+        } catch (error) {
+          console.log(error);
+        }
+      }
+      return false;
+    }
+    cleanAll = async()=>{
+      let output = [];
+      const out1 = await this.clean(this.products_mdb);
+      console.log(out1);
+      if(out1){
+        output["    products Cleaned!"]
+      }
+      console.log("    products cleaned");
+      const out2 = await this.clean(this.companies_mdb);
+      if(out2){
+        output["    companies Cleaned!"]
+      }
+      console.log("    companies cleaned");
+      const out3 = await this.clean(this.photos_mdb);
+      if(out3){
+        output["    photos Cleaned!"]
+      }
+      console.log("    photos cleaned");
+
+      return output;
+    }
+
     insertMany= async (db, data) => {
       //await db.deleteMany({});
       return db.insertMany(data);
@@ -126,7 +178,15 @@ class BackUp{
       let items_to_upload = [];
       for (let j = 0; j < items_local.length; j++) {
         const item_l = items_local[j];
-        if( !(item_l.fields.id in items_dict)){
+        const item_r = items_dict[item_l.fields.id];
+        const isLocalNewer = false;
+        try {
+          isLocalNewer = item_l.fields.updated && item_r.updated && item_l.fields.updated.getTime() > item_r.updated.getTime();
+        } catch (error) {
+          console.log(item_l.fields.updated+" : "+item_r.updated,error);
+        }
+        
+        if( !(item_l.fields.id in items_dict) || isLocalNewer){
           if(!isPhoto ||  item_l.fields.data != null){
             items_to_upload.push(item_l.fields);
           }
@@ -136,13 +196,18 @@ class BackUp{
       infos.push ("    Count to upload : "+items_to_upload.length);
       if(items_to_upload.length>0 && this.email ){
         const out_up = await this.insertMany(db, items_to_upload);
-        uploaded +=1;
+        uploaded = (out_up && out_up.insertedIds && out_up.insertedIds instanceof Object) ? Object.keys(out_up.insertedIds).length : 0;
       }
-      infos.push ("    Uploaded : "+items_to_upload.length);
+      infos.push ("    Uploaded : "+uploaded);
       return infos;
     }
     synchronize = async()=>{
       await this.initDb();
+      let info_C = [];
+      if(this.doClean){
+        info_C = await this.cleanAll();
+        info_C = ["Cleanning :",].concat(info_C);
+      }
       console.log("synch Products");
       let info = await this.synchronize_item(this.products_mdb, Product);
       info = ["Products :",].concat(info);
@@ -152,6 +217,7 @@ class BackUp{
       let info2 = await this.synchronize_item(this.photos_mdb, Photo,true);
       info2 = ["Photos :",].concat(info2);
 
+      info = info_C.concat(info);
       info = info.concat(info1);
       info = info.concat(info2);
       

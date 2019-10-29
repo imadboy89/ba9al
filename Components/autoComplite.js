@@ -1,7 +1,6 @@
 import React from 'react';
 import { View,TextInput, TouchableOpacity ,Text } from 'react-native';
-import Icon from 'react-native-vector-icons/FontAwesome';
-import {styles_floatBtn,styles_list,buttons_style,styles} from "../Styles/styles";
+import {styles_list} from "../Styles/styles";
 
 
 

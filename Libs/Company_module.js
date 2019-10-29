@@ -7,6 +7,7 @@ class Company {
         this.table_name = "companies";
         this.fields = {
             "id":null,"name":null,"desc":null,"img":null,"country":null,
+            "entered":null,"updated":null
         };
         if (fields){
             this.fields = fields;
@@ -22,6 +23,8 @@ class Company {
             "desc text",
             "img text",
             "country text",
+            "entered DATETIME DEFAULT CURRENT_TIMESTAMP",
+            "updated DATETIME DEFAULT NULL"
         ];
         this.fields_defenition_str = this.fields_defenition.join(",")
         this.DB = new DB(this);
@@ -53,7 +56,11 @@ class Company {
 
 
 
-    filterWithExtra(where={},limit){
+    filterWithExtra(where={},page, perPage){
+        let limit = "";
+        if(perPage){
+            limit = "limit "+(page*perPage)+", "+perPage;
+        }
         const where_build = this.DB.build_where(where);
         const fields_name = Object.keys(this.fields);
         let query = "select companies."+fields_name.join(",companies.")+
@@ -62,7 +69,7 @@ class Company {
               " FROM products "+
               " LEFT JOIN photo ON products.company=photo.id"+
               " LEFT JOIN companies ON products.company=companies.id "+where_build[0] + 
-              " GROUP BY 1 order by products_count desc";
+              " GROUP BY 1 order by products_count desc "+ " "+limit;
         return this.DB.executeSql(query, where_build[1]).then(output=>{
             let list = [];
             if ("error" in output ){
