@@ -147,12 +147,14 @@ class ScanScreen extends React.Component {
       return product;
     }
     plusProd(){
-      if(this.state.scanned.fields.id==null){
+      if( this.state.scanned && !this.state.scanned.is_hist && this.state.scanned.fields.id==null){
         alert(TXT.Please_fill_the_required_fields);
         return false;
       }
-      this.state.items_list.push(this.state.scanned);
-      this.setState({scanned:null});
+      if(this.state.scanned && !this.state.scanned.is_hist){
+        this.state.items_list.push(this.state.scanned);
+        this.setState({scanned:null});
+      }
     }
     Total(){
       this.plusProd();

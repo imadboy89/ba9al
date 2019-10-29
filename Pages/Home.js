@@ -374,7 +374,7 @@ class HomeScreen extends React.Component {
       );
   }
     getMonth(date){
-      return date.split(" ")[0].split("/").slice(0,2).join("/");
+      return date.split(" ")[0].split("-").slice(0,2).join("-");
     }
     render_history(){
       let lastMonth = "";

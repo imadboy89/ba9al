@@ -5,6 +5,7 @@ class translation{
         this.language = "en";
         this.translation = {
             
+            "Updated"             : {"ar":"تم تحديث"         ,"fr":"sauvegardé","dr":"tbdel f ",},
             "LastBackUp"             : {"ar":"النسخة الاحتياطية الاخيرة"         ,"fr":"Dernière sauvegarde","dr":"akhir backup",},
             "Yes"             : {"ar":"نعم"         ,"fr":"Oui","dr":"Ah",},
             "No"             : {"ar":"لا"         ,"fr":"Non","dr":"La",},

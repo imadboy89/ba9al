@@ -106,9 +106,7 @@ class ItemsList extends React.Component {
         <View style={styles.container} >
             <Text style={{color:"white",fontSize:18}}> {TXT.Items_count} : {this.props.items_list.length}</Text>
             <ScrollView 
-              refreshControl={
-                <RefreshControl refreshing={this.props.refreshing} onRefresh={this.props.onRefresh} />
-              }
+              refreshControl={ this.props.onRefresh ? <RefreshControl refreshing={this.props.refreshing} onRefresh={this.props.onRefresh} /> : null }
             >
                 <FlatList
                     data={this.props.items_list}

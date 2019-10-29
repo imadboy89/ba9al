@@ -10,13 +10,14 @@ class LocalStorage{
         this.imageQualities = {"Low":0.1,"Meduim":0.2,"High":0.4};
     }
     getDateTime(){
-        const date = new Date().getDate();
-        const month = new Date().getMonth() + 1;
-        const year = new Date().getFullYear();
-        const hours = new Date().getHours();
-        const min = new Date().getMinutes();
-        const sec = new Date().getSeconds();
-        return year + '/' + month + '/' + date + ' ' + hours + ':' + min;
+        const date_ob = new Date();
+        const date  = ("0" +date_ob.getDate()).slice(-2);
+        const month = ("0" + (date_ob.getMonth() + 1) ).slice(-2);
+        const year  = date_ob.getFullYear();
+        const hours = ("0" +date_ob.getHours()).slice(-2);
+        const min   = ("0" +date_ob.getMinutes()).slice(-2);
+        const sec   = ("0" +date_ob.getSeconds()).slice(-2);
+        return year + '-' + month + '-' + date + ' ' + hours + ':' + min;
       }
     getSettings = async key => {
         let settings = await AsyncStorage.getItem('settings');

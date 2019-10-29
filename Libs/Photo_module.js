@@ -6,6 +6,7 @@ class Photo {
         this.table_name = "photo";
         this.fields = {
             "id":null,"data":null,
+            "entered":null,"updated":null
         };
         if (fields){
             this.fields = fields;
@@ -18,6 +19,8 @@ class Photo {
         this.fields_defenition = [
             "id INTEGER PRIMARY KEY",
             "data BLOB",
+            "entered DATETIME DEFAULT CURRENT_TIMESTAMP",
+            "updated DATETIME DEFAULT NULL"
         ];
         this.fields_defenition_str = this.fields_defenition.join(",")
         this.DB = new DB(this);

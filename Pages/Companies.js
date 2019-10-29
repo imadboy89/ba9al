@@ -83,7 +83,7 @@ class CompaniesScreen extends React.Component {
     showProducts = (company) => {
         this.props.navigation.navigate('Products_',{company:company, });
     }
-    loadItems(){
+    loadItems = () => {
         if (this.state.items_list){
             this.setState({items_list:[]});
         }

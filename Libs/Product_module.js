@@ -65,12 +65,14 @@ class Product {
 
     }
     savePhoto(){
-        let photo_ob = new Photo();
-        photo_ob.fields.id = this.fields.id;
-        photo_ob.fields.data = this.photo_data;
-        return photo_ob.save().then(output=>{
-            console.log("saved PH");
-        });
+        if(this.photo_data){
+            let photo_ob = new Photo();
+            photo_ob.fields.id = this.fields.id;
+            photo_ob.fields.data = this.photo_data;
+            return photo_ob.save().then(output=>{
+                console.log("saved PH");
+            });
+        }
     }
     
     save = async (ignoreExtra=false)=>{
@@ -174,7 +176,6 @@ class Product {
                             const key = res_keys[i];
                             _module.fields[key] = res[key];
                         }
-                        console.log("_module.fields.entered",_module.fields.name,_module.fields.entered,_module.fields.updated);
                         list.push(_module);
                     });
                 }

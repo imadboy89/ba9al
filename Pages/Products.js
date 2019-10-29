@@ -113,8 +113,6 @@ class ProductsScreen extends React.Component {
         this.product.filterWithExtra(where,this.state.page,this.items_number_perpage).then(output=>{
         //this.product.filter({}).then(output=>{
             if(output["success"]){
-                console.log(output["list"][0].fields["entered"]);
-                console.log(output["list"][0].fields["updated"]);
               this.setState({items_list:output["list"],refreshing:false});
             }else{
               this.setState({sql_error:output["error"],refreshing:false});
@@ -253,7 +251,6 @@ class ProductsScreen extends React.Component {
                 ? { uri:this.state.product_edit.photo_data} 
                 : img_source;
         const img_length = this.state.product_edit && this.state.product_edit.photo_ob && this.state.product_edit.photo_ob.fields.data ? this.state.product_edit.photo_ob.fields.data.length : 0;
-        console.log("img_length",img_length);
         return (
             <Modal 
             animationType="slide"
@@ -334,6 +331,10 @@ class ProductsScreen extends React.Component {
                             value={this.state.product_edit.fields.id ? this.state.product_edit.fields.id+"": ""}
                         />
                         </View>
+                    </View>
+                    <View style={styles_list.row_view}>
+                        <Text style={styles_list.text_k}> {TXT.Updated}  :</Text>
+                        <Text style={styles_list.text_v}>{this.state.product_edit.fields.updated}</Text>
                     </View>
                 </View>
                 <View style={{flexDirection:"row",justifyContent:"center"}}>

@@ -90,12 +90,13 @@ class DB {
       console.log(await this.executeSql("select count(*) from products2;",values));
     }
     getDateTime(){
-      const date = new Date().getDate();
-      const month = new Date().getMonth() + 1;
-      const year = new Date().getFullYear();
-      const hours = new Date().getHours();
-      const min = new Date().getMinutes();
-      const sec = new Date().getSeconds();
+      const date_ob = new Date();
+      const date  = ("0" +date_ob.getDate()).slice(-2);
+      const month = ("0" + (date_ob.getMonth() + 1) ).slice(-2);
+      const year  = date_ob.getFullYear();
+      const hours = ("0" +date_ob.getHours()).slice(-2);
+      const min   = ("0" +date_ob.getMinutes()).slice(-2);
+      const sec   = ("0" +date_ob.getSeconds()).slice(-2);
       return year + '-' + month + '-' + date + ' ' + hours + ':' + min + ":" + sec;
     }
 
@@ -194,11 +195,10 @@ class DB {
     update(){
       fields_ = Object.assign({}, this.module.fields);
       if(fields_["entered"] == null){
-        delete fields_["entered"]
+        delete fields_["entered"];
       }
-      if(fields_["updated"] == null){
-        fields_["updated"] = this.getDateTime();
-      }
+      fields_["updated"] = this.getDateTime();
+
       const fields_name = Object.keys(fields_);
       const fields_value = Object.values(fields_);
       const fields_name_str = fields_name.join(",");
@@ -229,7 +229,7 @@ class DB {
       fields_holder = fields_holder.join(",");
       let output = {"success":false,"error":"",output:""};
       const query = 'INSERT INTO '+this.module.table_name+' ('+fields_name_str+') VALUES ('+fields_holder+')';
-      console.log(query);
+      
       return this.executeSql(query, fields_value);
 
     }

@@ -124,6 +124,10 @@ class BackUp{
       //await db.deleteMany({});
       return db.insertMany(data);
     }
+    updateOne= async (db, query, data) => {
+      //await db.deleteMany({});
+      return db.updateOne(query,data);
+    }
     getMDB(db,query={},options = {"projection": { "_id": 0 },}){
       return db.find(query, options).asArray().then(docs => {
               console.log("Found docs", docs.length)
@@ -144,12 +148,12 @@ class BackUp{
       const Item_ob_check = new Items_clss();
       let items_local = await Item_ob_check.filter();
       items_local = items_local["list"];
-      let items_dict = {};
+      let itemsR_dict = {};
       let saved=0;
       for (let i = 0; i < items.length; i++) {
         let item = items[i];
         delete item["_id"];
-        items_dict[item["id"]] = item;
+        itemsR_dict[item["id"]] = item;
         let outp = await Item_ob_check.doesExist({id:item.id});
         const photo_cond=false;
         try {
@@ -159,6 +163,7 @@ class BackUp{
         }
         if (!outp["doesExist"] || photo_cond ){
           if(photo_cond){
+            console.log(outp["doesExist"]);
             console.log("PH null "+item.id);
           }
           if(isPhoto){
@@ -176,19 +181,29 @@ class BackUp{
       }
       infos.push ("    Saved : "+saved);
       let items_to_upload = [];
+      let items_to_update = [];
       for (let j = 0; j < items_local.length; j++) {
         const item_l = items_local[j];
-        const item_r =  item_l.fields.id in items_dict ? items_dict[item_l.fields.id] : false;
+        const item_r =  item_l.fields.id in itemsR_dict ? itemsR_dict[item_l.fields.id] : false;
         const isLocalNewer = false;
         try {
-          isLocalNewer = item_r && item_l.fields.updated && item_r.updated && item_l.fields.updated.getTime() > item_r.updated.getTime();
+          if(item_r && item_l.fields.updated && item_l.fields.updated!=null ){
+            const date_l = item_l.fields.updated ? this.parseDate2Int(item_l.fields.updated) : 0;
+            const date_r = item_r.updated ? this.parseDate2Int(item_r.updated) : 0;
+            isLocalNewer = item_r.updated!=null ? date_l > date_r: true;
+          } 
+          
         } catch (error) {
           console.log(item_l.fields.updated+" : "+item_r.updated,error);
         }
         
-        if( !(item_l.fields.id in items_dict) || isLocalNewer){
+        if( !(item_l.fields.id in itemsR_dict) || isLocalNewer){
           if(!isPhoto ||  item_l.fields.data != null){
-            items_to_upload.push(item_l.fields);
+            if(isLocalNewer){
+              items_to_update.push(item_l.fields);
+            }else{
+              items_to_upload.push(item_l.fields);
+            }
           }
         }
       }
@@ -199,7 +214,26 @@ class BackUp{
         uploaded = (out_up && out_up.insertedIds && out_up.insertedIds instanceof Object) ? Object.keys(out_up.insertedIds).length : 0;
       }
       infos.push ("    Uploaded : "+uploaded);
+
+      updated = 0;
+      infos.push ("    Count to update : "+items_to_update.length);
+      if(items_to_update.length>0 && this.email ){
+        for (let i = 0; i < items_to_update.length; i++) {
+          const item = items_to_update[i];
+          const out_up = await this.updateOne(db,{"id":item.id} , item);
+          console.log(out_up);
+          updated +=1; 
+        }
+      }
+      infos.push ("    Updated : "+updated);
       return infos;
+    }
+    parseDate2Int(date_str){
+      try {
+        return parseInt(date_str.replace(/-|\s|:/g,""));
+      } catch (error) {
+        return 0;
+      }
     }
     synchronize = async()=>{
       await this.initDb();
