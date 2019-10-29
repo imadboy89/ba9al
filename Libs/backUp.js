@@ -178,10 +178,10 @@ class BackUp{
       let items_to_upload = [];
       for (let j = 0; j < items_local.length; j++) {
         const item_l = items_local[j];
-        const item_r = items_dict[item_l.fields.id];
+        const item_r =  item_l.fields.id in items_dict ? items_dict[item_l.fields.id] : false;
         const isLocalNewer = false;
         try {
-          isLocalNewer = item_l.fields.updated && item_r.updated && item_l.fields.updated.getTime() > item_r.updated.getTime();
+          isLocalNewer = item_r && item_l.fields.updated && item_r.updated && item_l.fields.updated.getTime() > item_r.updated.getTime();
         } catch (error) {
           console.log(item_l.fields.updated+" : "+item_r.updated,error);
         }
