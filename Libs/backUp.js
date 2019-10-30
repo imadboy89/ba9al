@@ -157,7 +157,7 @@ class BackUp{
       let items_local = await Item_ob_check.filter();
       items_local = items_local["list"];
       if(items_local.length==0){
-        Item_ob_check.drop_create_table();
+        Item_ob_check.DB.drop_create_table();
       }
       
       let itemsR_dict = {};
