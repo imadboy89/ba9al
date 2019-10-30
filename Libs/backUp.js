@@ -22,6 +22,7 @@ class BackUp{
         } catch (error) {
           console.log(error);
         }
+        this.admin = false;
         
     }
     setClientInfo(){
@@ -53,7 +54,13 @@ class BackUp{
     }
     _loadClient = async () => {
         const credents = await this.LS.getCredentials();
-        const credential = new UserPasswordCredential(credents["email"],credents["password"]);
+        let credential= new  AnonymousCredential();
+        let usingAnon = true;
+        if(credents && credents.email && credents.password){
+          credential = new UserPasswordCredential(credents["email"],credents["password"]);
+          usingAnon = false;
+        }
+
 
         return Stitch.initializeDefaultAppClient("ba9al-xpsly").then(client => {
           this.client = client ;
@@ -62,6 +69,7 @@ class BackUp{
             .then(user => {
               
               this.currentUserId = user.id;
+              this.admin = !usingAnon ;
               this.setClientInfo();
               console.log(`Successfully logged in as user ${this.email}` , this.lastActivity );
               return user;
@@ -130,10 +138,10 @@ class BackUp{
     }
     getMDB(db,query={},options = {"projection": { "_id": 0 },}){
       return db.find(query, options).asArray().then(docs => {
-              console.log("Found docs", docs.length)
               return docs;
           }).catch(err => {
-              console.error(err)
+              console.error(err);
+              alert(err);
           });
     }
     synchronize_item = async(db,Items_clss, isPhoto=false)=>{

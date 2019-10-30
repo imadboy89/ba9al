@@ -92,7 +92,8 @@ class HomeScreen extends React.Component {
         synchronize_btn_status:true,
         modalVisible_credentails : false,
         backup_doClear : false,
-        backup_email : ""
+        backup_email : "",
+        backup_is_admin : false,
       };
       this.LS = new LocalStorage();
       this.firstHistoryRender = true;
@@ -100,7 +101,7 @@ class HomeScreen extends React.Component {
       this.backup = new backUp();
       //this.backup.Company.DB.updateTables();
       this.backup._loadClient().then(output=>{
-        this.setState({backup_email:this.backup.email,backup_lastActivity:this.backup.lastActivity});
+        this.setState({backup_email:this.backup.email,backup_lastActivity:this.backup.lastActivity, backup_is_admin:this.backup.admin});
       });
       const didBlurSubscription = this.props.navigation.addListener(
         'didFocus',
@@ -298,7 +299,7 @@ class HomeScreen extends React.Component {
                 <Text style={styles_list.text_v}>{this.state.backup_lastActivity+""} </Text>
               </View>
               <View style={styles_list.row_view}>
-                  { this.state.backup_email!="" &&  
+                  { this.state.backup_is_admin &&  
                   <Switch
                   value={this.state.backup_doClear}
                   onValueChange={ (newValue)=> {

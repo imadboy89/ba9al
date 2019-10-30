@@ -107,9 +107,11 @@ class DB {
           [],
           (res,res1)=>{
             //console.log(res,res1);
+            //alert("success"+JSON.stringify(res1));
           },
           (res,res1)=>{
             //console.log(res,res1);
+            alert("error"+JSON.stringify(res1));
           }
           );
       });
@@ -272,6 +274,7 @@ class DB {
               },
               (Transaction,ResultSet)=>{
                 output["error"] = ResultSet;
+                //alert( "errorrr ", JSON.stringify(ResultSet) );
                 resolve(output);
               }
               );
