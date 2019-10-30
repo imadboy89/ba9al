@@ -108,15 +108,20 @@ class DB {
           (res,res1)=>{
             //console.log(res,res1);
             //alert("success"+JSON.stringify(res1));
+            return res1;
           },
           (res,res1)=>{
             //console.log(res,res1);
             alert("error"+JSON.stringify(res1));
+            return res1;
           }
           );
       });
     }
-
+    drop_create_table = async ()=>{
+      out = await this.executeSql("DROP TABLE "+this.module.table_name,[]);
+      return this.create_table();
+    }
     save(){
         if (this.module.fields.id==null){
             return this.insert();

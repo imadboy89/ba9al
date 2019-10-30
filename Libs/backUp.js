@@ -156,6 +156,10 @@ class BackUp{
       const Item_ob_check = new Items_clss();
       let items_local = await Item_ob_check.filter();
       items_local = items_local["list"];
+      if(items_local.length==0){
+        Item_ob_check.drop_create_table();
+      }
+      
       let itemsR_dict = {};
       let saved=0;
       for (let i = 0; i < items.length; i++) {
