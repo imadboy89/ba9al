@@ -22,7 +22,7 @@ class AutoComplite extends React.Component {
             const option_value = this.state.options_pool[option_key];
             option_key = Object.keys(option_value)[0];
             option_value = option_value[option_key];
-            if(this.state.q.length>=2 && option_value.startsWith(this.state.q) ){
+            if(this.state.q.length>=2 && option_value.toLowerCase().startsWith(this.state.q.toLowerCase()) ){
                 let option_dict = {};
                 option_dict[option_key] = option_value ;
                 this.state.options.push(option_dict);

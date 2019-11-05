@@ -45,6 +45,7 @@ class ScanScreen extends React.Component {
               this.props.navigation.setParams({title:TXT.Scan});
             }
           });
+          this.loadLastP();
         }
       );
     }
@@ -62,21 +63,25 @@ class ScanScreen extends React.Component {
       });
       this.setState({});
     }
+    loadLastP = async()=>{
+      this.state.items_list = [];
+      let lastPurchaseList = await this.LS.getLastPurchaseList();
+      //console.log(lastPurchaseList);
+      if(lastPurchaseList && "list" in lastPurchaseList){
+        this.setState({hist_label:lastPurchaseList["title"]});
+        //lastPurchaseList["list"].forEach(prodValues => {
 
-    componentDidMount(){
-      this.LS.getLastPurchaseList().then(lastPurchaseList=>{
-        //console.log(lastPurchaseList);
-        if(lastPurchaseList && "list" in lastPurchaseList){
-          this.setState({hist_label:lastPurchaseList["title"]});
-          lastPurchaseList["list"].forEach(prodValues => {
-            let prod_h = new Product(prodValues);
-            prod_h.is_hist = true;
-            this.state.items_list.push(prod_h);
-          });
-          this.Total();
+        //});
+        for (let i = 0; i < lastPurchaseList["list"].length; i++) {
+          const prodValues = lastPurchaseList["list"][i];
+          let prod_h = new Product(prodValues);
+          prod_h.is_hist = true;
+          prod_h.quantity = prodValues.quantity;
+          await prod_h.getPhoto();
+          this.state.items_list.push(prod_h);
         }
-
-      });
+        this.Total();
+      }
       this.props.navigation.setParams({
           TXT  : TXT,
           disable:false,
@@ -85,6 +90,9 @@ class ScanScreen extends React.Component {
           saveLS : ()=>{this.saveLS()} ,
           showSaveBtn : false,
        })
+    }
+    componentDidMount(){
+      
     }
   static navigationOptions =  ({ navigation  }) => ({
       title : navigation.getParam("title"),

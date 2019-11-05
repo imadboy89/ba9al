@@ -39,6 +39,7 @@ class ProductsScreen extends React.Component {
           });
           const company = this.props["navigation"].getParam("company");
           if(company){
+              this.state.page=0;
               this.loadItems();
           }else{
             this.props.navigation.setParams({company:null});
@@ -131,7 +132,7 @@ class ProductsScreen extends React.Component {
         this.state.product_edit.fields.desc = isNoBarCode ? "NoBarCode" : null;
         this.state.product_edit.get({"id":code}).then((output)=>{
             if (output["res"]==false){
-                this.state.product_edit.fields.company = this.state.product_edit.fields.id.slice(0,7);
+                this.state.product_edit.fields.company = company;
                 this.setState({
                     isVisible_modal_scan : false,
                     isVisible_modal_add : true,
@@ -191,9 +192,27 @@ class ProductsScreen extends React.Component {
         
     }
     delete(){
-        this.state.product_edit.delete();
-        this.setState({isVisible_modal_add:false});
-        this.loadItems();
+
+        Alert.alert(
+            TXT.Are_you_sure_you_want_to_delete,
+            TXT.Are_you_sure_you_want_to_delete + `: \n  [`+this.state.product_edit.fields.name+`] `,
+            [
+
+              {
+                text: TXT.No, 
+                onPress: () => {},
+                style: 'cancel',
+              },
+              {
+                text: TXT.Yes, 
+                onPress: () => {
+                    this.state.product_edit.delete();
+                    this.setState({isVisible_modal_add:false});
+                    this.loadItems();
+                },
+              },
+            ],
+          );
     }
 
     setItemParent = (item) => {
@@ -259,7 +278,7 @@ class ProductsScreen extends React.Component {
             onRequestClose={() => { this.setState({ isVisible_modal_add:false,}); } }
           >
             <View style={{flex:.5,backgroundColor:"#2c3e5066"}}></View>
-            <View style={{height:450,width:"99%",backgroundColor:"#7f8c8d"}}>
+            <View style={{height:500,width:"99%",backgroundColor:"#7f8c8d"}}>
                 <View style={styles_list.container}>
                 <Text>{img_length}</Text>
                     <TouchableHighlight onPress={()=>{
@@ -336,6 +355,10 @@ class ProductsScreen extends React.Component {
                         <Text style={styles_list.text_k}> {TXT.Updated}  :</Text>
                         <Text style={styles_list.text_v}>{this.state.product_edit.fields.updated}</Text>
                     </View>
+                    <View style={styles_list.row_view}>
+                        <Text style={styles_list.text_k}> {TXT.Entered}  :</Text>
+                        <Text style={styles_list.text_v}>{this.state.product_edit.fields.entered}</Text>
+                    </View>
                 </View>
                 <View style={{flexDirection:"row",justifyContent:"center"}}>
                     <Button
@@ -389,6 +412,7 @@ class ProductsScreen extends React.Component {
                 previous_disabled={this.state.page<=0 || this.state.items_list==false || this.state.items_list.length==0}
                 next_disabled = {this.state.items_list.length < this.items_number_perpage}
                 next_prious_handler={this.next_previous_handler}
+                page={this.state.page}
             />   
             {this.render_modal()}
             {this.render_modal_BarcodeScanner()}

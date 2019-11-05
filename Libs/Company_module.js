@@ -34,6 +34,7 @@ class Company {
         return this.DB.doesExist(where);
     }
     save(){
+        this.fields.country = (""+this.fields.id ).slice(0,3);
         this.fields.country = this.fields.country>0 ? getCountry(this.fields.country) : this.fields.country;
         return this.doesExist({"id":this.fields.id}).then((res)=>{
             if (res["doesExist"]==false){

@@ -1,5 +1,5 @@
 import React from 'react';
-import { Switch, Text, View, Button, TouchableOpacity,Picker,ScrollView,Modal,TextInput, Alert } from 'react-native';
+import { Switch, Text, View, Button, TouchableOpacity,Picker,ScrollView,Modal,TextInput, Alert,ActivityIndicator } from 'react-native';
 import {header_style,styles_list,styles_itemRow,styles} from "../Styles/styles";
 import Translation from "../Libs/Translation";
 import LocalStorage from "../Libs/LocalStorage";
@@ -58,7 +58,7 @@ class Credentials extends React.Component{
                   title={TXT.Save+""}
                   color="green"
                   onPress={()=>{
-                    this.saveCredentials();
+                    this.props.saveCredents(this.state.email,this.state.password);
                   }
                   }
               ></Button>
@@ -94,6 +94,7 @@ class HomeScreen extends React.Component {
         backup_doClear : false,
         backup_email : "",
         backup_is_admin : false,
+        synchLog : []
       };
       this.LS = new LocalStorage();
       this.firstHistoryRender = true;
@@ -196,8 +197,64 @@ class HomeScreen extends React.Component {
           );
       })
     }
+    appendLog = (msg)=>{
+      if(!this.state.synchLog){
+        this.state.synchLog = [];
+      }
+      console.log(msg);
+      this.state.synchLog.push(msg);
+      this.setState({});
+    }
+    getLoadingModal(){
+      if(!this.state.synchLog_modal ) return null;
+      const log = !this.state.synchLog.map ? null : this.state.synchLog.map((k,v)=>{
+        return (
+          <Text key={v} style={{color:"#bdc3c7",textAlign:"left",width:"90%",}}>{k}</Text>
+        );
+      });
+      return (
+        <Modal 
+        animationType="slide"
+        transparent={true}
+        visible={this.state.synchLog_modal}
+        onRequestClose={() => { this.setState({ synchLog_modal:false,}); } }
+        >
+          <View style={{flex:1,width:"100%",justifyContent:"center",backgroundColor:"black"}}>
+            {log}
+            { !this.state.synchronize_btn_status && 
+            <ActivityIndicator size="large" color="#00ff00" />}
+            { this.state.synchronize_btn_status &&
+            <Text style={{color:"#bdc3c7",textAlign:"center",width:"90%",fontSize:23}}>DONE!</Text>
+            }
+            <Button
+              title="close"
+              onPress={()=>{ this.setState({ synchLog_modal:false,}); }}
+            ></Button>
+          </View>
+          <View style={{flex:.1,backgroundColor:"#00000099"}}></View>
+        </Modal>
+      );
+    }
+    closeModal_credents =()=>{
+      this.setState({modalVisible_credentails:false});
+
+    }
+    saveCredents =(email,password)=>{
+      this.LS.setCredentials(email,password).then(()=>{
+        this.backup.changeClient().then(()=>{
+          this.closeModal_credents();
+          console.log("this.backup.email",this.backup.email , "_"+this.backup.admin+"_");
+          this.setState({
+            synchronize_btn_status:true,
+            backup_lastActivity:this.backup.lastActivity,
+            backup_email:this.backup.email,
+            backup_is_admin:this.backup.admin,
+          });
+        });
+        
+      });
+    }
     render_modal_credentials(){
-      Credentials
       return (          
           <Modal 
             animationType="slide"
@@ -210,10 +267,8 @@ class HomeScreen extends React.Component {
           <View style={{flex:.4,backgroundColor:"#2c3e5066"}}></View>
           <View style={{height:400,width:"100%",backgroundColor:"#646c78"}}>
             <Credentials
-              closeModal={ ()=>{
-                this.setState({modalVisible_credentails:false});
-                this.backup.changeClient();
-              }}
+              closeModal={this.closeModal_credents}
+              saveCredents={this.saveCredents}
             >
 
             </Credentials>
@@ -340,10 +395,8 @@ class HomeScreen extends React.Component {
                     title = {TXT.Sych_Now}
                     disabled={!this.state.synchronize_btn_status}
                     onPress={ ()=> {
-                      this.setState({synchronize_btn_status:false});
-                      this.backup.synchronize().then(out=>{
-                        console.log(out);
-                        alert(out.join("\n"));
+                      this.setState({synchronize_btn_status:false,synchLog_modal:true});
+                      this.backup.synchronize(this.appendLog).then(out=>{
                         this.setState({
                           synchronize_btn_status:true,
                           backup_lastActivity:this.backup.lastActivity,
@@ -359,6 +412,15 @@ class HomeScreen extends React.Component {
                     color="black"
                     onPress={ ()=> {
                       this.setState({modalVisible_credentails:true})
+                    }}
+                />
+                <Button 
+                    style={[styles_list.small_elemnt,{marginLeft:10}]}
+                    title = "Log"
+                    disabled={this.state.synchLog_modal}
+                    color="green"
+                    onPress={ ()=> {
+                      this.setState({synchLog_modal:true})
                     }}
                 />
                 
@@ -482,6 +544,7 @@ class HomeScreen extends React.Component {
               {this.render_history()}
               {this.render_modal_Settings()}
               {this.render_modal_credentials()}
+              {this.getLoadingModal()}
           </View>
         );
       }

@@ -26,6 +26,7 @@ class CompaniesScreen extends React.Component {
       };
       this.items_number_perpage = 20;
       this.company = new Company();
+      
       new Translation().getTranslation().then(tr=>{
         TXT = tr;
         this.setState({});
@@ -98,7 +99,7 @@ class CompaniesScreen extends React.Component {
     }
     setCode = (type, code, country,company,product) => {
         this.props.navigation.setParams({disable:false});
-        this.state.company_edit.fields.id= code.slice(0,7);
+        this.state.company_edit.fields.id= company;
 
         this.state.company_edit.get({"code":country+""+company}).then((output)=>{
             if (output["res"]==false){
@@ -160,6 +161,7 @@ class CompaniesScreen extends React.Component {
         this.setState({isVisible_modal_add:false});
     }
     delete(){
+        //this.company.DB.empty();
         this.state.company_edit.delete();
         this.setState({isVisible_modal_add:false});
         this.loadItems();
@@ -297,6 +299,7 @@ class CompaniesScreen extends React.Component {
                 previous_disabled={this.state.page<=0 || this.state.items_list==false || this.state.items_list.length==0}
                 next_disabled = {this.state.items_list.length < this.items_number_perpage}
                 next_prious_handler={this.next_previous_handler}
+                page={this.state.page}
                 />   
             {this.render_modal()}
             {this.render_modal_BarcodeScanner()}

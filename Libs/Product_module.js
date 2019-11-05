@@ -111,7 +111,7 @@ class Product {
     }
 
     getPhoto(){
-        if(this.photo_ob){
+        if(this.photo_ob && this.photo_ob.fields && this.photo_ob.fields.data ){
             return new Promise(resolve=>{
                 resolve(this.photo_ob);
             });
@@ -176,6 +176,14 @@ class Product {
                             const key = res_keys[i];
                             _module.fields[key] = res[key];
                         }
+                        //regenrerate companies:
+                        /*
+                        console.log((_module.fields.id+"").length , _module.fields.id  , (_module.fields.id+"").slice(0,8));
+                        if((_module.fields.id+"").length >=8 ){
+                            _module.company_ob.fields.id  = _module.fields.company;
+                            _module.company_ob.fields.name = _module.fields.company+"";
+                            _module.company_ob.save();
+                        }*/
                         list.push(_module);
                     });
                 }

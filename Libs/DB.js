@@ -24,7 +24,7 @@ class DB {
             this.fields_holder.push("?");
         }
         this.fields_holder = this.fields_holder.join(",");
-
+        this.BackedUp = false; 
         this.db = SQLite.openDatabase(this.database_name, this.database_version, this.database_displayname, this.database_size);
         this.create_table();
         /*
@@ -88,6 +88,9 @@ class DB {
         await this.executeSql("INSERT INTO products2 values(?,?,?,?,?,?);",values);
       }
       console.log(await this.executeSql("select count(*) from products2;",values));
+    }
+    empty(){
+      return this.executeSql("DELETE FROM "+this.module.table_name,[]);
     }
     getDateTime(){
       const date_ob = new Date();
@@ -205,7 +208,9 @@ class DB {
       if(fields_["entered"] == null){
         delete fields_["entered"];
       }
-      fields_["updated"] = this.getDateTime();
+      if(!this.BackedUp){
+        fields_["updated"] = this.getDateTime();
+      }
 
       const fields_name = Object.keys(fields_);
       const fields_value = Object.values(fields_);

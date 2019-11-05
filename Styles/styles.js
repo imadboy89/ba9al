@@ -92,7 +92,7 @@ const styles_list = StyleSheet.create({
         marginLeft:10
     },
     TextInput_fullWidth:{
-        width: "100%", 
+        width: "95%", 
         borderColor: 'gray', 
         backgroundColor:"#34495e",
         color:"white",

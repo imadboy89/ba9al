@@ -45,11 +45,18 @@ class BackUp{
     changeClient = async (eml,pass)=>{
       const app = Stitch.defaultAppClient;
       const credents = await this.LS.getCredentials();
-      const credential = new UserPasswordCredential(credents["email"],credents["password"]);
-
-
-      this.client = await app.auth.loginWithCredential(credential);
-      this.setClientInfo();
+      this.admin = true ;
+      try {
+        const credential = new UserPasswordCredential(credents["email"],credents["password"]);
+        this.client = await app.auth.loginWithCredential(credential);
+        return this.setClientInfo(); 
+      } catch (error) {
+        alert(error);
+        let credential= new  AnonymousCredential();
+        this.client = await app.auth.loginWithCredential(credential);
+        this.admin = false ;
+        return false;
+      }
        
     }
     _loadClient = async () => {
@@ -108,22 +115,19 @@ class BackUp{
     }
     cleanAll = async()=>{
       let output = [];
+      
       const out1 = await this.clean(this.products_mdb);
-      console.log(out1);
-      if(out1){
-        output["    products Cleaned!"]
-      }
-      console.log("    products cleaned");
+      let deleted = out1 && "deletedCount" in out1 ? out1["deletedCount"] : 0 ;
+      this.appendLog("    Products cleaned ["+deleted+"]");
+      
       const out2 = await this.clean(this.companies_mdb);
-      if(out2){
-        output["    companies Cleaned!"]
-      }
-      console.log("    companies cleaned");
+      deleted = out2 && "deletedCount" in out2 ? out2["deletedCount"] : 0 ;
+      this.appendLog("    Companies cleaned ["+deleted+"]");
+
+      
       const out3 = await this.clean(this.photos_mdb);
-      if(out3){
-        output["    photos Cleaned!"]
-      }
-      console.log("    photos cleaned");
+      deleted = out3 && "deletedCount" in out3 ? out3["deletedCount"] : 0 ;
+      this.appendLog("    Photos cleaned ["+deleted+"]");
 
       return output;
     }
@@ -152,16 +156,17 @@ class BackUp{
       }else{
         items = await this.getMDB(db);
       }
-      infos.push ("    Found : "+items.length);
+      this.appendLog ("    Found : "+items.length);
       const Item_ob_check = new Items_clss();
       let items_local = await Item_ob_check.filter();
       items_local = items_local["list"];
-      if(items_local.length==0){
+      if(items_local.length==0){ // drop an recteate table if empty
         Item_ob_check.DB.drop_create_table();
       }
       
       let itemsR_dict = {};
       let saved=0;
+      let local_updated=0;
       for (let i = 0; i < items.length; i++) {
         let item = items[i];
         delete item["_id"];
@@ -173,25 +178,37 @@ class BackUp{
         } catch (error) {
           console.log(outp,item.id);
         }
-        if (!outp["doesExist"] || photo_cond ){
-          if(photo_cond){
-            console.log(outp["doesExist"]);
-            console.log("PH null "+item.id);
-          }
+        isRemoteNewer = false;
+        const item_ll = outp["doesExist"];
+        if(item.updated ){
+          const date_l = item_ll.updated ? this.parseDate2Int(item_ll.updated) : 0;
+          const date_r = item.updated ? this.parseDate2Int(item.updated) : 0;
+          isRemoteNewer = item_ll.updated!=null ? date_r > date_l : true;
+        } 
+        if (!outp["doesExist"] || photo_cond || isRemoteNewer ){
+
           if(isPhoto){
             item = await db.findOne({"id":item.id},{"projection": { "_id": 0 }});
-            console.log(item.id +" : ",item.data==null);
+            //console.log(item.id +" : ",item.data==null);
             if(item.data==null){
               continue;
             }
           }
           const Item_ob_ = new Items_clss(item);
-          Item_ob_.save(true);
-          console.log("saving : "+item["id"]);
-          saved+=1;
+          Item_ob_.DB.BackedUp = true;
+          const savedUpdated = await Item_ob_.save(true);
+          const  status = isRemoteNewer ? "updating"  : "saving";
+          //console.log(status+" : ",savedUpdated);
+          if(item_ll){
+            local_updated+=1;
+          }else{
+            saved+=1;
+          }
+          
         }
       }
-      infos.push ("    Saved : "+saved);
+      this.appendLog ("    Saved : "+saved);
+      this.appendLog ("    LUpdated : "+local_updated);
       let items_to_upload = [];
       let items_to_update = [];
       for (let j = 0; j < items_local.length; j++) {
@@ -220,25 +237,24 @@ class BackUp{
         }
       }
       uploaded = 0;
-      infos.push ("    Count to upload : "+items_to_upload.length);
+      this.appendLog ("    Count to upload : "+items_to_upload.length);
       if(items_to_upload.length>0 && this.email ){
         const out_up = await this.insertMany(db, items_to_upload);
         uploaded = (out_up && out_up.insertedIds && out_up.insertedIds instanceof Object) ? Object.keys(out_up.insertedIds).length : 0;
       }
-      infos.push ("    Uploaded : "+uploaded);
+      this.appendLog ("    Uploaded : "+uploaded);
 
       updated = 0;
-      infos.push ("    Count to update : "+items_to_update.length);
+      this.appendLog ("    Count to rUpdate : "+items_to_update.length);
       if(items_to_update.length>0 && this.email ){
         for (let i = 0; i < items_to_update.length; i++) {
           const item = items_to_update[i];
           const out_up = await this.updateOne(db,{"id":item.id} , item);
-          console.log(out_up);
           updated +=1; 
         }
       }
-      infos.push ("    Updated : "+updated);
-      return infos;
+      this.appendLog ("    rUpdated : "+updated);
+      return true;
     }
     parseDate2Int(date_str){
       try {
@@ -247,28 +263,24 @@ class BackUp{
         return 0;
       }
     }
-    synchronize = async()=>{
+    synchronize = async(appendLog)=>{
+      this.appendLog = appendLog ;
       await this.initDb();
-      let info_C = [];
+      
       if(this.doClean){
-        info_C = await this.cleanAll();
-        info_C = ["Cleanning :",].concat(info_C);
+        await this.cleanAll();
       }
-      console.log("synch Products");
-      let info = await this.synchronize_item(this.products_mdb, Product);
-      info = ["Products :",].concat(info);
-      console.log("synch Companies");
-      let info1 = await this.synchronize_item(this.companies_mdb, Company);
-      info1 = ["Companies :",].concat(info1);
-      let info2 = await this.synchronize_item(this.photos_mdb, Photo,true);
-      info2 = ["Photos :",].concat(info2);
-
-      info = info_C.concat(info);
-      info = info.concat(info1);
-      info = info.concat(info2);
+      this.appendLog("------synch Products------");
+      await this.synchronize_item(this.products_mdb, Product);
+      
+      this.appendLog("------synch Companies------");
+      await this.synchronize_item(this.companies_mdb, Company);
+      
+      this.appendLog("------synch Photos------");
+      await this.synchronize_item(this.photos_mdb, Photo,true);
       
       //await this.synchronize_item(this.history_mdb, Product);
-      return info;
+      return true;
     }
 
     getBackupMail = async (receiver)=>{

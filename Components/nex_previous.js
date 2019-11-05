@@ -19,16 +19,16 @@ class Next_previous extends React.Component {
                     size={30}
                     name="chevron-left" 
                     disabled={this.props.previous_disabled} 
-                    color={ this.props.previous_disabled ?"white":"#1abc9c" }
+                    color={ this.props.previous_disabled ?"#f9f9f973":"#1abc9c" }
                     onPress={()=>this.props.next_prious_handler(-1)}
     
                 />
-                    <Text style={{width:30,color:"yellow",textAlign:"center",fontSize:14}}>{this.state.page}</Text>
+                <Text style={{width:30,color:"yellow",textAlign:"center",fontSize:18}}>{this.props.page}</Text>
                 <Icon 
                     size={30}
                     name="chevron-right" 
                     disabled={this.props.next_disabled} 
-                    color={ this.props.next_disabled ?"white":"#1abc9c" }
+                    color={ this.props.next_disabled ?"#f9f9f973":"#1abc9c" }
                     onPress={()=>this.props.next_prious_handler(1)}
                 />
             </View>
