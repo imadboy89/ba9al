@@ -328,34 +328,56 @@ class HomeScreen extends React.Component {
               </View>
               <View style={styles_list.row_view}>
                 <Text style={styles_list.text_k}> {TXT.AutoFocus} : </Text>
-                <Switch 
-                  style={styles_list.small_elemnt}
-                  value = {this.state.autoFocus}
-                  onValueChange={ (newValue)=> {
-                      this.saveConfig("autoFocus", newValue)
-                  }}
-              />
+                <View style={styles_list.text_v} >
+                  <Switch 
+                    style={{flex:1, alignSelf:"flex-start"}}
+                    value = {this.state.autoFocus}
+                    onValueChange={ (newValue)=> {
+                        this.saveConfig("autoFocus", newValue)
+                    }}
+                />
+                </View>
               </View>
               <View style={styles_list.row_view}>
                 <Text style={styles_list.text_k}> {TXT.Clear_history} : </Text>
-                <Button 
-                  style={[styles_list.small_elemnt,{marginLeft:10}]}
-                  title = {TXT.Clear_cache}
-                  disabled={!this.state.history_list || this.state.history_list.length==0}
-                  onPress={ ()=> {
-                    this.LS.clearHistory().then(()=>{
-                      this.loadHistory();
-                    });
-                  }}
-              />
+                <View style={styles_list.text_v} >
+                  <Button 
+                    style={{marginLeft:10}}
+                    title = {TXT.Clear_cache}
+                    disabled={!this.state.history_list || this.state.history_list.length==0}
+                    onPress={ ()=> {
+                      this.LS.clearHistory().then(()=>{
+                        this.loadHistory();
+                      });
+                    }}
+                />
+              </View>
+              </View>
+              <View style={styles_list.row_view}>
+                <Text style={styles_list.text_k}> {TXT.Clear_database} : </Text>
+                <View style={styles_list.text_v} >
+                  <Button 
+                    style={{marginLeft:10,marginRight:30}}
+                    title = {TXT.Clear}
+                    disabled={false}
+                    onPress={ ()=> {
+                      this.backUp.Product.DB.empty();
+                      this.backUp.Company.DB.empty();
+                      this.backUp.Photo.DB.empty();
+                    }}
+                />
+                </View>
               </View>
               <View style={styles_list.row_view}>
                 <Text style={styles_list.text_k}> {TXT.LastBackUp} : </Text>
                 <Text style={styles_list.text_v}>{this.state.backup_lastActivity+""} </Text>
               </View>
+              { this.state.backup_is_admin &&  
               <View style={styles_list.row_view}>
-                  { this.state.backup_is_admin &&  
+                <Text style={styles_list.text_k}> {TXT.Clear_remote_Backup} : </Text>
+                <View style={styles_list.text_v} >
                   <Switch
+                  style={{flex:1, alignSelf:"flex-start"}}
                   value={this.state.backup_doClear}
                   onValueChange={ (newValue)=> {
                     if(newValue){
@@ -389,13 +411,16 @@ class HomeScreen extends React.Component {
 
                   }}
                   />
-                  }
+                </View>
+              </View>
+              }
+              <View style={styles_list.row_view}>
                   <Button 
                     style={[styles_list.small_elemnt,{marginLeft:10}]}
                     title = {TXT.Sych_Now}
                     disabled={!this.state.synchronize_btn_status}
                     onPress={ ()=> {
-                      this.setState({synchronize_btn_status:false,synchLog_modal:true});
+                      this.setState({synchronize_btn_status:false,synchLog_modal:true,synchLog:[]});
                       this.backup.synchronize(this.appendLog).then(out=>{
                         this.setState({
                           synchronize_btn_status:true,
@@ -405,6 +430,7 @@ class HomeScreen extends React.Component {
                       });
                     }}
                 />
+                <View style={{width:10}}></View>
                 <Button 
                     style={[styles_list.small_elemnt,{marginLeft:10}]}
                     title = {TXT.Credents}
@@ -414,6 +440,7 @@ class HomeScreen extends React.Component {
                       this.setState({modalVisible_credentails:true})
                     }}
                 />
+                <View style={{width:10}}></View>
                 <Button 
                     style={[styles_list.small_elemnt,{marginLeft:10}]}
                     title = "Log"

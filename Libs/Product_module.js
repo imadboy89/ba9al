@@ -145,6 +145,7 @@ class Product {
         if(perPage){
             limit = "limit "+(page*perPage)+", "+perPage;
         }
+        limit = "";
         console.log(limit);
         const where_build = this.DB.build_where(where);
         const fields_name = Object.keys(this.fields);
@@ -180,10 +181,13 @@ class Product {
                         /*
                         console.log((_module.fields.id+"").length , _module.fields.id  , (_module.fields.id+"").slice(0,8));
                         if((_module.fields.id+"").length >=8 ){
+                            _module.fields.company = (_module.fields.id+"").slice(0,8) ;
+                            _module.save();
                             _module.company_ob.fields.id  = _module.fields.company;
                             _module.company_ob.fields.name = _module.fields.company+"";
                             _module.company_ob.save();
-                        }*/
+                        }
+                        */
                         list.push(_module);
                     });
                 }

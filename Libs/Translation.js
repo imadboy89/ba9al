@@ -33,6 +33,10 @@ class translation{
             "Last_cleared_history"        : {"ar":"تاريخ آخر مسح"              ,"fr":"Dernier historique effacé","dr":"akhir mara tmsa7",},
             "Clear_history"        : {"ar":"مسح التاريخ"              ,"fr":"Vider historique","dr":"msa7 sijil",},
             "Clear_cache"      : {"ar":"مسح ذاكرة التخزين المؤقت"              ,"fr":"Vider Cache","dr":"msa7 lcache",},
+            "Clear_database"      : {"ar":"مسح قاعدة البيانات"              ,"fr":"Vider base donnee","dr":"msa7 base donnee",},
+            "Clear"      : {"ar":"مسح"              ,"fr":"Vider","dr":"Msa7",},
+            "Clear_remote_Backup"      : {"ar":"مسح النسخ الاحتياطي عن بعد"              ,"fr":"Vider Backup a distance.","dr":"Msa7 backup",},
+            
             "Name"                       : {"ar":"اسم"              ,"fr":"Nom","dr":"Smiya",},
             "Snap"                       : {"ar":"Snap"              ,"fr":"Snap","dr":"Snap",},
             "Image_quality"              : {"ar":"جودة الصورة"        ,"fr":"Quality d'image","dr":"qualiti d photo",},
