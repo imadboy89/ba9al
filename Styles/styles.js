@@ -124,6 +124,20 @@ const header_style = StyleSheet.create({
  
  });
  const buttons_style = StyleSheet.create({
+    container_row : {
+        //flex:1,
+        flexDirection:"row",
+        
+        justifyContent:"center" , 
+        height:50, 
+        width:"100%"
+    },
+    view_btn_row : {
+        flex:1
+    },
+    vbtn_row : {
+        flex:1
+    },
     modalAdd : {
         fontSize:11,
         color:"white",

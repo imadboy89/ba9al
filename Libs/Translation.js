@@ -11,6 +11,8 @@ class translation{
             "LastBackUp"             : {"ar":"النسخة الاحتياطية الاخيرة"         ,"fr":"Dernière sauvegarde","dr":"akhir backup",},
             "Yes"             : {"ar":"نعم"         ,"fr":"Oui","dr":"Ah",},
             "No"             : {"ar":"لا"         ,"fr":"Non","dr":"La",},
+            "Sign_in"             : {"ar":"تسجيل الدخول"         ,"fr":"Se connecter","dr":"Tconnecta",},
+            "Sign_up"             : {"ar":"اشترك"         ,"fr":"S'inscrire","dr":"Tsejel",},
             "Please_fill_the_required_fields"             : {"ar":"يرجى تعبئة جميع الحقول المطلوبة"         ,"fr":"Veuillez remplir les champs requis","dr":"kteb ma3lomat kamla",},
             "Are_you_sure_you_want_to_clear_backup"             : {"ar":"هل أنت متأكد أنك تريد مسح النسخ الاحتياطي؟"         ,"fr":"Êtes-vous sûr de vouloir effacer la sauvegarde?","dr":"MtZaked baghi tmsa7 backup ?",},
             "Are_you_sure_you_want_to_delete"             : {"ar":"هل أنت متأكد أنك تريد المسح ؟"         ,"fr":"Êtes-vous sûr de vouloir effacer ?","dr":"MtZaked baghi tmsa7 ?",},

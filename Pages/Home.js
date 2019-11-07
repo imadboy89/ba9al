@@ -1,6 +1,6 @@
 import React from 'react';
 import { Switch, Text, View, Button, TouchableOpacity,Picker,ScrollView,Modal,TextInput, Alert,ActivityIndicator } from 'react-native';
-import {header_style,styles_list,styles_itemRow,styles} from "../Styles/styles";
+import {buttons_style,styles_list,styles_itemRow,styles} from "../Styles/styles";
 import Translation from "../Libs/Translation";
 import LocalStorage from "../Libs/LocalStorage";
 import HeaderButton from "../Components/HeaderButton";
@@ -25,9 +25,8 @@ class Credentials extends React.Component{
       this.props.closeModal();
     }
     render(){
-
       return (
-        <View style={{height:400,width:"100%",backgroundColor:"#646c78"}}>
+        <View style={{height:"100%",width:"100%",backgroundColor:"#646c78"}}>
           <View style={styles_list.row_view}>
           <Text style={styles_list.text_k}> {TXT.Email} : </Text>
           <TextInput
@@ -53,23 +52,43 @@ class Credentials extends React.Component{
               value={this.state.password}
           />
           </View>
-          <View style={{flexDirection:"row",justifyContent:"center"}}>
+          <View style={buttons_style.container_row}>
+            <View style={buttons_style.view_btn_row}>
               <Button
-                  title={TXT.Save+""}
-                  color="green"
+                  style={buttons_style.btn_row}
+                  title={TXT.Sign_in+""}
+                  disabled={this.props.savingCredents}
+                  color="#2ecc71"
                   onPress={()=>{
                     this.props.saveCredents(this.state.email,this.state.password);
                   }
                   }
               ></Button>
+            </View>
+            <View style={buttons_style.view_btn_row}>
               <Button
+                  style={buttons_style.btn_row}
                   title={TXT.Cancel+""}
-                  color="orange"
+                  
+                  color="#f39c12"
                   onPress={()=>{
                       this.props.closeModal();
                   }
                   }
               ></Button>
+            </View>
+            <View style={buttons_style.view_btn_row}>
+              <Button
+                  style={buttons_style.btn_row}
+                  title={TXT.Sign_up+""}
+                  disabled={this.props.savingCredents}
+                  color="#3498db"
+                  onPress={()=>{
+                      this.props.signUp(this.state.email,this.state.password);
+                  }
+                  }
+              ></Button>
+              </View>
             </View>
 
         </View>
@@ -241,6 +260,7 @@ class HomeScreen extends React.Component {
 
     }
     saveCredents =(email,password)=>{
+      this.setState({savingCredents:true});
       this.LS.setCredentials(email,password).then(()=>{
         this.backup.changeClient().then(()=>{
           this.closeModal_credents();
@@ -250,9 +270,16 @@ class HomeScreen extends React.Component {
             backup_lastActivity:this.backup.lastActivity,
             backup_email:this.backup.email,
             backup_is_admin:this.backup.admin,
+            savingCredents:false,
           });
         });
         
+      });
+    }
+    signUp =(email,password)=>{
+      this.setState({savingCredents:true});
+      this.backup.newUser(email,password).then(()=>{
+        this.saveCredents(email,password);
       });
     }
     render_modal_credentials(){
@@ -266,10 +293,12 @@ class HomeScreen extends React.Component {
             } }
           >
           <View style={{flex:.4,backgroundColor:"#2c3e5066"}}></View>
-          <View style={{height:400,width:"100%",backgroundColor:"#646c78"}}>
+          <View style={{height:300,width:"100%",backgroundColor:"#646c78"}}>
             <Credentials
               closeModal={this.closeModal_credents}
               saveCredents={this.saveCredents}
+              signUp={this.signUp}
+              savingCredents={this.state.savingCredents}
             >
 
             </Credentials>
@@ -417,7 +446,8 @@ class HomeScreen extends React.Component {
                 </View>
               </View>
               }
-              <View style={styles_list.row_view}>
+              <View style={buttons_style.container_row}>
+                <View style={buttons_style.view_btn_row}>
                   <Button 
                     style={[styles_list.small_elemnt,{marginLeft:10}]}
                     title = {TXT.Sych_Now}
@@ -434,6 +464,8 @@ class HomeScreen extends React.Component {
                     }}
                 />
                 <View style={{width:10}}></View>
+              </View>
+              <View style={buttons_style.view_btn_row}>
                 <Button 
                     style={[styles_list.small_elemnt,{marginLeft:10}]}
                     title = {TXT.Credents}
@@ -444,6 +476,8 @@ class HomeScreen extends React.Component {
                     }}
                 />
                 <View style={{width:10}}></View>
+                </View>
+                <View style={buttons_style.view_btn_row}>
                 <Button 
                     style={[styles_list.small_elemnt,{marginLeft:10}]}
                     title = "Log"
@@ -453,7 +487,7 @@ class HomeScreen extends React.Component {
                       this.setState({synchLog_modal:true})
                     }}
                 />
-                
+              </View>
             </View>
             
               <Button 

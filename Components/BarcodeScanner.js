@@ -31,7 +31,6 @@ class BarcodeScanner extends React.Component {
     this.getRatios = false;
     this.LS = new LocalStorage();
     this.LS.getSettings().then(settings=>{
-      console.log(settings["availableRatios"]);
       if("availableRatios" in settings && settings["availableRatios"].length > 0){
         this.getRatios = false;
       }else{
@@ -51,11 +50,11 @@ class BarcodeScanner extends React.Component {
     hasCameraPermission: null,
     scanned: false,
   };
-  loadMp3 = async()=>{
+  loadMp3(){
     this.soundScanned = new Audio.Sound();
     this.soundCamera = new Audio.Sound();
-    await this.soundScanned.loadAsync(require('../assets/scanned.mp3'));
-    await this.soundCamera.loadAsync(require('../assets/camera.mp3'));
+    this.soundScanned.loadAsync(require('../assets/scanned.mp3'));
+    this.soundCamera.loadAsync(require('../assets/camera.mp3'));
   }
   async componentDidMount() {
     this.getPermissionsAsync();
@@ -81,17 +80,18 @@ class BarcodeScanner extends React.Component {
     return (actual == checksum);
   }
   
-  playSoundBArCodeScanned = async ()=>{
+  playSoundBArCodeScanned (){
     try {
-      await this.soundScanned.replayAsync();
+      return this.soundScanned.replayAsync();
       // Your sound is playing!
     } catch (error) {
+      console.log(error);
       alert(`cannot play the sound file`, error);
     }
   }
-  playSoundCamera = async ()=>{
+  playSoundCamera (){
     try {
-      await this.soundCamera.replayAsync();
+      return this.soundCamera.replayAsync();
       // Your sound is playing!
     } catch (error) {
       alert(`cannot play the sound file`, error);
@@ -246,7 +246,7 @@ class BarcodeScanner extends React.Component {
     };
     if (this.camera) {
       let photo = await this.camera.takePictureAsync(options);
-      this.playSoundCamera();
+      await this.playSoundCamera();
       this.setState({cameraStatus:"Adjusting picture"});
       const final_photo = await this._resize(photo) ;
       this.setState({snaping:false});
@@ -254,7 +254,7 @@ class BarcodeScanner extends React.Component {
     }
   };
   handleBarCodeScanned = async ({ type, data }) => {
-    this.playSoundBArCodeScanned();
+    await this.playSoundBArCodeScanned();
     let isNoBarCode = false;
     if(type=="NoBarCode" && data==-1){
       const product = new Product();

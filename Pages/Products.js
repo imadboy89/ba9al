@@ -1,6 +1,6 @@
 import React from 'react';
 import { Text, View, Button,TextInput,Image,Modal,TouchableHighlight,Alert } from 'react-native';
-import {header_style,styles_list,styles_itemRow,styles} from "../Styles/styles";
+import {buttons_style,styles_list,styles_itemRow,styles} from "../Styles/styles";
 import Product from "../Libs/Product_module";
 import Translation from "../Libs/Translation";
 import ItemsList from '../Components/ItemsList';
@@ -443,32 +443,39 @@ class ProductsScreen extends React.Component {
                         <Text style={styles_list.text_v}>{this.state.product_edit.fields.entered}</Text>
                     </View>
                 </View>
-                <View style={{flexDirection:"row",justifyContent:"center"}}>
-                    <Button
-                        title={TXT.Save}
-                        color="green"
-                        onPress={()=>{
-                            this.save();
-                        }
-                        }
-                    ></Button>
-                    <Button
-                        title={TXT.Cancel}
-                        color="orange"
-                        onPress={()=>{
-                            this.setState({isVisible_modal_add:false});
-                        }
-                        }
-                    ></Button>
-                    <Button
-                        style={{color:"black"}}
-                        title={TXT.Delete}
-                        color="#e55039"
-                        onPress={()=>{
-                            this.delete();
-                        }
-                        }
-                    ></Button>
+                <View style={buttons_style.container_row}>
+                    <View style={buttons_style.view_btn_row}>
+
+                        <Button
+                            title={TXT.Save}
+                            color="green"
+                            onPress={()=>{
+                                this.save();
+                            }
+                            }
+                        ></Button>
+                    </View>
+                    <View style={buttons_style.view_btn_row}>
+                        <Button
+                            title={TXT.Cancel}
+                            color="orange"
+                            onPress={()=>{
+                                this.setState({isVisible_modal_add:false});
+                            }
+                            }
+                        ></Button>
+                    </View>
+                    <View style={buttons_style.view_btn_row}>
+                        <Button
+                            style={{color:"black"}}
+                            title={TXT.Delete}
+                            color="#e55039"
+                            onPress={()=>{
+                                this.delete();
+                            }
+                            }
+                        ></Button>
+                    </View>
                 </View>
                 </View>
                 <View style={{flex:1,backgroundColor:"#2c3e5066"}}></View>

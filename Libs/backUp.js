@@ -3,7 +3,7 @@ import Photo from "./Photo_module";
 import Company from './Company_module';
 import Product from "./Product_module";
 import { Linking  } from 'react-native';
-import { Stitch,RemoteMongoClient , AnonymousCredential,UserPasswordCredential } from "mongodb-stitch-react-native-sdk";
+import { Stitch,RemoteMongoClient , AnonymousCredential,UserPasswordCredential,UserPasswordAuthProviderClient } from "mongodb-stitch-react-native-sdk";
 
 
 class BackUp{
@@ -35,12 +35,21 @@ class BackUp{
         this.client = Stitch.defaultAppClient;
         this.lastActivity = this.client.auth.activeUserAuthInfo.lastAuthActivity;
         this.email = this.client.auth.activeUserAuthInfo.userProfile.data.email;  
+        return this.isAdmin();
         console.log("this.email",this.email);
         return true;
       } catch (error) {
         console.log(error)
       }
 
+    }
+    isAdmin(){
+      return this.client.callFunction("isAdmin").then(result => {
+        console.log(result);
+        this.admin = result;
+      }).catch(err=>{
+        alert(err);
+      });
     }
     changeClient = async (eml,pass)=>{
       const app = Stitch.defaultAppClient;
@@ -58,6 +67,20 @@ class BackUp{
         return false;
       }
        
+    }
+    newUser = (username,password)=>{
+      const emailPasswordClient = Stitch.defaultAppClient.auth
+        .getProviderClient(UserPasswordAuthProviderClient.factory);
+
+      return emailPasswordClient.registerWithEmail(username,password)
+        .then((output) => {
+          console.log("Successfully sent account confirmation email!", JSON.stringify(output) );
+          return output;
+        })
+        .catch(err => {
+          alert(err.message);
+          console.log(JSON.stringify(err) );
+        });
     }
     _loadClient = async () => {
         const credents = await this.LS.getCredentials();
@@ -77,10 +100,9 @@ class BackUp{
               
               this.currentUserId = user.id;
               this.admin = !usingAnon ;
-              this.setClientInfo();
-              console.log(`Successfully logged in as user ${this.email}` , this.lastActivity );
-              return user;
               
+              console.log(`Successfully logged in as user ${this.email}` , this.lastActivity );
+              return this.setClientInfo();
             })
             .catch(err => {
               console.log(`Failed to log in anonymously: ${err}`);
@@ -134,18 +156,23 @@ class BackUp{
 
     insertMany= async (db, data) => {
       //await db.deleteMany({});
-      return db.insertMany(data);
+      return db.insertMany(data).catch(err=>{
+        this.appendLog ("    XXX Insert : "+err.message);
+        return err;
+      });
     }
     updateOne= async (db, query, data) => {
       //await db.deleteMany({});
-      return db.updateOne(query,data);
+      return db.updateOne(query,data).catch(err=>{
+        this.appendLog ("    XXX rUpdate : "+err.message);
+        return err;
+      });
     }
     getMDB(db,query={},options = {"projection": { "_id": 0 },}){
       return db.find(query, options).asArray().then(docs => {
               return docs;
           }).catch(err => {
-              console.error(err);
-              alert(err);
+              this.appendLog ("    XXX Found : "+err.message);
           });
     }
     synchronize_item = async(db,Items_clss, isPhoto=false)=>{

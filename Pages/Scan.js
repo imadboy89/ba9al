@@ -347,8 +347,8 @@ class ScanScreen extends React.Component {
                 </View>
                 }
                 { this.state.scanned && this.state.scanned.scanMethod==undefined && 
-                <View style={{flexDirection:"row",justifyContent:"center"}}>
-                    <View style={[{ width: 80,height:40,}]}>
+                  <View style={buttons_style.container_row}>
+                    <View style={buttons_style.view_btn_row}>
                      <Button
                         style={buttons_style.modalAdd}
                         title={TXT.Total}
@@ -359,7 +359,7 @@ class ScanScreen extends React.Component {
                         }
                     ></Button>
                     </View>
-                    <View style={[{ width: 80,height:40,}]}>
+                    <View style={buttons_style.view_btn_row}>
                       <Button
                           style={buttons_style.modalPlus}
                           title={TXT["+"]}
