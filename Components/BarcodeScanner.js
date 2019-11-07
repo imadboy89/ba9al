@@ -44,17 +44,19 @@ class BarcodeScanner extends React.Component {
       });
     });
     this.state.cameraStatus = "starting Camera ...";
-    console.log("camera start");
-    this.soundScanned = new Audio.Sound();
-    this.soundCamera = new Audio.Sound();
-    this.soundScanned.loadAsync(require('../assets/scanned.mp3'));
-    this.soundCamera.loadAsync(require('../assets/camera.mp3'));
+    this.loadMp3();
+    
   }
   state = {
     hasCameraPermission: null,
     scanned: false,
   };
-
+  loadMp3 = async()=>{
+    this.soundScanned = new Audio.Sound();
+    this.soundCamera = new Audio.Sound();
+    await this.soundScanned.loadAsync(require('../assets/scanned.mp3'));
+    await this.soundCamera.loadAsync(require('../assets/camera.mp3'));
+  }
   async componentDidMount() {
     this.getPermissionsAsync();
   }
@@ -81,7 +83,7 @@ class BarcodeScanner extends React.Component {
   
   playSoundBArCodeScanned = async ()=>{
     try {
-      this.soundScanned.replayAsync();
+      await this.soundScanned.replayAsync();
       // Your sound is playing!
     } catch (error) {
       alert(`cannot play the sound file`, error);
@@ -89,7 +91,7 @@ class BarcodeScanner extends React.Component {
   }
   playSoundCamera = async ()=>{
     try {
-      this.soundCamera.replayAsync();
+      await this.soundCamera.replayAsync();
       // Your sound is playing!
     } catch (error) {
       alert(`cannot play the sound file`, error);
@@ -173,7 +175,7 @@ class BarcodeScanner extends React.Component {
         <Button 
           title='Fake scann'
           color="green"
-          onPress={() => this.handleBarCodeScanned({"type":"dddtype", "data":6119999900002})} />
+          onPress={() => this.handleBarCodeScanned({"type":"dddtype", "data":"61199999002"})} />
           <View style={{justifyContent:"center",flex:1,alignContent:"center",flexDirection:"row"}}>
             <View style={{flex:1,justifyContent:"center",alignContent:"center"}}>
               {this.props.setCode && 
@@ -230,7 +232,7 @@ class BarcodeScanner extends React.Component {
     const manipResult = await ImageManipulator.manipulateAsync(
       photo.uri,
       [ {resize :{ width:width, height:height }} ],
-      { compress: 0.2, format: ImageManipulator.SaveFormat.JPEG , base64 :true }
+      { compress: this.state.image_quality, format: ImageManipulator.SaveFormat.JPEG , base64 :true }
     );
     return manipResult ;
   };
@@ -239,7 +241,7 @@ class BarcodeScanner extends React.Component {
 
     this.setState({snaping:true,cameraStatus:"Snapping picture"});
     const options= {
-      quality : 0.2,
+      quality : this.state.image_quality,
       //base64  : true
     };
     if (this.camera) {
@@ -265,10 +267,12 @@ class BarcodeScanner extends React.Component {
       this.props.setCode(null, null, null,null,null,true); 
       return ;
     }
-
+    if(data.length>=11 && data.length<=13){
+      data = "0".repeat(13-data.length) + data;
+    }
     data = ""+data;
     const country = data.slice(0,3)
-    const company = data.slice(3,7)
+    const company = data.slice(0,8)
     const product = data.slice(7)
 
 

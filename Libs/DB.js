@@ -122,7 +122,7 @@ class DB {
       });
     }
     drop_create_table = async ()=>{
-      alert("empty table droping");
+      //alert("empty table droping");
       out = await this.executeSql("DROP TABLE "+this.module.table_name,[]);
       return this.create_table();
     }

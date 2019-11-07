@@ -4,7 +4,8 @@ class translation{
     constructor(LS){
         this.language = "en";
         this.translation = {
-            
+            "Product_name"             : {"ar":"اسم المنتج"         ,"fr":"Nom du produit","dr":"Ism d prodwi",},
+            "All"             : {"ar":"الكل"         ,"fr":"Tout","dr":"Kolchi",},
             "Entered"             : {"ar":"مسجل"         ,"fr":"Entré","dr":"Dkhal f ",},
             "Updated"             : {"ar":"تم تحديث"         ,"fr":"sauvegardé","dr":"Tbdel f ",},
             "LastBackUp"             : {"ar":"النسخة الاحتياطية الاخيرة"         ,"fr":"Dernière sauvegarde","dr":"akhir backup",},
@@ -16,7 +17,7 @@ class translation{
             "Confirmation"             : {"ar":"التأكيد"         ,"fr":"Confirmation","dr":"Ta2kid",},
             "Incorect_barcode_please_try_again"             : {"ar":"الباركود غير صحيح ، يرجى المحاولة مرة أخرى"         ,"fr":"Incorrect code a bare, essayer autre fois!","dr":"Code machi s7i7, 3awd scanni mara akhra!",},
             "Sych_Now"             : {"ar":"تزامن"         ,"fr":"Sych Now","dr":"Sych_Now",},
-            "Try_again"             : {"ar":"تزامن"         ,"fr":"Essay autr fois","dr":"7Awl mara akhra",},
+            "Try_again"             : {"ar":"حاول مرة أخري"         ,"fr":"Réessayer","dr":"7Awl mara akhra",},
             "Email"             : {"ar":"البريد الإلكتروني"         ,"fr":"Email","dr":"Email",},
             "Credents"             : {"ar":"معرفات"         ,"fr":"identifiants","dr":"Credents",},
             "Password"             : {"ar":"كلمة المرور"         ,"fr":"Mot de pass","dr":"ra9m sirri",},
@@ -36,7 +37,7 @@ class translation{
             "Clear_database"      : {"ar":"مسح قاعدة البيانات"              ,"fr":"Vider base donnee","dr":"msa7 base donnee",},
             "Clear"      : {"ar":"مسح"              ,"fr":"Vider","dr":"Msa7",},
             "Clear_remote_Backup"      : {"ar":"مسح النسخ الاحتياطي عن بعد"              ,"fr":"Vider Backup a distance.","dr":"Msa7 backup",},
-            
+            "Close"                       : {"ar":"أغلق"              ,"fr":"Fermer","dr":"Chod",},
             "Name"                       : {"ar":"اسم"              ,"fr":"Nom","dr":"Smiya",},
             "Snap"                       : {"ar":"Snap"              ,"fr":"Snap","dr":"Snap",},
             "Image_quality"              : {"ar":"جودة الصورة"        ,"fr":"Quality d'image","dr":"qualiti d photo",},

@@ -94,7 +94,8 @@ class HomeScreen extends React.Component {
         backup_doClear : false,
         backup_email : "",
         backup_is_admin : false,
-        synchLog : []
+        synchLog : [],
+        clear_database:true,
       };
       this.LS = new LocalStorage();
       this.firstHistoryRender = true;
@@ -359,11 +360,13 @@ class HomeScreen extends React.Component {
                   <Button 
                     style={{marginLeft:10,marginRight:30}}
                     title = {TXT.Clear}
-                    disabled={false}
-                    onPress={ ()=> {
-                      this.backUp.Product.DB.empty();
-                      this.backUp.Company.DB.empty();
-                      this.backUp.Photo.DB.empty();
+                    disabled={!this.state.clear_database}
+                    onPress={ async()=> {
+                      this.setState({clear_database:false});
+                      await this.backup.Product.DB.empty();
+                      await this.backup.Company.DB.empty();
+                      await this.backup.Photo.DB.empty();
+                      this.setState({clear_database:true});
                     }}
                 />
                 </View>
@@ -454,7 +457,7 @@ class HomeScreen extends React.Component {
             </View>
             
               <Button 
-                title="Close"
+                title={TXT.Close}
                 onPress={()=>this.setState({modalVisible:false}) }
               />
             </View>

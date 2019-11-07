@@ -56,9 +56,10 @@ class Product {
         let company_ob = new Company();
         return company_ob.doesExist({"id":this.fields.company}).then((res)=>{
             if (res["doesExist"]==false){
+                const company = "0".repeat(8-this.fields.company.length)+this.fields.company;
                 company_ob.fields.name = this.fields.company;
                 company_ob.fields.id = this.fields.company;
-                company_ob.fields.country = this.fields.company.slice(0,3);
+                company_ob.fields.country = company.slice(0,3);
                 company_ob.save();
             }
         });
@@ -145,8 +146,7 @@ class Product {
         if(perPage){
             limit = "limit "+(page*perPage)+", "+perPage;
         }
-        limit = "";
-        console.log(limit);
+        
         const where_build = this.DB.build_where(where);
         const fields_name = Object.keys(this.fields);
         let query = "select products."+fields_name.join(",products.")+

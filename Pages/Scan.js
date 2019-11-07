@@ -45,7 +45,9 @@ class ScanScreen extends React.Component {
               this.props.navigation.setParams({title:TXT.Scan});
             }
           });
-          this.loadLastP();
+          if(!this.state.items_list ||this.state.items_list.length == 0){
+            this.loadLastP();
+          }
         }
       );
     }
@@ -222,7 +224,23 @@ class ScanScreen extends React.Component {
 
               }
             }else{
-              Alert.alert(TXT.Product_not_found,TXT.Product_does_not_exist + " : "+code);
+              Alert.alert(TXT.Product_not_found,TXT.Product_does_not_exist + `: [`+code+`] `,
+              [
+                {
+                  text: TXT.Cancel, 
+                  onPress: () => {},
+                  style: 'cancel',
+                },
+                {
+                  text: TXT.Add, 
+                  onPress: () => {
+                    this.Total(); 
+                    this.setState({isVisible_modal_scan:false});
+                    this.props.navigation.navigate('Products_',{product_id:code, });
+                   },
+                },
+              ]
+              );
             }
 
         });
@@ -271,8 +289,8 @@ class ScanScreen extends React.Component {
                 </View>
               }
               { this.state.scanned && this.state.scanned.scanMethod==undefined && this.state.scanned.fields.desc=="PickProduct" &&
-                <View style={styles_list.row_view} >
-                  <Text style={styles_list.text_k}> {TXT.Product}  :</Text>
+                <View style={{flex:1}}>
+                  <Text style={styles_list.text_k}>{TXT.Product}  :</Text>
                   <AutoComplite
                       styleTextInput={styles_list.TextInput}
                       placeholder={TXT.Name+" .. "}
@@ -393,7 +411,33 @@ class ScanScreen extends React.Component {
         );
     }
     setItemParent = (item) => {
-      //console.log(item);
+      if(item.is_hist){
+        return false;
+      }
+      Alert.alert(
+        TXT.Confirmation,
+        TXT.Are_you_sure_you_want_to_delete + `: \n  [`+item.fields.name+`] `,
+        [
+
+          {
+            text: TXT.No, 
+            onPress: () => {},
+            style: 'cancel',
+          },
+          {
+            text: TXT.Yes, 
+            onPress: () => {
+              for (let i = 0; i < this.state.items_list.length; i++) {
+                if (this.state.items_list[i].fields.id == item.fields.id){
+                  delete this.state.items_list[i];
+                }
+              }
+
+              this.Total();
+            },
+          },
+        ],
+      );
     }
     render() {
       

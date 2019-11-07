@@ -7,7 +7,7 @@ import ItemsList from '../Components/ItemsList';
 import BarcodeScanner from "../Components/BarcodeScanner";
 import HeaderButton from "../Components/HeaderButton";
 import { TouchableOpacity } from 'react-native-gesture-handler';
-import Icon from 'react-native-vector-icons/FontAwesome';
+import AutoComplite from "../Components/autoComplite";
 import Next_previous from "../Components/nex_previous";
 TXT = null;
 
@@ -38,9 +38,14 @@ class ProductsScreen extends React.Component {
             //this.setState({});
           });
           const company = this.props["navigation"].getParam("company");
+          const product_id = this.props["navigation"].getParam("product_id");
           if(company){
               this.state.page=0;
               this.loadItems();
+          }else if(product_id){
+            this.state.product_edit = new Product();
+            this.setCode (null, product_id);
+            this.props.navigation.setParams({product_id: null})
           }else{
             this.props.navigation.setParams({company:null});
           }
@@ -58,14 +63,30 @@ class ProductsScreen extends React.Component {
         }
       };
 
+    openAddModal_search = () => {
+        this.setState({isVisible_modal_search:true});
+    };
+
     componentDidMount(){
 
         this.loadItems();
+        this.products_list = []
+        this.product.filter().then(output=>{
+            if("list" in output && output["list"]){
+                for (let i = 0; i < output["list"].length; i++) {
+                    const prod = output["list"][i];
+                    let prod_dict = {};
+                    prod_dict[prod.fields.id] = prod.fields.name 
+                    this.products_list.push(prod_dict);
+                }
+            }
+        });
         this.props.navigation.setParams({
             openAddModal : this.openAddModal,
             TXT  : TXT,
             disable:false,
-            loadItems:this.loadItems
+            loadItems:this.loadItems,
+            openAddModal_search:this.openAddModal_search
          });
       }
     static navigationOptions =  ({ navigation  }) => ({
@@ -73,9 +94,15 @@ class ProductsScreen extends React.Component {
         headerRight: a=>{
           const {params = {}} = navigation.state;
           let Add_str = "";
+          let All_str = "All";
           try {
             Add_str = params.TXT.Add;
+            All_str = params.TXT.All;
           } catch (error) {
+          }
+          const company = params.company ? Object.assign({}, params.company) : null;
+          if(company && company.fields && company.fields.name){
+            navigation.state.company = null;
           }
           return (
               <View style={{flexDirection:"row"}}>
@@ -88,10 +115,18 @@ class ProductsScreen extends React.Component {
                                 params.loadItems(true); 
                             }}
                         >
-                            <Text style={{paddingLeft:5,paddingRight:5,color:"white",backgroundColor:"#425b74",marginRight:20,fontSize:20,borderRadius: 4,borderWidth: 0.5,borderColor: '#d6d7da'}}>All</Text>
+                            <Text style={{paddingLeft:5,paddingRight:5,color:"white",backgroundColor:"#425b74",marginRight:20,fontSize:20,borderRadius: 4,borderWidth: 0.5,borderColor: '#d6d7da'}}>{All_str}</Text>
                         </TouchableOpacity>
                     </View>
                 }
+                <HeaderButton 
+                    name="search"
+                    disabled={params.disable}
+                    onPress={()=>params.openAddModal_search()}
+                    size={28} 
+                    color="#ecf0f1"
+                />
+                <View style={{width:10}}></View>
                 <HeaderButton 
                     name="plus-square"
                     disabled={params.disable}
@@ -132,7 +167,7 @@ class ProductsScreen extends React.Component {
         this.state.product_edit.fields.desc = isNoBarCode ? "NoBarCode" : null;
         this.state.product_edit.get({"id":code}).then((output)=>{
             if (output["res"]==false){
-                this.state.product_edit.fields.company = company;
+                this.state.product_edit.fields.company = company ? company : code.slice(0,8);
                 this.setState({
                     isVisible_modal_scan : false,
                     isVisible_modal_add : true,
@@ -194,7 +229,7 @@ class ProductsScreen extends React.Component {
     delete(){
 
         Alert.alert(
-            TXT.Are_you_sure_you_want_to_delete,
+            TXT.Confirmation,
             TXT.Are_you_sure_you_want_to_delete + `: \n  [`+this.state.product_edit.fields.name+`] `,
             [
 
@@ -255,6 +290,54 @@ class ProductsScreen extends React.Component {
           </Modal>
         );
     }
+    openItem = (item_id)=>{
+        this.state.product_edit = new Product();
+        this.state.product_edit.fields.id= item_id;
+        this.state.product_edit.get({"id":item_id}).then((output)=>{
+            if (output["res"]){
+                this.setState({
+                    isVisible_modal_search : false,
+                    isVisible_modal_add : true,
+                });
+            }
+        });
+    }
+    render_modal_Search(){
+        if(this.state.isVisible_modal_search!=true){
+            return null;
+        }
+        return (
+            <Modal 
+            animationType="slide"
+            transparent={true}
+            visible={this.state.isVisible_modal_search}
+            onRequestClose={() => { 
+                this.setState({ isVisible_modal_search:false});
+             } }
+          >
+
+           <View style={{flex:.5,backgroundColor:"#2c3e5066"}}></View>
+           <View style={{height:500,width:"99%",backgroundColor:"#7f8c8d"}}>
+           <Text style={styles_list.text_k}>{TXT.Product_name}  :</Text>
+           <AutoComplite
+                      styleTextInput={styles_list.TextInput}
+                      placeholder={TXT.Name+" .. "}
+                      placeholderTextColor="#ecf0f1"
+                      options_pool={this.products_list}
+                      action={this.openItem}
+                  />
+                <Button
+                    title={TXT.Close}
+                    onPress={()=>{
+                        this.setState({isVisible_modal_search:false});
+                    }}
+                ></Button>
+           </View>
+           <View style={{flex:1,backgroundColor:"#2c3e5066"}}></View>   
+          </Modal>
+        );
+    }
+    
     render_modal(){
         if(this.state.product_edit == null){
             return null;
@@ -416,7 +499,9 @@ class ProductsScreen extends React.Component {
             />   
             {this.render_modal()}
             {this.render_modal_BarcodeScanner()}
-            {this.render_modal_Camera()}         
+            {this.render_modal_Camera()}
+            {this.render_modal_Search()}
+            
           </View>
         );
       }

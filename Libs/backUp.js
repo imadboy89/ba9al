@@ -174,7 +174,7 @@ class BackUp{
         let outp = await Item_ob_check.doesExist({id:item.id});
         const photo_cond=false;
         try {
-          photo_cond = isPhoto && "data" in outp["doesExist"] && outp["doesExist"]["data"]==null;
+          photo_cond = isPhoto && outp["doesExist"] && "data" in outp["doesExist"] && outp["doesExist"]["data"]==null;
         } catch (error) {
           console.log(outp,item.id);
         }

@@ -1,4 +1,10 @@
 const countries_codes = {
+    "USA/CA":                          [0,19] ,
+    "UPC-A-1":                         [20,29] ,
+    "USA-drungs":                      [30,39] ,
+    "UPC-A-2":                         [40,49] ,
+    "USA-GS1":                         [50,59] ,
+    "USA/CA ":                         [60,99] ,
     "United States":                   [100,139] ,
     "France/Monaco":                   [300,379] ,
     "Bulgaria":                        [380,380] ,
