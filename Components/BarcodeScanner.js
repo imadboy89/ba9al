@@ -82,7 +82,7 @@ class BarcodeScanner extends React.Component {
   
   playSoundBArCodeScanned (){
     try {
-      return this.soundScanned.replayAsync();
+      return this.soundScanned.replayAsync().catch(err=>console.log(err));
       // Your sound is playing!
     } catch (error) {
       console.log(error);
@@ -91,7 +91,7 @@ class BarcodeScanner extends React.Component {
   }
   playSoundCamera (){
     try {
-      return this.soundCamera.replayAsync();
+      return this.soundCamera.replayAsync().catch(err=>console.log(err));
       // Your sound is playing!
     } catch (error) {
       alert(`cannot play the sound file`, error);
@@ -254,7 +254,6 @@ class BarcodeScanner extends React.Component {
     }
   };
   handleBarCodeScanned = async ({ type, data }) => {
-    await this.playSoundBArCodeScanned();
     let isNoBarCode = false;
     if(type=="NoBarCode" && data==-1){
       const product = new Product();
@@ -266,6 +265,8 @@ class BarcodeScanner extends React.Component {
     }else if (type=="NoBarCode" && data==-2){
       this.props.setCode(null, null, null,null,null,true); 
       return ;
+    }else{
+      await this.playSoundBArCodeScanned();
     }
     if(data.length>=11 && data.length<=13){
       data = "0".repeat(13-data.length) + data;
