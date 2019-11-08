@@ -296,11 +296,11 @@ class CompaniesScreen extends React.Component {
                  />
 
                 <Next_previous 
-                previous_disabled={this.state.page<=0 || this.state.items_list==false || this.state.items_list.length==0}
-                next_disabled = {this.state.items_list.length < this.items_number_perpage}
-                next_prious_handler={this.next_previous_handler}
-                page={this.state.page}
-                />   
+                    previous_disabled={this.state.page<=0}
+                    next_disabled = {this.state.items_list.length < (this.items_number_perpage-1)}
+                    next_prious_handler={this.next_previous_handler}
+                    page={this.state.page}
+                    />   
             {this.render_modal()}
             {this.render_modal_BarcodeScanner()}
             

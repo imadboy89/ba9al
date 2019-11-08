@@ -82,7 +82,7 @@ class ScanScreen extends React.Component {
           await prod_h.getPhoto();
           this.state.items_list.push(prod_h);
         }
-        this.Total();
+        this.Total(2);
       }
       this.props.navigation.setParams({
           TXT  : TXT,
@@ -166,11 +166,15 @@ class ScanScreen extends React.Component {
         this.setState({scanned:null});
       }
     }
-    Total(){
+    Total(second_call){
       this.plusProd();
       const items_list = this.continue_list.concat(this.state.items_list);
+
       if(!items_list || items_list.length ==0){
-        return;
+        if(second_call){
+          return;
+        }
+        return this.loadLastP();
       }
       this.state.items_list = [];
       for (let k = 0; k < items_list.length; k++) {
@@ -193,6 +197,22 @@ class ScanScreen extends React.Component {
       this.setState({scanned:null,Total:total,isVisible_modal_scan:false});
       this.props.navigation.setParams({showSaveBtn : this.state.items_list.length>0 && this.state.items_list[0].is_hist==undefined ,});
     }
+    loadItemsForSearch(){
+      if(this.products_list && this.products_list.length>0){
+        return new Promise(resolve=>{resolve(this.products_list);});
+      }
+      this.products_list = []
+      return this.product.filter().then(output=>{
+          if("list" in output && output["list"]){
+              for (let i = 0; i < output["list"].length; i++) {
+                  const prod = output["list"][i];
+                  let prod_dict = {};
+                  prod_dict[prod.fields.id] = prod.fields.name 
+                  this.products_list.push(prod_dict);
+              }
+          }
+      });
+  }
     setCode = (type, code, country,company,product,isNoBarCode) => {
         this.setState({disable_btns:false});
         if(isNoBarCode){
@@ -200,6 +220,7 @@ class ScanScreen extends React.Component {
           new_prod.fields.desc = "PickProduct";
           new_prod.fields.price = "";
           new_prod.list=[]
+          /*
           new_prod.filterWithExtra({"products.desc":"NoBarCode"}).then(output=>{
             if(output["list"] && output["list"].length > 0){
               for (let j = 0; j < output["list"].length; j++) {
@@ -209,6 +230,9 @@ class ScanScreen extends React.Component {
                 new_prod.list.push(prod_dict);
               }
             }
+          });*/
+          this.loadItemsForSearch().then(()=>{
+            new_prod.list=this.products_list;
             this.setState({scanned:new_prod});
           });
           return ;
@@ -410,7 +434,7 @@ class ScanScreen extends React.Component {
           </Modal>
         );
     }
-    setItemParent = (item) => {
+    setItemParent = (item, index) => {
       if(item.is_hist){
         return false;
       }
@@ -427,12 +451,7 @@ class ScanScreen extends React.Component {
           {
             text: TXT.Yes, 
             onPress: () => {
-              for (let i = 0; i < this.state.items_list.length; i++) {
-                if (this.state.items_list[i].fields.id == item.fields.id){
-                  delete this.state.items_list[i];
-                }
-              }
-
+              this.state.items_list.splice(index,1)
               this.Total();
             },
           },

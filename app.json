@@ -1,7 +1,7 @@
 {
   "expo": {
-    "name": "[ba9al] 11-06",
-    "slug": "Ba9al2",
+    "name": "Ba9al",
+    "slug": "Ba9al",
     "privacy": "public",
     "sdkVersion": "35.0.0",
     "platforms": [
@@ -9,13 +9,13 @@
       "android",
       "web"
     ],
-    "version": "1.0.0",
+    "version": "1.1.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "splash": {
       "image": "./assets/splash.png",
       "resizeMode": "contain",
-      "backgroundColor": "#ffffff"
+      "backgroundColor": "#000000"
     },
     "updates": {
       "fallbackToCacheTimeout": 0

@@ -4,6 +4,12 @@ class translation{
     constructor(LS){
         this.language = "en";
         this.translation = {
+            
+            "User_name"             : {"ar":"اسم المستخدم"         ,"fr":"Nom d'utilisateur","dr":"Ism lmosta3min",},
+            "Are_you_sure_you_want_to_clear_database"             : {"ar":"هل أنت متأكد أنك تريد مسح قاعدة البيانات؟"         ,"fr":"Êtes-vous sûr de vouloir effacer la base de données?","dr":"M2aked baghi tmsa7 base donee ?",},
+            "This_will_remove_all_the_products_and_companies"             : {"ar":"سيؤدي هذا إلى إزالة جميع المنتجات والشركات"         ,"fr":"Cela supprimera tous les produits et sociétés","dr":"Ghadi tmsa7 prouiyat w charikat kamlin ",},
+            "Requesting_for_camera_permission"  : {"ar":"طلب إذن الكاميرا"         ,"fr":"Demander l'autorisation de la caméra","dr":"Activi camera n ba9Al App",},
+            "No_access_to_camera"             : {"ar":"لا يمكن الوصول إلى الكاميرا"         ,"fr":"Pas d'accès à la caméra","dr":"Camera mblokiya 3la ba9al App",},
             "Product_name"             : {"ar":"اسم المنتج"         ,"fr":"Nom du produit","dr":"Ism d prodwi",},
             "All"             : {"ar":"الكل"         ,"fr":"Tout","dr":"Kolchi",},
             "Entered"             : {"ar":"مسجل"         ,"fr":"Entré","dr":"Dkhal f ",},

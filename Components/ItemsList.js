@@ -23,8 +23,9 @@ class ItemRow_ extends React.Component {
         }
         if(this.props.item.fields.company){
           const company_name = (this.props.item.company_ob && this.props.item.company_ob.fields) ? this.props.item.company_ob.fields.name : this.props.item.fields.company;
+          const country_name = (this.props.item.company_ob && this.props.item.company_ob.fields) ? this.props.item.company_ob.fields.country : this.props.item.fields.id;
           name += this.props.isCalculate ? " x"+this.props.item.quantity : "" ;
-          desc = company_name +" - " +this.props.item.fields.id;
+          desc = country_name +" - " +company_name;
           leftTxt = this.props.item.fields.price;
         }else{
           name += this.props.isCalculate ? " x"+this.props.item.quantity : "" ;
@@ -35,21 +36,24 @@ class ItemRow_ extends React.Component {
         const img_source = ( this.props.item.photo_ob && ["",null,undefined].indexOf(this.props.item.photo_ob.fields.data)<0 )
                 ? { uri:this.props.item.photo_ob.fields.data} 
                 : require('../assets/camera.png');
-        
+        const img_length = ( this.props.item.photo_ob && ["",null,undefined].indexOf(this.props.item.photo_ob.fields.data)<0 )
+                ? this.props.item.photo_ob.fields.data.length
+                : 0;
+        const bgc = img_length && img_length > 50000 ? "#e67e22" : "#000" ;
         return (
             <TouchableOpacity 
             activeOpacity={0.7}
             onPress={() => {
               if(this.props.setItemParent){
-                this.props.setItemParent(this.props.item)}
+                this.props.setItemParent(this.props.item,this.props.index_)}
               }
               } >
             <View  style={styles_itemRow.container} >
                 {this.props.isCalculate==true &&
                 <Text style={styles_itemRow.quantity}>{"x"+this.props.item.quantity}</Text>
                 }
-                <View style={styles_itemRow.image}>
-                  <Image  source={img_source} resizeMode="contain" style={{ flex: 1, height: undefined, width: undefined }} />
+                <View style={[styles_itemRow.image]}>
+                  <Image  source={img_source} resizeMode="contain" style={[{backgroundColor:bgc},{ flex: 1, height: undefined, width: undefined }]} />
                 </View>
                 <View style={styles_itemRow.container_text}>
                     <View style={styles_itemRow.subContainer_text}>
@@ -110,9 +114,10 @@ class ItemsList extends React.Component {
             >
                 <FlatList
                     data={this.props.items_list}
-                    renderItem={({ item }) =>{
+                    renderItem={({ item,index  }) =>{
                       return (<ItemRow 
                                 item={item} 
+                                index_={index}
                                 setItemParent={this.setItemParent} 
                                 isCalculate={this.props.isCalculate} 
                                 showProducts={this.props.showProducts}

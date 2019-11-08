@@ -14,9 +14,9 @@ class Next_previous extends React.Component {
 
     render(){
         return (
-            <View style={{flexDirection:"row",justifyContent:"center"}}>
+            <View style={{flexDirection:"row",justifyContent:"center",margin:5}}>
                 <Icon 
-                    size={30}
+                    size={33}
                     name="chevron-left" 
                     disabled={this.props.previous_disabled} 
                     color={ this.props.previous_disabled ?"#f9f9f973":"#1abc9c" }
@@ -25,7 +25,7 @@ class Next_previous extends React.Component {
                 />
                 <Text style={{width:30,color:"yellow",textAlign:"center",fontSize:18}}>{this.props.page}</Text>
                 <Icon 
-                    size={30}
+                    size={33}
                     name="chevron-right" 
                     disabled={this.props.next_disabled} 
                     color={ this.props.next_disabled ?"#f9f9f973":"#1abc9c" }

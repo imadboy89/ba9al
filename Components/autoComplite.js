@@ -1,7 +1,7 @@
 import React from 'react';
-import { View,TextInput, TouchableOpacity ,Text } from 'react-native';
+import { View,TextInput, TouchableOpacity ,Text, ScrollView } from 'react-native';
 import {styles_list} from "../Styles/styles";
-
+import { withNavigation } from 'react-navigation';
 
 
 class AutoComplite extends React.Component {
@@ -12,7 +12,12 @@ class AutoComplite extends React.Component {
         options:[],
         options_pool:this.props.options_pool,
         done:false,
+        focusAutoCompliteInput:true,
       };
+
+    }
+    componentDidMount(){
+        this.setState({focusAutoCompliteInput:true});
     }
     getoptions(){
         this.state.options = [];
@@ -52,7 +57,7 @@ class AutoComplite extends React.Component {
                     }}
                     style={{marginRight:20,}}>
                   <View style={{}} >
-                      <Text style={{color:"white",backgroundColor:"#7f8c8d",fontSize:18,borderRadius: 4,borderWidth: 0.2,borderColor: '#d6d7da'}}>
+                      <Text style={{color:"white",backgroundColor:"#7f8c8d",fontSize:18,borderRadius: 4,borderWidth: 0.2,borderColor: '#d6d7da',height:40,fontSize:25}}>
                       {option_value}
                       </Text>
                   </View>
@@ -61,6 +66,7 @@ class AutoComplite extends React.Component {
         });
     }
     render(){
+
         return (
             <View style={{flex:1}}>
                 <TextInput
@@ -69,8 +75,11 @@ class AutoComplite extends React.Component {
                     placeholderTextColor={this.props.placeholderTextColor}
                     onChangeText ={newValue=>{this.setState({q:newValue});}}
                     value={this.state.q}
+                    autoFocus={true}
+                    autoCompleteType="off"
+                    focus={this.state.focusAutoCompliteInput}
                 />
-                <View style={{/*position:"absolute",*/marginRight:30,height:"60%"}}>
+                <View style={{/*position:"absolute",*/marginRight:30,marginLeft:30}}>
                     {this.render_options()}
                 </View>
 
@@ -79,4 +88,4 @@ class AutoComplite extends React.Component {
     }
 }
 
-export default AutoComplite;
+export default withNavigation(AutoComplite);

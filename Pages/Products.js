@@ -63,15 +63,13 @@ class ProductsScreen extends React.Component {
         }
       };
 
-    openAddModal_search = () => {
+    openAddModal_search = async() => {
+        await this.loadItemsForSearch();
         this.setState({isVisible_modal_search:true});
     };
-
-    componentDidMount(){
-
-        this.loadItems();
+    loadItemsForSearch(){
         this.products_list = []
-        this.product.filter().then(output=>{
+        return this.product.filter().then(output=>{
             if("list" in output && output["list"]){
                 for (let i = 0; i < output["list"].length; i++) {
                     const prod = output["list"][i];
@@ -81,6 +79,11 @@ class ProductsScreen extends React.Component {
                 }
             }
         });
+    }
+    componentDidMount(){
+
+        this.loadItems();
+        //this.loadItemsForSearch();
         this.props.navigation.setParams({
             openAddModal : this.openAddModal,
             TXT  : TXT,
@@ -339,7 +342,7 @@ class ProductsScreen extends React.Component {
     }
     
     render_modal(){
-        if(this.state.product_edit == null){
+        if(this.state.product_edit == null || !this.state.isVisible_modal_add){
             return null;
         }
         /*
@@ -353,6 +356,7 @@ class ProductsScreen extends React.Component {
                 ? { uri:this.state.product_edit.photo_data} 
                 : img_source;
         const img_length = this.state.product_edit && this.state.product_edit.photo_ob && this.state.product_edit.photo_ob.fields.data ? this.state.product_edit.photo_ob.fields.data.length : 0;
+        const bgc = img_length && img_length > 50000 ? "#e67e22" : "#000" ;
         return (
             <Modal 
             animationType="slide"
@@ -363,13 +367,12 @@ class ProductsScreen extends React.Component {
             <View style={{flex:.5,backgroundColor:"#2c3e5066"}}></View>
             <View style={{height:500,width:"99%",backgroundColor:"#7f8c8d"}}>
                 <View style={styles_list.container}>
-                <Text>{img_length}</Text>
                     <TouchableHighlight onPress={()=>{
                         this.setState({
                             isVisible_modal_camera:true,
                         });
                     }}>
-                        <View style={{width:200,height:150,backgroundColor:"#bdc3c7",alignSelf:"center"}}>
+                        <View style={{width:200,height:150,backgroundColor:bgc,alignSelf:"center",marginTop:20}}>
                             <Image  source={img_source} resizeMode="contain" style={{ flex: 1, height: undefined, width: undefined }} />
                         </View>
                     </TouchableHighlight>
@@ -386,6 +389,7 @@ class ProductsScreen extends React.Component {
                                 this.setState({});
                             }}
                             value={this.state.product_edit.fields.name}
+                            autoFocus={true}
                         />
                         </View>
                     </View>
@@ -401,6 +405,7 @@ class ProductsScreen extends React.Component {
                                 this.setState({});
                             }}
                             value={this.state.product_edit.fields.price ? this.state.product_edit.fields.price+"": ""}
+                            keyboardType="decimal-pad"
                         />
                         </View>
                     </View>
@@ -488,7 +493,6 @@ class ProductsScreen extends React.Component {
         this.loadItems();
     }
     render() {
-      
         return (
           <View style={styles.container} >
               <ItemsList 
@@ -499,8 +503,8 @@ class ProductsScreen extends React.Component {
                 refreshing={this.state.refreshing}
                  />
             <Next_previous 
-                previous_disabled={this.state.page<=0 || this.state.items_list==false || this.state.items_list.length==0}
-                next_disabled = {this.state.items_list.length < this.items_number_perpage}
+                previous_disabled={this.state.page<=0 }
+                next_disabled = {this.state.items_list.length < (this.items_number_perpage-1)}
                 next_prious_handler={this.next_previous_handler}
                 page={this.state.page}
             />   

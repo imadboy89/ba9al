@@ -151,7 +151,7 @@ class Product {
         const fields_name = Object.keys(this.fields);
         let query = "select products."+fields_name.join(",products.")+
               //",photos.data where products.id=photos.id limit 1";
-              ",photo.data,companies.name AS company_name "+
+              ",photo.data,companies.name AS company_name,companies.country AS country_name "+
               " FROM "+this.table_name+
               " LEFT JOIN photo ON products.id=photo.id"+
               " LEFT JOIN companies ON products.company=companies.id "+where_build[0] + " ORDER BY products.entered DESC "+limit  ;
@@ -169,8 +169,9 @@ class Product {
                         _module.photo_ob = new Photo({id:res["id"],"data":res["data"]});
                         delete res["data"] ;
                         //////////////////////////////////  COMPANY
-                        _module.company_ob = new Company({id:res["company"],name:res["company_name"]});
+                        _module.company_ob = new Company({id:res["company"],name:res["company_name"],country:res["country_name"]});
                         delete res["company_name"] ;
+                        delete res["country_name"] ;
                         ///////////////////////////////////////////
                         res_keys = Object.keys(res);
                         for (let i = 0; i < res_keys.length; i++) {

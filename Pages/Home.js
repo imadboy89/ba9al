@@ -28,15 +28,17 @@ class Credentials extends React.Component{
       return (
         <View style={{height:"100%",width:"100%",backgroundColor:"#646c78"}}>
           <View style={styles_list.row_view}>
-          <Text style={styles_list.text_k}> {TXT.Email} : </Text>
+          <Text style={styles_list.text_k}> {TXT.User_name} : </Text>
           <TextInput
               style={styles_list.TextInput}
-              placeholder={TXT.Email+" .. "}
+              placeholder={TXT.User_name+" .. "}
               placeholderTextColor="#ecf0f1"
               onChangeText ={newValue=>{
                   this.setState({email:newValue});
               }}
               value={this.state.email}
+              type="username"
+              autoCorrect={false}
           />
           </View>
 
@@ -50,6 +52,9 @@ class Credentials extends React.Component{
                   this.setState({password:newValue});
               }}
               value={this.state.password}
+              type="password"
+              secureTextEntry={true}
+              autoCorrect={false}
           />
           </View>
           <View style={buttons_style.container_row}>
@@ -216,6 +221,31 @@ class HomeScreen extends React.Component {
               <Picker.Item label={key} value={key} key={key} />
           );
       })
+    }
+    clearDatabase(){
+      Alert.alert(
+        TXT.Confirmation,
+        TXT.This_will_remove_all_the_products_and_companies,
+        [
+          {
+            text: TXT.Yes,
+            onPress: async() => {
+              this.setState({clear_database:false});
+              await this.backup.Product.DB.empty();
+              await this.backup.Company.DB.empty();
+              await this.backup.Photo.DB.empty();
+              this.setState({clear_database:true});
+            },
+            
+          },
+          {
+            text: TXT.No, 
+            onPress: () => {},
+            style: 'cancel',
+          },
+        ],
+      );
+
     }
     appendLog = (msg)=>{
       if(!this.state.synchLog){
@@ -390,13 +420,7 @@ class HomeScreen extends React.Component {
                     style={{marginLeft:10,marginRight:30}}
                     title = {TXT.Clear}
                     disabled={!this.state.clear_database}
-                    onPress={ async()=> {
-                      this.setState({clear_database:false});
-                      await this.backup.Product.DB.empty();
-                      await this.backup.Company.DB.empty();
-                      await this.backup.Photo.DB.empty();
-                      this.setState({clear_database:true});
-                    }}
+                    onPress={this.clearDatabase}
                 />
                 </View>
               </View>

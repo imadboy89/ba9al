@@ -10,6 +10,7 @@ const styles_list = StyleSheet.create({
   
   
     },
+
     row_view : {
       flex: 1, 
       flexDirection: 'row' ,
@@ -96,8 +97,9 @@ const styles_list = StyleSheet.create({
         borderColor: 'gray', 
         backgroundColor:"#34495e",
         color:"white",
-        fontSize:18,
-        marginLeft:10
+        fontSize:23,
+        marginLeft:10,
+        height:40,
     },
   });
 
@@ -171,6 +173,11 @@ const header_style = StyleSheet.create({
         flexDirection:"row",
         //backgroundColor: '#a4ccf3',
         backgroundColor: "black"
+    },
+    black_border:{
+        borderRadius: 4,
+        borderWidth: 0.5,
+        borderColor: '#000',
     },
     title: {
         fontSize: 18,

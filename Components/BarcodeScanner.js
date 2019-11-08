@@ -25,7 +25,10 @@ class BarcodeScanner extends React.Component {
       autoFocus: true,
       ratio : "4:3",
       image_quality:0.2,
-      isVisible_modal_loader:true
+      isVisible_modal_loader:true,
+      hasCameraPermission: null,
+      scanned: false,
+      flashMode:Camera.Constants.FlashMode.off,
     };
     TXT = this.props.TXT;
     this.getRatios = false;
@@ -46,10 +49,7 @@ class BarcodeScanner extends React.Component {
     this.loadMp3();
     
   }
-  state = {
-    hasCameraPermission: null,
-    scanned: false,
-  };
+
   loadMp3(){
     this.soundScanned = new Audio.Sound();
     this.soundCamera = new Audio.Sound();
@@ -135,14 +135,17 @@ class BarcodeScanner extends React.Component {
     );
 }
   render() {
+    
     const { hasCameraPermission, scanned } = this.state;
-
+    
     if (hasCameraPermission === null) {
-      return <Text>Requesting for camera permission</Text>;
+      return <Text style={{fontSize:25,color:"blue",margin:20,flex:1,alignSelf:"center"}}>{TXT.Requesting_for_camera_permission}</Text>;
     }
     if (hasCameraPermission === false) {
-      return <Text>No access to camera</Text>;
+      return <Text style={{fontSize:25,color:"blue",margin:20,flex:1,alignSelf:"center"}} >{TXT.No_access_to_camera}</Text>;
     }
+    const flash_color = this.state.flashMode==Camera.Constants.FlashMode.off ?"#7f8c8d": "#f1c40f";
+    const flash_bgcolor = this.state.flashMode==Camera.Constants.FlashMode.off ?"#95a5a6": "#ffeca0d9";
     return (
       <View
         style={{
@@ -159,6 +162,7 @@ class BarcodeScanner extends React.Component {
           style={{width:"100%",height:"70%"}}
           autoFocus={this.state.autoFocus ? Camera.Constants.AutoFocus.on : Camera.Constants.AutoFocus.off}
           ratio={this.state.ratio}
+          flashMode={this.state.flashMode}
           onCameraReady ={async ()=>{
             console.log("camera ready");
             if(this.getRatios){
@@ -172,55 +176,71 @@ class BarcodeScanner extends React.Component {
             this.camera = ref;
           }}
         />
+        { __DEV__  && 
         <Button 
           title='Fake scann'
           color="green"
-          onPress={() => this.handleBarCodeScanned({"type":"dddtype", "data":"61199999002"})} />
-          <View style={{justifyContent:"center",flex:1,alignContent:"center",flexDirection:"row"}}>
-            <View style={{flex:1,justifyContent:"center",alignContent:"center"}}>
-              {this.props.setCode && 
-              <View>
-                  {this.props.IsCalc != true &&
-                  <Button 
-                    title={TXT.No_Bar_Code+""} 
-                    onPress={() => this.handleBarCodeScanned({"type":"NoBarCode", "data":-1})}
-                    />
-                  }
-                  {this.props.IsCalc == true &&
-                  <Button 
-                    title={TXT.No_Bar_Code+"."} 
-                    onPress={() => this.handleBarCodeScanned({"type":"NoBarCode", "data":-2})}
-                    />
-                  }
-                  {scanned && 
-                  <TouchableOpacity  
-                    disabled={!scanned}
-                    style={styles_Btn.TouchableOpacityStyle}
-                    title={TXT.Scan+""} 
-                    onPress={() => this.setState({ scanned: false })} >
-                      <View style={[styles_Btn.ButtonStyle,{backgroundColor:'#2c3e50',}]} >
-                        <Icon name="barcode" size={40} style={{alignSelf:"center",color:"#ecf0f1"}}></Icon>
-                      </View>
-                  </TouchableOpacity>
-                  }
-              </View>
-              }
-              {this.props.setImgB64 && 
-              <TouchableOpacity  
-                style={styles_Btn.TouchableOpacityStyle}
-                disabled={this.state.snaping}
-                title={TXT.Snap+""} 
-                onPress={() => this.snap()} >
-                  <View style={[styles_Btn.ButtonStyle,{backgroundColor:'#16a085',}]} >
-                    <Icon name="camera" size={40} style={{alignSelf:"center",color:"#ecf0f1"}}></Icon>
-                  </View>
-              </TouchableOpacity>
-              }
+          onPress={() => this.handleBarCodeScanned({"type":"dddtype", "data":"6119999900002"})} />
+        }
+          <View style={{width:"100%",justifyContent:"center",alignContent:"center", flexDirection:"row"}}>
 
-            </View>
+            <TouchableOpacity  
+              style={styles_Btn.TouchableOpacityStyle}
+              onPress={()=>{
+                //this.setState({flashMode : this.state.flashMode==Camera.Constants.FlashMode.off?Camera.Constants.FlashMode.on:Camera.Constants.FlashMode.off });
+                this.setState({flashMode : this.state.flashMode==Camera.Constants.FlashMode.off?Camera.Constants.FlashMode.torch:Camera.Constants.FlashMode.off });
+              }} >
+                <View style={[styles_Btn.ButtonStyle,{backgroundColor:flash_bgcolor,}]} >
+                  <Icon name="flash" size={40} style={{alignSelf:"center"}}
+                    color= {flash_color}
+                ></Icon>
+                </View>
+            </TouchableOpacity>
+            {scanned && 
+                <TouchableOpacity  
+                  disabled={!scanned}
+                  style={styles_Btn.TouchableOpacityStyle}
+                  title={TXT.Scan+""} 
+                  onPress={() => this.setState({ scanned: false })} >
+                    <View style={[styles_Btn.ButtonStyle,{backgroundColor:'#2c3e50',}]} >
+                      <Icon name="barcode" size={40} style={{alignSelf:"center",color:"#ecf0f1"}}></Icon>
+                    </View>
+                </TouchableOpacity>
+                }
+            {this.props.setImgB64 && 
+            <TouchableOpacity  
+              style={styles_Btn.TouchableOpacityStyle}
+              disabled={this.state.snaping}
+              title={TXT.Snap+""} 
+              onPress={() => this.snap()} >
+                <View style={[styles_Btn.ButtonStyle,{backgroundColor:'#16a085',}]} >
+                  <Icon name="camera" size={40} style={{alignSelf:"center",color:"#ecf0f1"}}></Icon>
+                </View>
+            </TouchableOpacity>
+            }
+              
           </View>
-          {this.getLoadingModal()}
-          {this.render_modal_Loader()}
+          <View style={{flex:1,justifyContent:"center",alignContent:"center"}}>
+            {this.props.setCode && 
+            <View>
+                {this.props.IsCalc != true &&
+                <Button 
+                  title={TXT.No_Bar_Code+""} 
+                  onPress={() => this.handleBarCodeScanned({"type":"NoBarCode", "data":-1})}
+                  />
+                }
+                {this.props.IsCalc == true &&
+                <Button 
+                  title={TXT.No_Bar_Code+"."} 
+                  onPress={() => this.handleBarCodeScanned({"type":"NoBarCode", "data":-2})}
+                  />
+                }
+            </View>
+            }
+
+          </View>
+        {this.getLoadingModal()}
+        {this.render_modal_Loader()}
       </View>
     );
   }
@@ -246,7 +266,7 @@ class BarcodeScanner extends React.Component {
     };
     if (this.camera) {
       let photo = await this.camera.takePictureAsync(options);
-      await this.playSoundCamera();
+      this.playSoundCamera();
       this.setState({cameraStatus:"Adjusting picture"});
       const final_photo = await this._resize(photo) ;
       this.setState({snaping:false});
@@ -254,6 +274,8 @@ class BarcodeScanner extends React.Component {
     }
   };
   handleBarCodeScanned = async ({ type, data }) => {
+    this.setState({ scanned: true });
+
     let isNoBarCode = false;
     if(type=="NoBarCode" && data==-1){
       const product = new Product();
@@ -300,7 +322,6 @@ class BarcodeScanner extends React.Component {
       return ;
     }
     
-    this.setState({ scanned: true });
     this.props.setCode(type, data, country,company,product,isNoBarCode); 
 
   };
