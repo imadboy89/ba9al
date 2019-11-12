@@ -11,6 +11,7 @@ import Icon from 'react-native-vector-icons/FontAwesome';
 import HeaderButton from "../Components/HeaderButton";
 import LocalStorage from "../Libs/LocalStorage";
 import AutoComplite from "../Components/autoComplite";
+import History from "../Libs/History_module";
 TXT = null;
 
 
@@ -34,8 +35,7 @@ class ScanScreen extends React.Component {
       this.company = new Company();
       this.product = new Product();
       this.continue_list=[];
-      this.LS = new LocalStorage();
-
+      this.History_ob = new History();
       const didBlurSubscription = this.props.navigation.addListener(
         'didFocus',
         payload => {
@@ -51,35 +51,47 @@ class ScanScreen extends React.Component {
         }
       );
     }
-    saveLS(){
+    saveLS = async()=>{
       let items_list = [];
-      this.state.items_list.forEach(item => {
-        item.fields.quantity = item.quantity;
+      const hist_id  = new History().DB.getDateTime();
+      const month    = hist_id.split(" ")[0].split("-").slice(0,2).join("-");
+      for (let i = 0; i < this.state.items_list.length; i++) {
+        const item = this.state.items_list[i];
+
+        let fields_ = {
+          hist_id    : hist_id,
+          month      : month,
+          product_id : item.fields.id,
+          price      : item.fields.price,
+          quantity   : item.quantity,
+        }; 
+        
+        const history_ = new History(fields_);
+        await history_.save();
         items_list.push(item.fields);
-      });
+      }
       this.state.items_list[0].is_hist = true;
-      const LastP = {"list":items_list,"title":"","total":this.state.Total};
-      this.LS.setPurchaseHistory(LastP).then(PurchaseList=>{
-        console.log("saving Done");
-        this.props.navigation.setParams({showSaveBtn : false ,});
-      });
       this.setState({});
+      this.props.navigation.setParams({showSaveBtn : false,})
     }
     loadLastP = async()=>{
-      this.state.items_list = [];
-      let lastPurchaseList = await this.LS.getLastPurchaseList();
-      //console.log(lastPurchaseList);
-      if(lastPurchaseList && "list" in lastPurchaseList){
-        this.setState({hist_label:lastPurchaseList["title"]});
-        //lastPurchaseList["list"].forEach(prodValues => {
 
-        //});
-        for (let i = 0; i < lastPurchaseList["list"].length; i++) {
-          const prodValues = lastPurchaseList["list"][i];
-          let prod_h = new Product(prodValues);
-          prod_h.is_hist = true;
-          prod_h.quantity = prodValues.quantity;
-          await prod_h.getPhoto();
+      this.state.items_list = [];
+      //let lastPurchaseList = await this.LS.getLastPurchaseList();
+      let lastPurchaseList_  = await this.History_ob.filterWithExtra({},"id DESC","",true);
+      let lastPurchaseList = [];
+      for (let i = 0; i < lastPurchaseList_.length; i++) {
+        const hist_elem = lastPurchaseList_[i];
+        if(lastPurchaseList.length==0 || lastPurchaseList[0].hist_id == hist_elem.hist_id){
+          lastPurchaseList.push(hist_elem);
+        }
+      }
+      if(lastPurchaseList && lastPurchaseList.length > 0){
+        this.setState({hist_label:lastPurchaseList[0].hist_id});
+
+        for (let i = 0; i < lastPurchaseList.length; i++) {
+          const prod_h = lastPurchaseList[i];
+          
           this.state.items_list.push(prod_h);
         }
         this.Total(2);
@@ -195,7 +207,7 @@ class ScanScreen extends React.Component {
         }
       }
       this.setState({scanned:null,Total:total,isVisible_modal_scan:false});
-      this.props.navigation.setParams({showSaveBtn : this.state.items_list.length>0 && this.state.items_list[0].is_hist==undefined ,});
+      this.props.navigation.setParams({showSaveBtn : this.state.items_list.length>0 && this.state.items_list[0].is_hist!=true ,});
     }
     loadItemsForSearch(){
       if(this.products_list && this.products_list.length>0){

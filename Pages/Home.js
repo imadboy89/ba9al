@@ -5,6 +5,7 @@ import Translation from "../Libs/Translation";
 import LocalStorage from "../Libs/LocalStorage";
 import HeaderButton from "../Components/HeaderButton";
 import backUp from "../Libs/backUp";
+import History from "../Libs/History_module";
 TXT = null;
 
 
@@ -129,12 +130,14 @@ class HomeScreen extends React.Component {
       this.backup._loadClient().then(output=>{
         this.setState({backup_email:this.backup.email,backup_lastActivity:this.backup.lastActivity, backup_is_admin:this.backup.admin});
       });
+      this.History_ob = new History();
       const didBlurSubscription = this.props.navigation.addListener(
         'didFocus',
         payload => {
           new Translation().getTranslation().then(tr=>{
           if(TXT != tr){
             TXT = tr;
+            this.backup.TXT = TXT;
             this.props.navigation.setParams({title:TXT.Home});
             this.setState({language:this.TXT_ob.language});
           }
@@ -160,9 +163,16 @@ class HomeScreen extends React.Component {
       const LastRemovedHistory = await this .LS.LastRemovedHistory();
 
       this.firstHistoryRender = true;
-      this.LS.getHistory().then(history=>{
-        history = history? history : [];
-        this.setState({history_list:history,LastRemovedHistory:LastRemovedHistory});
+      
+      let ls_hist = await this.LS.getHistory();
+      await this.History_ob.importLS(ls_hist);
+
+      this.History_ob.gethistory().then( output =>{
+        this.setState({
+          history_list       : output[0],
+          month_total        : output[1],
+          t9adya_total       : output[2],
+          LastRemovedHistory : LastRemovedHistory});
       });
     }
     componentDidMount(){
@@ -291,10 +301,13 @@ class HomeScreen extends React.Component {
     }
     saveCredents =(email,password)=>{
       this.setState({savingCredents:true});
-      this.LS.setCredentials(email,password).then(()=>{
+      this.LS.setCredentials(email,password).then(output=>{
+        if(output==false){
+          return false;
+        }
         this.backup.changeClient().then(()=>{
           this.closeModal_credents();
-          console.log("this.backup.email",this.backup.email , "_"+this.backup.admin+"_");
+
           this.setState({
             synchronize_btn_status:true,
             backup_lastActivity:this.backup.lastActivity,
@@ -406,8 +419,10 @@ class HomeScreen extends React.Component {
                     title = {TXT.Clear_cache}
                     disabled={!this.state.history_list || this.state.history_list.length==0}
                     onPress={ ()=> {
-                      this.LS.clearHistory().then(()=>{
-                        this.loadHistory();
+                      this.History_ob.DB.empty().then(()=>{
+                        this.LS.setLastRemovedHistory().then(()=>{
+                          this.loadHistory();
+                        });
                       });
                     }}
                 />
@@ -529,96 +544,86 @@ class HomeScreen extends React.Component {
     }
     render_history(){
       let lastMonth = "";
-      //this.state.months_total = {};
+      this.state.months_total = {};
       let monthtotal = 0 ;
       let is_OK = true;
-      const list =  this.state.history_list.slice(0).reverse().map((list,i)=>{
-        if(!list["list"] || !list["list"].map){
-          return null;
-        }
-        is_OK = true;
-        const list_details = list["list"].map((prod,k)=>{
-          
-          if(prod.id==null){
-            is_OK = false;
-            return <Text>Not Found</Text>;
-          }
-          return (
-            <Text key={list["title"]+i+prod.name+k}  style={{color:"#bdc3c7",fontSize:18}}>
-              x{prod.quantity?prod.quantity:1} -{prod.name} - {prod.price} dh
-            </Text>
-            
-          );
-        });
-        let new_month = false;
-        const title_month = this.getMonth(list["title"]);
-        if(lastMonth!=title_month){
-          if(monthtotal!="" && !(monthtotal in this.state.months_total) ){
-            this.state.months_total[lastMonth] = monthtotal ; 
-          }
-          
-          lastMonth = title_month;
-          new_month = title_month;
-          monthtotal = list["total"];
-        }else{
-          monthtotal += list["total"];
-        }
-        if(this.state.history_list.length-1 == i){
-          if(monthtotal!="" && !(monthtotal in this.state.months_total) ){
-            this.state.months_total[lastMonth] = monthtotal ; 
-          }
-        }
-        if(!is_OK){
-          return null;
-        }
-        return (
-          <View key={list["title"]+i}  >
-            { new_month &&
-              <Text style={{color:"white",width:"100%",fontSize:30,backgroundColor:"#3d91c8a8"}} > 
-              {new_month} : {this.state.months_total[new_month]} dh
-              </Text>
-            }
-            <TouchableOpacity 
-              style={{alignSelf: 'stretch',paddingBottom:5,paddingTop:5,paddingLeft:20,borderRadius: 4,borderWidth: 0.5,borderColor: '#d6d7da',}}
-              activeOpacity={0.7}
-              onPress={()=>{
-                if(this.state.showDetails && this.state.showDetails== list["title"]+i){
-                  this.setState({showDetails:null});
-                }else{
-                  this.setState({showDetails:list["title"]+i});
-                }
-              }}
-            >
-              <View style={{alignSelf: 'stretch',flexDirection:"row"}}>
-                <Text style={{color:"white",width:"70%",fontSize:20}}> 
-                  {list["title"]}
-                </Text>
-                {list["total"] && 
-                    <Text style={{color:"#f5e295fc",padding:0,backgroundColor:"#2980b970",textAlign:"right",fontSize:20,width:"30%"}}>
-                      {list["total"]+" DH"}
-                    </Text>
-                  } 
-              </View>
-              <View >
-              {this.state.showDetails && this.state.showDetails==list["title"]+i &&
-                list_details
-                }
-              </View>
-            </TouchableOpacity>
+      let i = 0;
+      let j = 0;
+      let t9dyat = [];
 
-          </View>
-        );
-      });
-      if(this.firstHistoryRender){
-        this.firstHistoryRender = false;
-        setTimeout(() => {
-          this.setState({});
-        }, 100);
+      for (const month in this.state.history_list) {
+        let list_prods=null;
+        if (this.state.history_list.hasOwnProperty(month)) {
+          const month_hist = this.state.history_list[month];
+          t9dyat.push(                  
+          <Text key={month} style={{color:"white",width:"100%",fontSize:30,backgroundColor:"#3d91c8a8"}} > 
+            {month} : {this.state.month_total[month]} dh
+          </Text>);
+          for (const t9adya_key in month_hist) {
+            let list_prods=null;
+            if (month_hist.hasOwnProperty(t9adya_key)) {
+              const t9adya = month_hist[t9adya_key];
+              const list_details = t9adya.map((prod,k)=>{
+          
+                if(prod.fields.product_id==null){
+                  is_OK = false;
+                  return <Text>Not Found</Text>;
+                }
+                return (
+                  <Text key={t9adya_key+prod.fields.product_id+k}  style={{color:"#bdc3c7",fontSize:18}}>
+                    x{prod.fields.quantity?prod.fields.quantity:1} -{prod.fields.product_id} - {prod.fields.price} dh
+                  </Text>
+                  
+                );
+              });
+              
+              t9dyat.push(
+                <View key={t9adya_key}  >
+                <TouchableOpacity 
+                  style={{alignSelf: 'stretch',paddingBottom:5,paddingTop:5,paddingLeft:20,borderRadius: 4,borderWidth: 0.5,borderColor: '#d6d7da',}}
+                  activeOpacity={0.7}
+                  onPress={()=>{
+                    if(this.state.showDetails && this.state.showDetails== t9adya_key){
+                      this.setState({showDetails:null});
+                    }else{
+                      this.setState({showDetails:t9adya_key});
+                    }
+                    console.log("t9adya_key+j",t9adya_key);
+                  }}
+                >
+                  <View style={{alignSelf: 'stretch',flexDirection:"row"}}>
+                    <Text style={{color:"white",width:"70%",fontSize:20}}> 
+                      {t9adya_key}
+                    </Text>
+                    {this.state.t9adya_total[t9adya_key] && 
+                        <Text style={{color:"#f5e295fc",padding:0,backgroundColor:"#2980b970",textAlign:"right",fontSize:20,width:"30%"}}>
+                          { this.state.t9adya_total[t9adya_key] +" DH"}
+                        </Text>
+                      } 
+                  </View>
+                  <View >
+                  {this.state.showDetails && this.state.showDetails==t9adya_key &&
+                    list_details
+                    }
+                  </View>
+                </TouchableOpacity>
+    
+              </View>
+              
+              );
+
+              j=j+1;
+            }
+          }
+
+
+          i+=1;
+        }
       }
       return (
         <ScrollView style={{flex:1,flexDirection:"column",paddingRgith:10,marginLeft:10,}}>
           <Text style={{color:"white",width:"95%",paddingLeft:8,fontSize:30,}} > {TXT.History} :</Text>
-          {list}
+          {t9dyat}
           {this.state.LastRemovedHistory &&
           <Text style={{color:"#f4caa5",fontSize:18}}>{TXT.Last_cleared_history} : {this.state.LastRemovedHistory}</Text>
           }

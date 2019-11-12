@@ -175,11 +175,11 @@ class DB {
 
       });
     }
-    filter(Module,where={}){
-      return  this.select(where)
+    filter(Module,where={},orderby="",limit=""){
+      return  this.select(where,orderby,limit)
        .then(output=>{
            let list = []
-           let dara_rows = output["ResultSet"]["rows"]["_array"] ;
+           let dara_rows = output && output["ResultSet"] && output["ResultSet"]["rows"] && output["ResultSet"]["rows"]["_array"] ?  output["ResultSet"]["rows"]["_array"] : [];
            if(output["success"] && dara_rows.length>=1){
                dara_rows.forEach(res => {
                    let _module = new Module();
@@ -251,24 +251,45 @@ class DB {
       const where_values = Object.values(where);
       const where_keys   = Object.keys(where);
       let fields_holder = [];
+      let where_values_new = [];
       for (let i = 0; i < where_keys.length; i++) {
+        if(Array.isArray(where_values[i])){
+          let holders_symbol = [];
+          for (let k = 0; k < where_values[i].length; k++) {
+            const val = where_values[i][k];
+            where_values_new.push(val);
+            holders_symbol.push("?");
+          }
+          fields_holder.push(where_keys[i]+" in ("+holders_symbol.join(",")+") ");
+        }else{
           fields_holder.push(where_keys[i]+"=?");
+          where_values_new . push( where_values[i] );
+        }  
       }
       fields_holder = fields_holder.length>0 ? " WHERE "+fields_holder.join(" AND ") : "";
-      return [fields_holder,where_values];
+      return [fields_holder,where_values_new];
     }
-    select(where){
+    select(where,orderby="",limit=""){
+      orderby = orderby && orderby!="" ? " ORDER BY "+orderby : "";
+      limit   = limit && limit !="" ? " LIMIT "+limit : "";
       const where_values = Object.values(where);
       const where_keys   = Object.keys(where);
       let fields_holder = [];
       for (let i = 0; i < where_keys.length; i++) {
-          fields_holder.push(where_keys[i]+"=?");
+          if(Array.isArray(where_values[i])){
+            const values = where_values[i].join(",");
+            where_values[i] = values;
+            fields_holder.push(where_keys[i]+" in (?) ");
+          }else{
+            fields_holder.push(where_keys[i]+"=?");
+          }
+          
       }
       fields_holder = fields_holder.length>0 ? " WHERE "+fields_holder.join(" AND ") : "";
       let output = {"success":false,"error":"",output:""};
       const fields = Object.keys(this.module.fields);
 
-      const query = 'SELECT '+fields.join(",")+' FROM '+this.module.table_name+' '+fields_holder;
+      const query = 'SELECT '+fields.join(",")+' FROM '+this.module.table_name+' '+fields_holder + " "+orderby+limit;
       return this.executeSql(query, where_values);
     }
 

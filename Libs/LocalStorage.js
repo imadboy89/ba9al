@@ -86,6 +86,9 @@ class LocalStorage{
         await AsyncStorage.setItem('history', JSON.stringify([]));
         return this.LastRemovedHistory(this.getDateTime());
     };
+    setLastRemovedHistory= async () => {
+        return this.LastRemovedHistory(this.getDateTime());
+    };
     LastRemovedHistory = async (date=null) =>{
         if(date){
             await AsyncStorage.setItem('LastRemovedHistory', date);

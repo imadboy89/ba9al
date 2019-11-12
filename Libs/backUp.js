@@ -2,7 +2,7 @@ import LocalStorage from "./LocalStorage";
 import Photo from "./Photo_module";
 import Company from './Company_module';
 import Product from "./Product_module";
-import { Linking  } from 'react-native';
+import { NetInfo  } from 'react-native';
 import { Stitch,RemoteMongoClient , AnonymousCredential,UserPasswordCredential,UserPasswordAuthProviderClient } from "mongodb-stitch-react-native-sdk";
 
 
@@ -23,7 +23,14 @@ class BackUp{
           console.log(error);
         }
         this.admin = false;
-        
+        this.isConnected = false;
+    }
+    checkCnx = ()=>{
+      return NetInfo.isConnected.fetch().then(isConnected => {
+        this.isConnected = isConnected;
+        console.log("isConnected", isConnected);
+        return isConnected;
+      });
     }
     setClientInfo(){
       try {
@@ -52,6 +59,10 @@ class BackUp{
       });
     }
     changeClient = async (eml,pass)=>{
+      if( ! await this.checkCnx()){
+        alert(this.TXT.You_need_internet_connection_to+(this.TXT.language=="en"?" ":"")+this.TXT.Sign_in);
+        return false;
+      }
       const app = Stitch.defaultAppClient;
       const credents = await this.LS.getCredentials();
       this.admin = true ;
@@ -68,7 +79,12 @@ class BackUp{
       }
        
     }
-    newUser = (username,password)=>{
+    newUser = async(username,password)=>{
+      if( ! await this.checkCnx()){
+        alert(this.TXT.You_need_internet_connection_to+(this.TXT.language=="en"?" ":"")+this.TXT.Sign_up);
+        return false;
+      }
+      
       const emailPasswordClient = Stitch.defaultAppClient.auth
         .getProviderClient(UserPasswordAuthProviderClient.factory);
 
@@ -83,6 +99,10 @@ class BackUp{
         });
     }
     _loadClient = async () => {
+        
+        if( ! await this.checkCnx()){
+          return false;
+        }
         const credents = await this.LS.getCredentials();
         let credential= new  AnonymousCredential();
         let usingAnon = true;
@@ -292,6 +312,10 @@ class BackUp{
     }
     synchronize = async(appendLog)=>{
       this.appendLog = appendLog ;
+      if( ! await this.checkCnx()){
+        alert(this.TXT.You_need_internet_connection_to+(this.TXT.language=="en"?" ":"")+this.TXT.Sych_Now);
+        return false;
+      }
       await this.initDb();
       
       if(this.doClean){
@@ -308,41 +332,6 @@ class BackUp{
       
       //await this.synchronize_item(this.history_mdb, Product);
       return true;
-    }
-
-    getBackupMail = async (receiver)=>{
-        await this.initDb();
-        //mailto:<receiver_email>?subject=<subject>&body=<body>&cc=<emails_to_copy>
-        const data = await this.getBackup();
-        const out1 = await this.insertMany(this.products_mdb, data["Product"]["data"]);
-        console.log("Product insertedIds : ", Object.keys(out1["insertedIds"] ) . length );
-
-        const out2 = await this.insertMany(this.companies_mdb, data["Company"]["data"]);
-        console.log("Company insertedIds : ", Object.keys(out2["insertedIds"] ) . length );
-
-        const out3 = await this.insertMany(this.photos_mdb, data["Photo"]["data"]);
-        console.log("Photo insertedIds : ", Object.keys(out3["insertedIds"] ) . length );
-
-        //const out4 = await this.insertMany(this.history_mdb, data["Hitory"]);
-        //console.log("Hitory insertedIds : ", Object.keys(out4["insertedIds"] ) . length );
-    }
-
-    getBackup = async ()=>{
-        let backupDATA = {};
-
-        backupDATA["Product"]  = await this.Product.DB.backup();
-        console.log("Product",backupDATA["Product"]["data"].length);
-        backupDATA["Company"]  = await this.Company.DB.backup();
-        console.log("Company",backupDATA["Company"]["data"].length);
-        backupDATA["Photo"]  = await this.Photo.DB.backup();
-        console.log("Photo",backupDATA["Photo"]["data"].length);
-        backupDATA["Hitory"] = await this.LS.getHistory();
-        console.log("Hitory",backupDATA["Hitory"].length);
-
-
-        backupDATA["LastRemovedHistory"] = await this.LS.LastRemovedHistory();
-        
-        return backupDATA;
     }
 
 }

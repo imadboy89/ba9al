@@ -4,7 +4,8 @@ class translation{
     constructor(LS){
         this.language = "en";
         this.translation = {
-            
+
+            "You_need_internet_connection_to"             : {"ar":"تحتاج إلى اتصال بالإنترنت ل"         ,"fr":"Vous avez besoin d'une connexion Internet pour ","dr":"Khask connexion bach ",},
             "User_name"             : {"ar":"اسم المستخدم"         ,"fr":"Nom d'utilisateur","dr":"Ism lmosta3min",},
             "Are_you_sure_you_want_to_clear_database"             : {"ar":"هل أنت متأكد أنك تريد مسح قاعدة البيانات؟"         ,"fr":"Êtes-vous sûr de vouloir effacer la base de données?","dr":"M2aked baghi tmsa7 base donee ?",},
             "This_will_remove_all_the_products_and_companies"             : {"ar":"سيؤدي هذا إلى إزالة جميع المنتجات والشركات"         ,"fr":"Cela supprimera tous les produits et sociétés","dr":"Ghadi tmsa7 prouiyat w charikat kamlin ",},
@@ -50,7 +51,7 @@ class translation{
             "Snap"                       : {"ar":"Snap"              ,"fr":"Snap","dr":"Snap",},
             "Image_quality"              : {"ar":"جودة الصورة"        ,"fr":"Quality d'image","dr":"qualiti d photo",},
             "Add"                        : {"ar":"إضافة"            ,"fr":"Ajouter","dr":"Dakhal",},
-            "Items_count"                : {"ar":"عدد العناصر"        ,"fr":"Nombre d'activles","dr":"3adad d sel3a",},
+            "Items_count"                : {"ar":"عدد العناصر"        ,"fr":"Nombre d'articles","dr":"3adad d sel3a",},
             "Ok"                         : {"ar":"حسنا"             ,"fr":"D'accord","dr":"Safi",},
             "History"                    : {"ar":"التاريخ"            ,"fr":"Historique","dr":"sijil",},
             "+"                          : {"ar":"+"               ,"fr":"+","dr":"+",},

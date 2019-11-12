@@ -85,7 +85,7 @@ const styles_list = StyleSheet.create({
         justifyContent:"center"
     },
     TextInput:{
-        width: "80%", 
+        width: "70%", 
         borderColor: 'gray', 
         backgroundColor:"#34495e",
         color:"white",

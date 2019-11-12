@@ -155,11 +155,12 @@ class Product {
               " FROM "+this.table_name+
               " LEFT JOIN photo ON products.id=photo.id"+
               " LEFT JOIN companies ON products.company=companies.id "+where_build[0] + " ORDER BY products.entered DESC "+limit  ;
+            console.log(query , where_build[1]);
         return this.DB.executeSql(query, where_build[1]).then(output=>{
             let list = [];
-            if("error" in output && output["error"] && output["error"] !=""){
+            if(output && typeof output === 'object' && "error" in output && output["error"] && output["error"] !=""){
                 console.log(output["error"]);
-            }else{
+            }else if (output && typeof output === 'object' && output["ResultSet"] && output["ResultSet"]["rows"] && output["ResultSet"]["rows"]["_array"]){
                 let dara_rows = output["ResultSet"]["rows"]["_array"] ;
                 if(output["success"] && dara_rows.length>=1){
                     dara_rows.forEach(res => {
@@ -193,6 +194,10 @@ class Product {
                     });
                 }
             }
+            if(output && typeof output != 'object' ){
+                console.log(output);
+            }
+            output = output && typeof output === 'object'  ? output : {} ;
             output["success"] = list.length>0 ? true : false;
             delete output["ResultSet"];
             output["list"] = list ;
