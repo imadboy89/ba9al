@@ -6,101 +6,10 @@ import LocalStorage from "../Libs/LocalStorage";
 import HeaderButton from "../Components/HeaderButton";
 import backUp from "../Libs/backUp";
 import History from "../Libs/History_module";
+import Credentials from "../Components/Credentials";
+import Partners from "../Components/Partners";
+
 TXT = null;
-
-
-class Credentials extends React.Component{
-  constructor(props) {
-    super(props);
-    this.state = {
-      email:"",
-      password:""
-    };
-    this.LS = new LocalStorage();
-    this.LS.getCredentials().then(output=>{
-      this.setState({email:output.email, password:output.password});
-    });
-    }
-    saveCredentials(){
-      this.LS.setCredentials(this.state.email,this.state.password);
-      this.props.closeModal();
-    }
-    render(){
-      return (
-        <View style={{height:"100%",width:"100%",backgroundColor:"#646c78"}}>
-          <View style={styles_list.row_view}>
-          <Text style={styles_list.text_k}> {TXT.User_name} : </Text>
-          <TextInput
-              style={styles_list.TextInput}
-              placeholder={TXT.User_name+" .. "}
-              placeholderTextColor="#ecf0f1"
-              onChangeText ={newValue=>{
-                  this.setState({email:newValue});
-              }}
-              value={this.state.email}
-              type="username"
-              autoCorrect={false}
-          />
-          </View>
-
-          <View style={styles_list.row_view}>
-          <Text style={styles_list.text_k}> {TXT.Password} : </Text>
-          <TextInput
-              style={styles_list.TextInput}
-              placeholder={TXT.Password+" .. "}
-              placeholderTextColor="#ecf0f1"
-              onChangeText ={newValue=>{
-                  this.setState({password:newValue});
-              }}
-              value={this.state.password}
-              type="password"
-              secureTextEntry={true}
-              autoCorrect={false}
-          />
-          </View>
-          <View style={buttons_style.container_row}>
-            <View style={buttons_style.view_btn_row}>
-              <Button
-                  style={buttons_style.btn_row}
-                  title={TXT.Sign_in+""}
-                  disabled={this.props.savingCredents}
-                  color="#2ecc71"
-                  onPress={()=>{
-                    this.props.saveCredents(this.state.email,this.state.password);
-                  }
-                  }
-              ></Button>
-            </View>
-            <View style={buttons_style.view_btn_row}>
-              <Button
-                  style={buttons_style.btn_row}
-                  title={TXT.Cancel+""}
-                  
-                  color="#f39c12"
-                  onPress={()=>{
-                      this.props.closeModal();
-                  }
-                  }
-              ></Button>
-            </View>
-            <View style={buttons_style.view_btn_row}>
-              <Button
-                  style={buttons_style.btn_row}
-                  title={TXT.Sign_up+""}
-                  disabled={this.props.savingCredents}
-                  color="#3498db"
-                  onPress={()=>{
-                      this.props.signUp(this.state.email,this.state.password);
-                  }
-                  }
-              ></Button>
-              </View>
-            </View>
-
-        </View>
-      );
-    }
-}
 
 class HomeScreen extends React.Component {
     constructor(props) {
@@ -121,6 +30,8 @@ class HomeScreen extends React.Component {
         backup_is_admin : false,
         synchLog : [],
         clear_database:true,
+        modalVisible_partners : false,
+
       };
       this.LS = new LocalStorage();
       this.firstHistoryRender = true;
@@ -142,6 +53,14 @@ class HomeScreen extends React.Component {
             this.setState({language:this.TXT_ob.language});
           }
           });
+          /*
+          this.History_ob.getCount().then(out=>{
+            let count = 0;
+            try { count = parseInt(out);
+            } catch (error) { count = 0;}
+            this.props.navigation.setParams({ items_count:count});
+            });
+            */
           this.loadHistory();
         }
       );
@@ -165,10 +84,18 @@ class HomeScreen extends React.Component {
       this.firstHistoryRender = true;
       
       let ls_hist = await this.LS.getHistory();
-      await this.History_ob.importLS(ls_hist);
-
+      const imported_history = await this.History_ob.importLS(ls_hist);
+      if(imported_history && imported_history.length && imported_history.length>0){
+        this.LS.clearHistory();
+      }
       this.History_ob.gethistory().then( output =>{
+        output= output["error"] && output["error"]!="" ? [-1,"",""] : output;
+        if(!output || output.length == 0 ){
+          return false;
+        }
+        this.props.navigation.setParams({ items_count:output[3]});
         this.setState({
+          backup_doClear     : false,
           history_list       : output[0],
           month_total        : output[1],
           t9adya_total       : output[2],
@@ -181,11 +108,11 @@ class HomeScreen extends React.Component {
           openAddModal : this.openAddModal,
           TXT  : TXT,
           disable:false,
-
+          items_count:0,
        })
     }
   static navigationOptions =  ({ navigation  }) => ({
-      title : navigation.getParam("title"),
+      title : navigation.getParam("title")+" ["+navigation.getParam("items_count",0)+"]",
       headerRight: a=>{
         const {params = {}} = navigation.state;
         return (
@@ -232,7 +159,7 @@ class HomeScreen extends React.Component {
           );
       })
     }
-    clearDatabase(){
+    clearDatabase = ()=>{
       Alert.alert(
         TXT.Confirmation,
         TXT.This_will_remove_all_the_products_and_companies,
@@ -244,6 +171,7 @@ class HomeScreen extends React.Component {
               await this.backup.Product.DB.empty();
               await this.backup.Company.DB.empty();
               await this.backup.Photo.DB.empty();
+              await this.backup.History.DB.empty();
               this.setState({clear_database:true});
             },
             
@@ -268,8 +196,9 @@ class HomeScreen extends React.Component {
     getLoadingModal(){
       if(!this.state.synchLog_modal ) return null;
       const log = !this.state.synchLog.map ? null : this.state.synchLog.map((k,v)=>{
+        const textColor = k.indexOf("XXX") >=0 ? "#efc4c4" : "#cbe0d5" ;
         return (
-          <Text key={v} style={{color:"#bdc3c7",textAlign:"left",width:"90%",}}>{k}</Text>
+          <Text key={v} style={{color:textColor,textAlign:"left",width:"90%",marginLeft:20}}>{k}</Text>
         );
       });
       return (
@@ -279,12 +208,16 @@ class HomeScreen extends React.Component {
         visible={this.state.synchLog_modal}
         onRequestClose={() => { this.setState({ synchLog_modal:false,}); } }
         >
+          <View style={{flex:.1,backgroundColor:"#00000099"}}></View>
           <View style={{flex:1,width:"100%",justifyContent:"center",backgroundColor:"black"}}>
-            {log}
+            <Text style={styles_list.title_modals}> Log of Synchronazing : </Text>
+            <ScrollView style={{flex:1,width:"100%",backgroundColor:"black"}}>
+              {log}
+            </ScrollView>
             { !this.state.synchronize_btn_status && 
-            <ActivityIndicator size="large" color="#00ff00" />}
-            { this.state.synchronize_btn_status &&
-            <Text style={{color:"#bdc3c7",textAlign:"center",width:"90%",fontSize:23}}>DONE!</Text>
+              <ActivityIndicator size="large" color="#00ff00" />}
+            { this.state.synchronize_btn_status && this.state.synchLog.map &&this.state.synchLog.length>0 && 
+              <Text style={{color:"#91ffc0",textAlign:"center",width:"90%",fontSize:23}}>DONE!</Text>
             }
             <Button
               title="close"
@@ -297,7 +230,9 @@ class HomeScreen extends React.Component {
     }
     closeModal_credents =()=>{
       this.setState({modalVisible_credentails:false});
-
+    }
+    closeModal_partners =()=>{
+      this.setState({modalVisible_partners:false});
     }
     saveCredents =(email,password)=>{
       this.setState({savingCredents:true});
@@ -307,7 +242,6 @@ class HomeScreen extends React.Component {
         }
         this.backup.changeClient().then(()=>{
           this.closeModal_credents();
-
           this.setState({
             synchronize_btn_status:true,
             backup_lastActivity:this.backup.lastActivity,
@@ -336,7 +270,8 @@ class HomeScreen extends React.Component {
             } }
           >
           <View style={{flex:.4,backgroundColor:"#2c3e5066"}}></View>
-          <View style={{height:300,width:"100%",backgroundColor:"#646c78"}}>
+          <View style={{height:400,width:"100%",backgroundColor:"#646c78"}}>
+          <Text style={styles_list.title_modals}> {TXT.Credents}: </Text>
             <Credentials
               closeModal={this.closeModal_credents}
               saveCredents={this.saveCredents}
@@ -345,6 +280,32 @@ class HomeScreen extends React.Component {
             >
 
             </Credentials>
+          </View>
+          <View style={{flex:1,backgroundColor:"#2c3e5066"}}></View>
+
+          </Modal>
+          );
+    }
+    render_modal_partners(){
+      return (          
+          <Modal 
+            animationType="slide"
+            transparent={true}
+            visible={this.state.modalVisible_partners}
+            onRequestClose={() => { 
+                this.setState({ modalVisible_partners:false,});
+            } }
+          >
+          <View style={{flex:.4,backgroundColor:"#2c3e5066"}}></View>
+          <View style={{height:350,width:"100%",backgroundColor:"#646c78"}}>
+            <Text style={styles_list.title_modals}> {TXT.Partners}: </Text>
+            <Partners
+              closeModal={this.closeModal_partners}
+              invitingPartner={this.state.invitingPartner}
+              backup = {this.backup}
+            >
+
+            </Partners>
           </View>
           <View style={{flex:1,backgroundColor:"#2c3e5066"}}></View>
 
@@ -361,8 +322,9 @@ class HomeScreen extends React.Component {
               this.setState({ modalVisible:false,});
            } }
         >
-            <View style={{flex:.4,backgroundColor:"#2c3e5066"}}></View>
-            <View style={{height:400,width:"100%",backgroundColor:"#646c78"}}>
+            <View style={{flex:.1,backgroundColor:"#2c3e5066"}}></View>
+            <View style={{height:550,width:"100%",backgroundColor:"#646c78"}}>
+              <Text style={styles_list.title_modals}> {TXT.Settings} : </Text>
               <View style={styles_list.row_view}>
                 <Text style={styles_list.text_k}> {TXT.Language} : </Text>
                 <Picker
@@ -413,29 +375,60 @@ class HomeScreen extends React.Component {
               </View>
               <View style={styles_list.row_view}>
                 <Text style={styles_list.text_k}> {TXT.Clear_history} : </Text>
-                <View style={styles_list.text_v} >
+                <View style={[styles_list.text_v,{flexDirection:"row"}]} >
                   <Button 
                     style={{marginLeft:10}}
-                    title = {TXT.Clear_cache}
-                    disabled={!this.state.history_list || this.state.history_list.length==0}
+                    title = {TXT.Clear_local}
+                    disabled={this.state.history_list!=-1 && (!this.state.history_list || this.state.history_list.length==0)}
+                    color="#f1c40f"
                     onPress={ ()=> {
                       this.History_ob.DB.empty().then(()=>{
-                        this.LS.setLastRemovedHistory().then(()=>{
+                        this.LS.clearHistory().then(()=>{
                           this.loadHistory();
                         });
                       });
                     }}
                 />
+                  <Button 
+                    style={{marginLeft:10}}
+                    title = {TXT.Clear_cloud}
+                    disabled={!this.state.synchronize_btn_status}
+                    color="#e67e22"
+                    onPress={ ()=> {
+                      this.setState({synchronize_btn_status:false});
+                      this.backup.synch_history_clean().then(o=>{
+                        if(o===false && o>=0){
+                          alert(TXT.Cloud_history_cleaned_successfully + " ["+o+"]");
+                        }else{
+                          alert(TXT.Cloud_history_failed + " ["+o+"]");
+                        }
+                        this.setState({synchronize_btn_status:true});
+                      });
+                    }}
+                />
               </View>
               </View>
+
               <View style={styles_list.row_view}>
                 <Text style={styles_list.text_k}> {TXT.Clear_database} : </Text>
                 <View style={styles_list.text_v} >
                   <Button 
                     style={{marginLeft:10,marginRight:30}}
                     title = {TXT.Clear}
+                    color="orange"
                     disabled={!this.state.clear_database}
                     onPress={this.clearDatabase}
+                />
+                </View>
+              </View>
+              <View style={styles_list.row_view}>
+                <Text style={styles_list.text_k}> {TXT.Partners} : </Text>
+                <View style={styles_list.text_v} >
+                  <Button 
+                    style={{marginLeft:10,marginRight:30}}
+                    title = {TXT.Manage}
+                    disabled={false}
+                    onPress={()=>{this.setState({modalVisible_partners:true});}}
                 />
                 </View>
               </View>
@@ -494,11 +487,17 @@ class HomeScreen extends React.Component {
                     onPress={ ()=> {
                       this.setState({synchronize_btn_status:false,synchLog_modal:true,synchLog:[]});
                       this.backup.synchronize(this.appendLog).then(out=>{
+                        /*
                         this.setState({
                           synchronize_btn_status:true,
                           backup_lastActivity:this.backup.lastActivity,
                           backup_email:this.backup.email,
                         });
+                        */
+                        this.state.synchronize_btn_status = true;
+                        this.state.backup_lastActivity = this.backup.lastActivity;
+                        this.state.backup_email = this.backup.email;
+                        this.loadHistory();
                       });
                     }}
                 />
@@ -543,16 +542,11 @@ class HomeScreen extends React.Component {
       return date.split(" ")[0].split("-").slice(0,2).join("-");
     }
     render_history(){
-      let lastMonth = "";
       this.state.months_total = {};
-      let monthtotal = 0 ;
-      let is_OK = true;
-      let i = 0;
       let j = 0;
       let t9dyat = [];
 
       for (const month in this.state.history_list) {
-        let list_prods=null;
         if (this.state.history_list.hasOwnProperty(month)) {
           const month_hist = this.state.history_list[month];
           t9dyat.push(                  
@@ -560,15 +554,16 @@ class HomeScreen extends React.Component {
             {month} : {this.state.month_total[month]} dh
           </Text>);
           for (const t9adya_key in month_hist) {
-            let list_prods=null;
             if (month_hist.hasOwnProperty(t9adya_key)) {
               const t9adya = month_hist[t9adya_key];
-              const list_details = t9adya.map((prod,k)=>{
+              let owner_ = null;
+              let list_details = t9adya.map((prod,k)=>{
           
                 if(prod.fields.product_id==null){
                   is_OK = false;
                   return <Text>Not Found</Text>;
                 }
+                owner_ = <Text key={t9adya_key+prod.fields.owner } style={{color:"#91ffc0",fontSize:18}}>{prod.fields.owner}</Text>;
                 return (
                   <Text key={t9adya_key+prod.fields.product_id+k}  style={{color:"#bdc3c7",fontSize:18}}>
                     x{prod.fields.quantity?prod.fields.quantity:1} -{prod.fields.product_id} - {prod.fields.price} dh
@@ -576,7 +571,7 @@ class HomeScreen extends React.Component {
                   
                 );
               });
-              
+
               t9dyat.push(
                 <View key={t9adya_key}  >
                 <TouchableOpacity 
@@ -588,7 +583,6 @@ class HomeScreen extends React.Component {
                     }else{
                       this.setState({showDetails:t9adya_key});
                     }
-                    console.log("t9adya_key+j",t9adya_key);
                   }}
                 >
                   <View style={{alignSelf: 'stretch',flexDirection:"row"}}>
@@ -603,7 +597,10 @@ class HomeScreen extends React.Component {
                   </View>
                   <View >
                   {this.state.showDetails && this.state.showDetails==t9adya_key &&
-                    list_details
+                    owner_
+                  }
+                  {this.state.showDetails && this.state.showDetails==t9adya_key &&
+                    list_details 
                     }
                   </View>
                 </TouchableOpacity>
@@ -615,9 +612,6 @@ class HomeScreen extends React.Component {
               j=j+1;
             }
           }
-
-
-          i+=1;
         }
       }
       return (
@@ -637,6 +631,7 @@ class HomeScreen extends React.Component {
               {this.render_history()}
               {this.render_modal_Settings()}
               {this.render_modal_credentials()}
+              {this.render_modal_partners()}
               {this.getLoadingModal()}
           </View>
         );

@@ -4,7 +4,14 @@ class translation{
     constructor(LS){
         this.language = "en";
         this.translation = {
-
+            
+            "Cloud_history_cleaned_successfully"             : {"ar":"سحابة التاريخ تنظيفها بنجاح"         ,"fr":"L'historique des cloud ​​nettoyé avec succès","dr":"historique d cloud tms7o",},
+            "Cloud_history_failed"             : {"ar":"فشل سحابة التاريخ"         ,"fr":"L'historique des cloud ​​a échoué","dr":"Riglaj",},
+            "Settings"             : {"ar":"الإعدادات"         ,"fr":"Paramètres","dr":"Riglaj",},
+            "Pending"             : {"ar":"قيد الانتظار"         ,"fr":"En attente","dr":"taAcceptik",},
+            "Manage"             : {"ar":"إدارة"         ,"fr":"Gérer","dr":"Gérer",},
+            "Partners"             : {"ar":"شركاء"         ,"fr":"Les partenaires","dr":"choraka2",},
+            "You_need_internet_connection_for_this_action"             : {"ar":"تحتاج إلى اتصال بالإنترنت لهذا الإجراء"         ,"fr":"Vous avez besoin d'une connexion Internet pour cette action","dr":"Khask connexion bach t3mel hadchi",},
             "You_need_internet_connection_to"             : {"ar":"تحتاج إلى اتصال بالإنترنت ل"         ,"fr":"Vous avez besoin d'une connexion Internet pour ","dr":"Khask connexion bach ",},
             "User_name"             : {"ar":"اسم المستخدم"         ,"fr":"Nom d'utilisateur","dr":"Ism lmosta3min",},
             "Are_you_sure_you_want_to_clear_database"             : {"ar":"هل أنت متأكد أنك تريد مسح قاعدة البيانات؟"         ,"fr":"Êtes-vous sûr de vouloir effacer la base de données?","dr":"M2aked baghi tmsa7 base donee ?",},
@@ -13,6 +20,8 @@ class translation{
             "No_access_to_camera"             : {"ar":"لا يمكن الوصول إلى الكاميرا"         ,"fr":"Pas d'accès à la caméra","dr":"Camera mblokiya 3la ba9al App",},
             "Product_name"             : {"ar":"اسم المنتج"         ,"fr":"Nom du produit","dr":"Ism d prodwi",},
             "All"             : {"ar":"الكل"         ,"fr":"Tout","dr":"Kolchi",},
+            "Invite"             : {"ar":"أدعوه"         ,"fr":"Inviter","dr":"invitih",},
+            "Accept"             : {"ar":"قبول"         ,"fr":"Accepter","dr":"9bel",},
             "Entered"             : {"ar":"مسجل"         ,"fr":"Entré","dr":"Dkhal f ",},
             "Updated"             : {"ar":"تم تحديث"         ,"fr":"sauvegardé","dr":"Tbdel f ",},
             "LastBackUp"             : {"ar":"النسخة الاحتياطية الاخيرة"         ,"fr":"Dernière sauvegarde","dr":"akhir backup",},
@@ -44,6 +53,8 @@ class translation{
             "Clear_history"        : {"ar":"مسح التاريخ"              ,"fr":"Vider historique","dr":"msa7 sijil",},
             "Clear_cache"      : {"ar":"مسح ذاكرة التخزين المؤقت"              ,"fr":"Vider Cache","dr":"msa7 lcache",},
             "Clear_database"      : {"ar":"مسح قاعدة البيانات"              ,"fr":"Vider base donnee","dr":"msa7 base donnee",},
+            "Clear_cloud"      : {"ar":"مسح السحابية"              ,"fr":"Vider cloud","dr":"Msa7 cloud",},
+            "Clear_local"      : {"ar":"مسح المحلية"              ,"fr":"Vider local","dr":"Msa7 local",},
             "Clear"      : {"ar":"مسح"              ,"fr":"Vider","dr":"Msa7",},
             "Clear_remote_Backup"      : {"ar":"مسح النسخ الاحتياطي عن بعد"              ,"fr":"Vider Backup a distance.","dr":"Msa7 backup",},
             "Close"                       : {"ar":"أغلق"              ,"fr":"Fermer","dr":"Chod",},

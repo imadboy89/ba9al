@@ -1,16 +1,18 @@
 import DB from "./DB";
 import Product from "./Product_module";
+import localStorage from "./LocalStorage"
 class History {
     constructor(fields=null) {
         let list = [];
         this.table_name = "history";
         this.fields = {
-            "id":null,
+            //"id":null,
             "hist_id":null,
             "month":null,
             "product_id":null,
             "price":null,
             "quantity":null,
+            "owner":null,
             "entered":null,"updated":null
         };
         if (fields){
@@ -22,12 +24,13 @@ class History {
             }
         }
         this.fields_defenition = [
-            "id INTEGER PRIMARY KEY",
+            //"id INTEGER PRIMARY KEY",
             "hist_id TEXT",
             "month TEXT",
             "product_id INTEGER",
             "price REAL",
             "quantity INTEGER",
+            "owner TEXT",
             "entered DATETIME DEFAULT CURRENT_TIMESTAMP",
             "updated DATETIME DEFAULT NULL"
         ];
@@ -39,13 +42,11 @@ class History {
     }
     importLS = async(history)=>{
         try {
-            console.log("history",history);
             if (!history || history.length==0){
                 return false;
             }
             const history_exist = await this.filter();
-            console.log("history_exist",history_exist);
-            if( ! history_exist || !history_exist["success"] || !history_exist["list"] || history_exist["list"].length == 0){
+            if( history_exist && history_exist["success"] && history_exist["list"] && history_exist["list"].length > 0){
                 return false
             }            
         } catch (error) {
@@ -54,6 +55,7 @@ class History {
         }
 
         //await  this.DB.empty();
+        let imported_history = [];
         for (let i = 0; i < history.length; i++) {
             const histt = history[i];
             const month = this.getMonth(histt["title"]);
@@ -70,22 +72,26 @@ class History {
                 "quantity":prodValues.quantity,
                 "entered":histt["title"]+":00","updated":null
               });
-              history_ob.save().then(outputt=>console.log(outputt));
+              const outp = await history_ob.save();
+              lastInsertedId = outp && outp["success"] && outp["ResultSet"] && outp["ResultSet"]["insertId"] ? outp["ResultSet"]["insertId"] : 0 ;
+              imported_history.push(lastInsertedId+" - "+histt["title"]+ " : "+prodValues.price + "dh");
             }
   
           }
+          if(imported_history.length>0){
+              alert(`Imported `+imported_history.length+` items  :\n`+imported_history.join(`\n`));
+          }
+          return imported_history;
     }
     doesExist(where){
         return this.DB.doesExist(where);
     }
-    save(){
-        return this.doesExist({"id":this.fields.id}).then((res)=>{
-            if (res["doesExist"]==false){
-                return this.DB.insert();
-            }else{
-                return this.DB.update();
-            }
-        });
+    save = async()=>{
+        const credents = await new localStorage().getCredentials();
+        credents_email =  credents && credents["email"] ? credents["email"] : "";
+        this.fields.owner = this.fields.owner ? this.fields.owner : credents_email;
+
+        return this.DB.insert();
     }
     delete(){
         return this.DB.delete();
@@ -96,14 +102,19 @@ class History {
     filter(where={},orderby="",limit=""){
        return  this.DB.filter(History,where,orderby,limit);
     }
-    getLastHistory(){
-        
+    getCount(){
+        this.DB.groupBy = "group by hist_id";
+        return  this.filter().then(out=>{
+            this.DB.groupBy = "";
+            return out && out["list"] && out["list"].length ? out["list"].length : 0;
+        });
     }
     gethistory(){
-        return this.filter({},"id desc").then(output=>{
+        return this.filter({},"hist_id desc").then(output=>{
             if(!output["success"] || !output["list"]){
                 return output;
             }
+            console.log("output[list].length",output["list"].length);
             let list_by_month = {};
             let total = 0 ;
             let month_total = {};
@@ -131,8 +142,14 @@ class History {
               }
               
             }
+            return this.getCount().then(out=>{
+                let hist_count = 0;
+                try { hist_count = parseInt(out);
+                } catch (error) { hist_count = 0;}
+    
+                return [list_by_month,month_total,t9adya_total,hist_count] ;
+            });
             
-            return [list_by_month,month_total,t9adya_total] ;
 
         });
     }

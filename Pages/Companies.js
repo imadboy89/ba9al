@@ -40,6 +40,10 @@ class CompaniesScreen extends React.Component {
                 this.props.navigation.setParams({title:TXT.Companies});
               }
           });
+          this.company.filter().then(out=>{
+            let count = out && out["success"] && out["list"] && out["list"].length ? out["list"].length : 0;
+            this.props.navigation.setParams({ items_count:count});
+            });
         }
       );
     }
@@ -58,10 +62,11 @@ class CompaniesScreen extends React.Component {
             openAddModal : this.openAddModal,
             TXT  : TXT,
             disable:false,
+            items_count:0,
          })
       }
     static navigationOptions =  ({ navigation  }) => ({
-        title : navigation.getParam("title"),
+        title : navigation.getParam("title")+" ["+navigation.getParam("items_count",0)+"]",
         headerRight: a=>{
           const {params = {}} = navigation.state;
           return (

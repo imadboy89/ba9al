@@ -10,12 +10,19 @@ const styles_list = StyleSheet.create({
   
   
     },
-
+    title_modals : {
+        fontSize:28,
+        alignSelf:"center",
+        textAlign:"center",
+        width:"100%",
+        color:"#53b8fb",
+        marginBottom:20,
+    },
     row_view : {
-      flex: 1, 
+      //flex: 1, 
       flexDirection: 'row' ,
       alignItems: 'center',
-      height : 30 ,
+      height : 35 ,
       marginRight:20,
       marginLeft:20,
       marginBottom:10,
@@ -63,6 +70,7 @@ const styles_list = StyleSheet.create({
     },
     text_v: {
       //backgroundColor:"#34495e",
+      alignSelf: 'center',
       marginLeft:20,
       fontSize: 14,
       fontWeight: 'bold',

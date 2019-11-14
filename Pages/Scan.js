@@ -35,6 +35,7 @@ class ScanScreen extends React.Component {
       this.company = new Company();
       this.product = new Product();
       this.continue_list=[];
+      this.LS = new LocalStorage();
       this.History_ob = new History();
       const didBlurSubscription = this.props.navigation.addListener(
         'didFocus',
@@ -54,32 +55,46 @@ class ScanScreen extends React.Component {
     saveLS = async()=>{
       let items_list = [];
       const hist_id  = new History().DB.getDateTime();
+      
       const month    = hist_id.split(" ")[0].split("-").slice(0,2).join("-");
       for (let i = 0; i < this.state.items_list.length; i++) {
         const item = this.state.items_list[i];
-
+        item.fields.quantity = item.quantity;
+        items_list.push(item.fields);
         let fields_ = {
           hist_id    : hist_id,
           month      : month,
           product_id : item.fields.id,
           price      : item.fields.price,
           quantity   : item.quantity,
+          entered    : hist_id,
         }; 
         
         const history_ = new History(fields_);
         await history_.save();
-        items_list.push(item.fields);
+        
       }
       this.state.items_list[0].is_hist = true;
+
+//////////////////////////////////////////////
+/*
+      const LastP = {"list":items_list,"title":"","total":this.state.Total};
+      this.LS.setPurchaseHistory(LastP).then(PurchaseList=>{
+        console.log("saving Done");
+        this.props.navigation.setParams({showSaveBtn : false ,});
+     });
+*/
+//////////////////////////////////////////////
       this.setState({});
       this.props.navigation.setParams({showSaveBtn : false,})
+
     }
     loadLastP = async()=>{
 
       this.state.items_list = [];
-      //let lastPurchaseList = await this.LS.getLastPurchaseList();
-      let lastPurchaseList_  = await this.History_ob.filterWithExtra({},"id DESC","",true);
-      let lastPurchaseList = [];
+      let lastPurchaseList = await this.LS.getLastPurchaseList();
+      let lastPurchaseList_  = await this.History_ob.filterWithExtra({},"hist_id DESC","",true);
+      lastPurchaseList = [];
       for (let i = 0; i < lastPurchaseList_.length; i++) {
         const hist_elem = lastPurchaseList_[i];
         if(lastPurchaseList.length==0 || lastPurchaseList[0].hist_id == hist_elem.hist_id){

@@ -2,6 +2,7 @@ import LocalStorage from "./LocalStorage";
 import Photo from "./Photo_module";
 import Company from './Company_module';
 import Product from "./Product_module";
+import History from "./History_module";
 import { NetInfo  } from 'react-native';
 import { Stitch,RemoteMongoClient , AnonymousCredential,UserPasswordCredential,UserPasswordAuthProviderClient } from "mongodb-stitch-react-native-sdk";
 
@@ -11,6 +12,7 @@ class BackUp{
         this.Product = new Product();
         this.Company = new Company();
         this.Photo   = new Photo();
+        this.History   = new History();
         this.LS = new LocalStorage();
         //this.initDb();
         this.lastActivity = "";
@@ -41,10 +43,9 @@ class BackUp{
         );
         this.client = Stitch.defaultAppClient;
         this.lastActivity = this.client.auth.activeUserAuthInfo.lastAuthActivity;
-        this.email = this.client.auth.activeUserAuthInfo.userProfile.data.email;  
+        this.email = this.client.auth.activeUserAuthInfo.userProfile.data.email;
         return this.isAdmin();
-        console.log("this.email",this.email);
-        return true;
+
       } catch (error) {
         console.log(error)
       }
@@ -58,11 +59,81 @@ class BackUp{
         alert(err);
       });
     }
+    synch_history = async(history)=>{
+      if(history == undefined){
+        const histories_ = await this.History.filter();
+        let hist_list = [];
+        for (let index = 0; index < histories_["list"].length; index++) {
+          const hist = histories_["list"][index];
+          hist_list.push(hist.fields);
+        }
+        history = hist_list;
+        if(hist_list.length==0){ // drop an recteate table if empty
+          this.History.DB.drop_create_table();
+        }
+      }
+      let results = {};
+      if(!this.client || !this.client.callFunction){
+        this.appendLog ("    XXX synch_history function : Register to be able to synch history");
+        return false;
+      }
+      try {
+        results = await this.client.callFunction("synch_history",[history,]);
+      } catch (error) {
+        console.log(error);
+        this.appendLog ("    XXX synch_history function : "+error);
+        return false;
+      }
+      if(results.error ){
+        this.appendLog ("    XXX synch_history function : "+results.error);
+        return;
+      }
+      
+      for (let i = 0; i < results["items_to_saveLC"].length; i++) {
+        const hist_r = results["items_to_saveLC"][i];
+        delete hist_r["_id"];
+        delete hist_r["id"];
+        const hist_tosave = new History(hist_r);
+        await hist_tosave.save();
+      }
+      this.appendLog ("    Found : "+results["found"]);
+      this.appendLog ("    saved : "+results["items_to_saveLC"].length);
+      this.appendLog ("    upload : "+results["uploaded"]);
+      return results;
+    }
+    synch_history_clean = async()=>{
+
+      let results = {};
+      try {
+        results = await this.client.callFunction("synch_history",[false,true]);
+      } catch (error) {
+        this.appendLog ("    XXX synch_history Clear function : "+error.message);
+        return false;
+      }
+      return results["deleted"];
+    }
+    partnersManager = async(action,partner_username)=>{
+      if( ! await this.checkCnx()){
+        alert(this.TXT.You_need_internet_connection_for_this_action);
+        return false;
+      }
+      const datetime = this.Product.DB.getDateTime();
+      let results = {};
+      try {
+        results = await this.client.callFunction("partnersManager",[action,datetime,partner_username]);
+      } catch (error) {
+        alert(error.message ? error.message : error);
+        return false;
+      }
+      return results;
+    }
     changeClient = async (eml,pass)=>{
       if( ! await this.checkCnx()){
         alert(this.TXT.You_need_internet_connection_to+(this.TXT.language=="en"?" ":"")+this.TXT.Sign_in);
         return false;
       }
+      this.email = "";
+      this.lastActivity = "";
       const app = Stitch.defaultAppClient;
       const credents = await this.LS.getCredentials();
       this.admin = true ;
@@ -72,6 +143,7 @@ class BackUp{
         return this.setClientInfo(); 
       } catch (error) {
         alert(error);
+        this.LS.setCredentials("","");
         let credential= new  AnonymousCredential();
         this.client = await app.auth.loginWithCredential(credential);
         this.admin = false ;
@@ -157,9 +229,10 @@ class BackUp{
     }
     cleanAll = async()=>{
       let output = [];
+      let deleted = 0;
       
       const out1 = await this.clean(this.products_mdb);
-      let deleted = out1 && "deletedCount" in out1 ? out1["deletedCount"] : 0 ;
+      deleted = out1 && "deletedCount" in out1 ? out1["deletedCount"] : 0 ;
       this.appendLog("    Products cleaned ["+deleted+"]");
       
       const out2 = await this.clean(this.companies_mdb);
@@ -170,7 +243,12 @@ class BackUp{
       const out3 = await this.clean(this.photos_mdb);
       deleted = out3 && "deletedCount" in out3 ? out3["deletedCount"] : 0 ;
       this.appendLog("    Photos cleaned ["+deleted+"]");
-
+      
+      /*
+      const out4 = await this.synch_history_clean();
+      deleted = out4 ? out4 : 0 ;
+      this.appendLog("    History cleaned ["+deleted+"]");
+      */
       return output;
     }
 
@@ -210,7 +288,11 @@ class BackUp{
       if(items_local.length==0){ // drop an recteate table if empty
         Item_ob_check.DB.drop_create_table();
       }
-      
+      items_local_dict = {};
+      for (let k = 0; k < items_local.length; k++) {
+        items_local_dict[items_local[k].fields.id] = items_local[k];
+        
+      }
       let itemsR_dict = {};
       let saved=0;
       let local_updated=0;
@@ -218,21 +300,23 @@ class BackUp{
         let item = items[i];
         delete item["_id"];
         itemsR_dict[item["id"]] = item;
-        let outp = await Item_ob_check.doesExist({id:item.id});
+
+        const item_ll = item.id in items_local_dict ? items_local_dict[item.id]: false;
         const photo_cond=false;
         try {
-          photo_cond = isPhoto && outp["doesExist"] && "data" in outp["doesExist"] && outp["doesExist"]["data"]==null;
+          photo_cond = isPhoto && item_ll && item_ll.fields && item_ll.fields.data  && item_ll.fields.data==null;
         } catch (error) {
-          console.log(outp,item.id);
+          console.log(item.id);
         }
-        isRemoteNewer = false;
-        const item_ll = outp["doesExist"];
+
+        
+        let isRemoteNewer = false;
         if(item.updated ){
-          const date_l = item_ll.updated ? this.parseDate2Int(item_ll.updated) : 0;
+          const date_l = item_ll.fields.updated ? this.parseDate2Int(item_ll.fields.updated) : 0;
           const date_r = item.updated ? this.parseDate2Int(item.updated) : 0;
-          isRemoteNewer = item_ll.updated!=null ? date_r > date_l : true;
+          isRemoteNewer = item_ll.fields.updated!=null ? date_r > date_l : true;
         } 
-        if (!outp["doesExist"] || photo_cond || isRemoteNewer ){
+        if (!item_ll || photo_cond || isRemoteNewer ){
 
           if(isPhoto){
             item = await db.findOne({"id":item.id},{"projection": { "_id": 0 }});
@@ -321,6 +405,7 @@ class BackUp{
       if(this.doClean){
         await this.cleanAll();
       }
+      
       this.appendLog("------synch Products------");
       await this.synchronize_item(this.products_mdb, Product);
       
@@ -330,7 +415,9 @@ class BackUp{
       this.appendLog("------synch Photos------");
       await this.synchronize_item(this.photos_mdb, Photo,true);
       
-      //await this.synchronize_item(this.history_mdb, Product);
+      this.appendLog("------synch History------");
+      await this.synch_history();
+      
       return true;
     }
 

@@ -155,7 +155,6 @@ class Product {
               " FROM "+this.table_name+
               " LEFT JOIN photo ON products.id=photo.id"+
               " LEFT JOIN companies ON products.company=companies.id "+where_build[0] + " ORDER BY products.entered DESC "+limit  ;
-            console.log(query , where_build[1]);
         return this.DB.executeSql(query, where_build[1]).then(output=>{
             let list = [];
             if(output && typeof output === 'object' && "error" in output && output["error"] && output["error"] !=""){

@@ -14,7 +14,7 @@ class DB {
         this.database_name="ba9al.db";
         this.database_version="1.0";
         this.database_displayname="ba9al Database";
-        this.database_size=200000;
+        this.database_size=20000000;
 
         this.fields_name = Object.keys(module_.fields);
         this.fields_value = Object.values(module_.fields);
@@ -25,16 +25,9 @@ class DB {
         }
         this.fields_holder = this.fields_holder.join(",");
         this.BackedUp = false; 
+        this.groupBy = "";
         this.db = SQLite.openDatabase(this.database_name, this.database_version, this.database_displayname, this.database_size);
         this.create_table();
-        /*
-        "DROP TABLE companies;"
-        this.executeSql("ALTER TABLE companies2 RENAME TO companies;",[]).then(out=>{
-          console.log(out) ;
-        }) ; 
-        this.db = null;
-        */
-        //"ALTER TABLE companies2 RENAME TO companies;"
     }
     backup(){
       const query = "SELECT * from "+this.module.table_name+" ";
@@ -89,8 +82,8 @@ class DB {
       }
       console.log(await this.executeSql("select count(*) from products2;",values));
     }
-    empty(){
-      return this.executeSql("DELETE FROM "+this.module.table_name,[]);
+    empty = async()=>{
+      return this.drop_create_table();
     }
     getDateTime(){
       const date_ob = new Date();
@@ -127,7 +120,7 @@ class DB {
       return this.create_table();
     }
     save(){
-        if (this.module.fields.id==null){
+        if (this.module.fields.id==null || this.module.fields.id==undefined){
             return this.insert();
         }else{
             return this.update();
@@ -289,7 +282,8 @@ class DB {
       let output = {"success":false,"error":"",output:""};
       const fields = Object.keys(this.module.fields);
 
-      const query = 'SELECT '+fields.join(",")+' FROM '+this.module.table_name+' '+fields_holder + " "+orderby+limit;
+      const query = 'SELECT '+fields.join(",")+' FROM '+this.module.table_name+' '+fields_holder +" "+this.groupBy+ " "+orderby+limit;
+      //console.log(query , where_values);
       return this.executeSql(query, where_values);
     }
 

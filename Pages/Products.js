@@ -47,11 +47,15 @@ class ProductsScreen extends React.Component {
             this.setCode (null, product_id);
             this.props.navigation.setParams({product_id: null})
           }else{
-            this.props.navigation.setParams({company:null});
+            this.product.filter().then(out=>{
+                let count = out && out["success"] && out["list"] && out["list"].length ? out["list"].length : 0;
+
+                this.props.navigation.setParams({company:null, items_count:count});
+            });
           }
         }
       );
-
+    
     }
     
     openAddModal = (product) => {
@@ -89,11 +93,12 @@ class ProductsScreen extends React.Component {
             TXT  : TXT,
             disable:false,
             loadItems:this.loadItems,
-            openAddModal_search:this.openAddModal_search
+            openAddModal_search:this.openAddModal_search,
+            items_count : 0,
          });
       }
     static navigationOptions =  ({ navigation  }) => ({
-        title : navigation.getParam("title"),
+        title : navigation.getParam("title")+" ["+navigation.getParam("items_count",0)+"]",
         headerRight: a=>{
           const {params = {}} = navigation.state;
           let Add_str = "";
