@@ -129,6 +129,14 @@ class BarcodeScanner extends React.Component {
         <View style={{height:100,width:"100%",justifyContent:"center",backgroundColor:"black"}}>
           <ActivityIndicator size="large" color="#00ff00" />
           <Text style={{color:"#7f8c8d",textAlign:"center",width:"100%"}}>{this.state.cameraStatus}</Text>
+          <View style={{width:"30%",alignSelf:"center",marginTop:50}}>
+            <Button 
+              color="black" 
+              onPress={()=>{this.setState({isVisible_modal_loader:false});}}
+              title="Ignore"
+              ></Button>
+          </View>
+
         </View>
         <View style={{flex:.9,backgroundColor:"#00000099"}}></View>
       </Modal>
