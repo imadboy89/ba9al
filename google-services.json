@@ -1,0 +1,40 @@
+{
+  "project_info": {
+    "project_number": "653007070356",
+    "firebase_url": "https://com-imadboss-ba9al.firebaseio.com",
+    "project_id": "com-imadboss-ba9al",
+    "storage_bucket": "com-imadboss-ba9al.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:653007070356:android:afd97ccbd2591f3d8ec081",
+        "android_client_info": {
+          "package_name": "com.imadboss.ba9al"
+        }
+      },
+      "oauth_client": [
+        {
+          "client_id": "653007070356-kk9f8485t1obsfadrs4395r0f7o7hp1j.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDI8nvktG2N02zSl1lQdwYiWr9GD8o18q0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": [
+            {
+              "client_id": "653007070356-kk9f8485t1obsfadrs4395r0f7o7hp1j.apps.googleusercontent.com",
+              "client_type": 3
+            }
+          ]
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

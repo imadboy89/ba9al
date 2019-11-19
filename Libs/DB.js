@@ -265,6 +265,7 @@ class DB {
     select(where,orderby="",limit=""){
       orderby = orderby && orderby!="" ? " ORDER BY "+orderby : "";
       limit   = limit && limit !="" ? " LIMIT "+limit : "";
+      /*
       const where_values = Object.values(where);
       const where_keys   = Object.keys(where);
       let fields_holder = [];
@@ -279,12 +280,13 @@ class DB {
           
       }
       fields_holder = fields_holder.length>0 ? " WHERE "+fields_holder.join(" AND ") : "";
+      */
+      [fields_holder,where_values_new] = this.build_where(where);
       let output = {"success":false,"error":"",output:""};
       const fields = Object.keys(this.module.fields);
 
       const query = 'SELECT '+fields.join(",")+' FROM '+this.module.table_name+' '+fields_holder +" "+this.groupBy+ " "+orderby+limit;
-      //console.log(query , where_values);
-      return this.executeSql(query, where_values);
+      return this.executeSql(query, where_values_new);
     }
 
     executeSql(query,values){

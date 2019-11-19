@@ -42,6 +42,7 @@ class ProductsScreen extends React.Component {
           if(company){
               this.state.page=0;
               this.loadItems();
+              this.props.navigation.setParams({items_count:""});
           }else if(product_id){
             this.state.product_edit = new Product();
             this.setCode (null, product_id);
@@ -49,7 +50,7 @@ class ProductsScreen extends React.Component {
           }else{
             this.product.filter().then(out=>{
                 let count = out && out["success"] && out["list"] && out["list"].length ? out["list"].length : 0;
-
+                count = ' ['+count+']';
                 this.props.navigation.setParams({company:null, items_count:count});
             });
           }
@@ -94,11 +95,11 @@ class ProductsScreen extends React.Component {
             disable:false,
             loadItems:this.loadItems,
             openAddModal_search:this.openAddModal_search,
-            items_count : 0,
+            items_count : "",
          });
       }
     static navigationOptions =  ({ navigation  }) => ({
-        title : navigation.getParam("title")+" ["+navigation.getParam("items_count",0)+"]",
+        title : navigation.getParam("title")+navigation.getParam("items_count",""),
         headerRight: a=>{
           const {params = {}} = navigation.state;
           let Add_str = "";
@@ -116,14 +117,14 @@ class ProductsScreen extends React.Component {
               <View style={{flexDirection:"row"}}>
                 {params.company && params.company.fields && params.company.fields.name &&
                     <View style={{flexDirection:"row"}}>
-                        <Text style={{color:"white",marginRight:20,fontSize:20,}}>{params.company.fields.name}</Text>
+                        <Text style={{color:"white",marginRight:8,fontSize:18,}}>{params.company.fields.name}</Text>
                         <TouchableOpacity
                             onPress={()=>{
                                 navigation.setParams({company:null});
                                 params.loadItems(true); 
                             }}
                         >
-                            <Text style={{paddingLeft:5,paddingRight:5,color:"white",backgroundColor:"#425b74",marginRight:20,fontSize:20,borderRadius: 4,borderWidth: 0.5,borderColor: '#d6d7da'}}>{All_str}</Text>
+                            <Text style={{paddingLeft:5,paddingRight:5,color:"white",backgroundColor:"#4d8fd2",marginRight:20,fontSize:20,borderRadius: 4,borderWidth: 0.5,borderColor: '#d6d7da'}}>{All_str}</Text>
                         </TouchableOpacity>
                     </View>
                 }
@@ -134,7 +135,7 @@ class ProductsScreen extends React.Component {
                     size={28} 
                     color="#ecf0f1"
                 />
-                <View style={{width:10}}></View>
+                <View style={{width:8}}></View>
                 <HeaderButton 
                     name="plus-square"
                     disabled={params.disable}
@@ -395,6 +396,8 @@ class ProductsScreen extends React.Component {
                             }}
                             value={this.state.product_edit.fields.name}
                             autoFocus={true}
+                            autoCorrect={false}
+                            autoCapitalize="sentences"
                         />
                         </View>
                     </View>

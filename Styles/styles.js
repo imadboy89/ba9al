@@ -23,14 +23,16 @@ const styles_list = StyleSheet.create({
       flexDirection: 'row' ,
       alignItems: 'center',
       height : 35 ,
-      marginRight:20,
-      marginLeft:20,
-      marginBottom:10,
+      //marginRight:10,
+      //marginLeft:10,
+      marginTop:5,
+      marginBottom:5,
       borderStyle : "solid",
       borderWidth : 1,
       textAlign: 'right',
       width:"95%",
-      justifyContent:"center"
+      justifyContent:"center",
+      alignSelf:"center",
     },
     nrml_view : {
         flex: 1, 
@@ -175,7 +177,7 @@ const header_style = StyleSheet.create({
  const styles_itemRow = StyleSheet.create({
     container: {
         marginTop:8,
-        marginLeft:20,
+        marginLeft:10,
         marginRight:20,
         height:60,
         flexDirection:"row",

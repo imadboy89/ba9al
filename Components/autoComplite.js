@@ -20,19 +20,30 @@ class AutoComplite extends React.Component {
         this.setState({focusAutoCompliteInput:true});
     }
     getoptions(){
+        items_list_added = [];
+        items_list_middle_match = [];
         this.state.options = [];
+        
         const keys = Object.keys(this.state.options_pool);
         for (let i = 0; i < keys.length; i++) {
             const option_key = keys[i];
             const option_value = this.state.options_pool[option_key];
             option_key = Object.keys(option_value)[0];
             option_value = option_value[option_key];
-            if(this.state.q.length>=2 && option_value.toLowerCase().startsWith(this.state.q.toLowerCase()) ){
+            if(this.state.q.length>=2 && option_value.toLowerCase().startsWith(this.state.q.toLowerCase()) && items_list_added.indexOf(option_key)==-1){
                 let option_dict = {};
                 option_dict[option_key] = option_value ;
                 this.state.options.push(option_dict);
+                items_list_added.push(option_key);
+            }else if(this.state.q.length>=2 && option_value.toLowerCase().indexOf(this.state.q.toLowerCase())>=1  && items_list_added.indexOf(option_key)==-1){
+                let option_dict = {};
+                option_dict[option_key] = option_value ;
+                items_list_middle_match.push(option_dict);
+                items_list_added.push(option_key);
             }
+            
         }
+        this.state.options = this.state.options.concat(items_list_middle_match);
         return this.state.options;
     }
     onPressHandler = (option_key, option_value,option)=>{
@@ -57,7 +68,7 @@ class AutoComplite extends React.Component {
                     }}
                     style={{marginRight:20,}}>
                   <View style={{}} >
-                      <Text style={{color:"white",backgroundColor:"#7f8c8d",fontSize:18,borderRadius: 4,borderWidth: 0.2,borderColor: '#d6d7da',height:40,fontSize:25}}>
+                      <Text style={{color:"white",backgroundColor:"#7f8c8d",fontSize:14,borderRadius: 4,borderWidth: 0.2,borderColor: '#d6d7da',height:30}}>
                       {option_value}
                       </Text>
                   </View>
@@ -79,9 +90,9 @@ class AutoComplite extends React.Component {
                     autoCompleteType="off"
                     focus={this.state.focusAutoCompliteInput}
                 />
-                <View style={{/*position:"absolute",*/marginRight:30,marginLeft:30}}>
+                <ScrollView style={{marginRight:5,marginLeft:5,height:200,}}>
                     {this.render_options()}
-                </View>
+                </ScrollView>
 
             </View>
         );

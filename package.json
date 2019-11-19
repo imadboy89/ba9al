@@ -2,6 +2,7 @@
   "main": "node_modules/expo/AppEntry.js",
   "scripts": {
     "start": "expo start --tunnel",
+    "publish": "expo publish  --release-channel final",
     "android": "expo start  --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
@@ -14,7 +15,6 @@
     "expo-camera": "^7.0.0",
     "expo-image-manipulator": "^7.0.0",
     "expo-sqlite": "^7.0.0",
-    "moment": "^2.24.0",
     "mongodb-stitch-react-native-sdk": "^4.6.0",
     "react": "16.8.3",
     "react-dom": "16.8.3",

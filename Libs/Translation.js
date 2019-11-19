@@ -4,13 +4,15 @@ class translation{
     constructor(LS){
         this.language = "en";
         this.translation = {
-            
+            "Version"             : {"ar":"الإصدار"         ,"fr":"Version","dr":"Version",},
+            "Logged_as"             : {"ar":"متصل ك"         ,"fr":"Connecté","dr":"Mconnecti b",},
             "Cloud_history_cleaned_successfully"             : {"ar":"سحابة التاريخ تنظيفها بنجاح"         ,"fr":"L'historique des cloud ​​nettoyé avec succès","dr":"historique d cloud tms7o",},
             "Cloud_history_failed"             : {"ar":"فشل سحابة التاريخ"         ,"fr":"L'historique des cloud ​​a échoué","dr":"Riglaj",},
             "Settings"             : {"ar":"الإعدادات"         ,"fr":"Paramètres","dr":"Riglaj",},
             "Pending"             : {"ar":"قيد الانتظار"         ,"fr":"En attente","dr":"taAcceptik",},
             "Manage"             : {"ar":"إدارة"         ,"fr":"Gérer","dr":"Gérer",},
             "Partners"             : {"ar":"شركاء"         ,"fr":"Les partenaires","dr":"choraka2",},
+            "Partner"             : {"ar":"شريك"         ,"fr":"Partenaire","dr":"charik",},
             "You_need_internet_connection_for_this_action"             : {"ar":"تحتاج إلى اتصال بالإنترنت لهذا الإجراء"         ,"fr":"Vous avez besoin d'une connexion Internet pour cette action","dr":"Khask connexion bach t3mel hadchi",},
             "You_need_internet_connection_to"             : {"ar":"تحتاج إلى اتصال بالإنترنت ل"         ,"fr":"Vous avez besoin d'une connexion Internet pour ","dr":"Khask connexion bach ",},
             "User_name"             : {"ar":"اسم المستخدم"         ,"fr":"Nom d'utilisateur","dr":"Ism lmosta3min",},

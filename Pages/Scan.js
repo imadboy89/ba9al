@@ -1,7 +1,6 @@
 import React from 'react';
-import { StyleSheet, Text, View, Button, TouchableOpacity,TextInput,Image,Modal,Alert } from 'react-native';
+import { ActivityIndicator, Text, View, Button, TouchableOpacity,TextInput,Image,Modal,Alert } from 'react-native';
 import {styles_Btn,styles_list,buttons_style,styles} from "../Styles/styles";
-import { withNavigation } from 'react-navigation';
 import Company from "../Libs/Company_module";
 import Product from "../Libs/Product_module";
 import Translation from "../Libs/Translation";
@@ -12,6 +11,7 @@ import HeaderButton from "../Components/HeaderButton";
 import LocalStorage from "../Libs/LocalStorage";
 import AutoComplite from "../Components/autoComplite";
 import History from "../Libs/History_module";
+import backUp from "../Libs/backUp";
 TXT = null;
 
 
@@ -28,15 +28,18 @@ class ScanScreen extends React.Component {
         disable_btns : false,
         Total : 0,
         scanned : null,
-        hist_label:null
+        hist_label:null,
+        notificationAction:false,
         
       };
+      this.last_requested_t9dya = "";
       this.counter = 0;
       this.company = new Company();
       this.product = new Product();
       this.continue_list=[];
       this.LS = new LocalStorage();
       this.History_ob = new History();
+      this.notificationData = false;
       const didBlurSubscription = this.props.navigation.addListener(
         'didFocus',
         payload => {
@@ -46,13 +49,156 @@ class ScanScreen extends React.Component {
               this.props.navigation.setParams({title:TXT.Scan});
             }
           });
-          if(!this.state.items_list ||this.state.items_list.length == 0){
-            this.loadLastP();
+          const action = this.props["navigation"].getParam("action",false);
+          if(action && action =="requestedT9dya"){
+            try {
+              notificationData = this.props["navigation"].getParam("data",false);
+              this.checkingRequests(notificationData);
+              this.props["navigation"].setParams({"data":null,"requestedT9dya":null});
+            } catch (error) {
+              alert(error);
+              this.notificationData = false;
+            }
+            
+          }else{
+            this.notificationData = false;
           }
+          //this.loadLastP();
         }
       );
+      try {
+        this.backup_status = false;
+        try {
+          this.backup = new backUp();
+          this.backup_status = false;
+        } catch (error) {
+          alert(error);
+        }
+        this.checkingRequests();
+  
+      } catch (error) {
+        alert(error);        
+      }
+      
+
     }
-    saveLS = async()=>{
+    checkClient = async()=>{
+      await this.backup.setClientInfo();
+      if(this.backup.email && this.backup.email!=""){
+        this.backup_status = true;
+        this.setState({});
+        return true;
+      }
+      console.log("still no client :",this.backup_status);
+      this.backup_status = false;
+      this.setState({});
+      return false;
+    }
+    checkingRequests = async(notificationData=false)=>{
+      console.log("checkingRequests 1 ");
+      if(this.timer == undefined){
+        this.timer = setInterval(()=> this.checkingRequests(), 10*1000);
+      }
+      if(!notificationData){
+        console.log("checkingRequests 2 ");
+        if(this.state.isVisible_modal_scan || this.state.scanned!=null || this.props.navigation.getParam("showSaveBtn") == true){
+          return false;
+        }
+        console.log("checkingRequests 3 ");
+        if(this.state.items_list && this.state.items_list.length > 0 && this.state.items_list[0].is_send){
+          return false;
+        }
+      }
+
+      console.log("checkingRequests 4 ");
+      if(!this.backup_status && !notificationData){
+        if(this.state.items_list.length == 0){
+          this.loadLastP();
+        }
+        const res_ = await this.checkClient();
+        if(!res_){
+          return false;
+        }
+      }
+      console.log("checkingRequests 5 ");
+      const res = !notificationData ? await this.backup.requestT9adya("get",[],false) : false;
+      t9adya = !notificationData && res && res["success"] == true && res["output"] && res["output"]["t9adya"] && res["output"]["t9adya"].length >0 
+                      ? res["output"]["t9adya"] 
+                      : notificationData["data"] ;
+      console.log("t9adya",t9adya);
+      console.log("notificationData['data']",notificationData["data"]);
+
+      if(t9adya){
+        let items_list = [];
+        const t9dya_entered = res ? res["output"]["entered"] : t9adya[0]["entered"] ;
+        if(t9dya_entered == this.last_requested_t9dya ){
+          if(this.state.items_list.length == 0 || !this.state.items_list[0].is_hist){
+            return ;
+          }
+
+        }
+        this.last_requested_t9dya = t9dya_entered;
+
+        for (let i = 0; i < t9adya.length; i++) {
+          const prod_req = new Product();
+          await prod_req.get({id : t9adya[i].product_id});
+          prod_req.quantity        = t9adya[i].quantity;
+          prod_req.fields.price    = t9adya[i].price;
+          prod_req.is_rscv = true;
+          items_list.push(prod_req);  
+        }
+
+        if(this.state.isVisible_modal_scan || this.state.scanned!=null || this.props.navigation.getParam("showSaveBtn") == true || this.props.navigation.getParam("reqUpdated") == true){
+          return false;
+        }
+        this.state.items_list = items_list;
+        if(items_list.length > 0){
+          this.state.hist_label = !notificationData ? res["output"]["owner"] : notificationData["from"];
+          this.state.hist_label = this.state.hist_label.split("@")[0];
+          this.Total(2);
+        }
+      }else{
+        this.loadLastP();
+      }
+    }
+    
+    updateRequestedT9adya = async()=>{
+      this.props.navigation.setParams({hideT9dyaBtns:true,reqUpdated:false});
+      const output  = await this.backup.requestT9adya("delete");
+      const output1 = await this.requestT9adya();
+    }
+    deleteRequestedT9adya = async()=>{
+      this.props.navigation.setParams({hideT9dyaBtns:true,reqUpdated:false});
+      const output = await this.backup.requestT9adya("delete");
+
+      this.setState({items_list:[]});
+      this.loadLastP();
+    }
+    requestT9adya = async()=>{
+      
+      this.props.navigation.setParams({hideT9dyaBtns:true,reqUpdated:false});
+      let t9adya = this.saveHistory(is_send=true);
+      let title = "New request "+this.state.items_list.length+" items , Total:"+this.state.Total;
+      let body =  "";
+      for (let i = 0; i < this.state.items_list.length; i++) {
+        body+=this.state.items_list[i].quantity+"x "+this.state.items_list[i].fields.name+" - "+this.state.items_list[i].fields.price+"\n"
+      }
+      const output = await this.backup.requestT9adya("request",t9adya,false);
+      const outpu1 = await this.backup.pushNotification(title,body,{data:t9adya,from:this.backup.email},false);
+      console.log(outpu1);
+      for (let i = 0; i < this.state.items_list.length; i++) {
+        this.state.items_list[i] . req_type = "rscv" ;
+        this.state.items_list[i] . is_send = false ;
+        this.state.items_list[i] . is_rscv = true ;
+      }
+      this.props.navigation.setParams({
+        showSaveBtn : this.state.items_list.length>0 && this.state.items_list[0].is_hist!=true ,
+        req_type    : "rscv",
+        hideT9dyaBtns:false
+      });
+      
+    }
+    saveHistory = (is_send=false)=>{
       let items_list = [];
       const hist_id  = new History().DB.getDateTime();
       
@@ -60,7 +206,7 @@ class ScanScreen extends React.Component {
       for (let i = 0; i < this.state.items_list.length; i++) {
         const item = this.state.items_list[i];
         item.fields.quantity = item.quantity;
-        items_list.push(item.fields);
+        
         let fields_ = {
           hist_id    : hist_id,
           month      : month,
@@ -69,32 +215,39 @@ class ScanScreen extends React.Component {
           quantity   : item.quantity,
           entered    : hist_id,
         }; 
+        items_list.push(fields_);
+        if(!is_send){
+          const history_ = new History(fields_);
+          history_.save();
+        }
         
-        const history_ = new History(fields_);
-        await history_.save();
-        
+        if(!is_send){
+          this.state.items_list[i].is_hist = true;
+          this.state.items_list[i].is_send = false;
+        }else{
+          this.state.items_list[i].is_hist = false;
+          this.state.items_list[i].is_send = true;
+        }
       }
-      this.state.items_list[0].is_hist = true;
-
-//////////////////////////////////////////////
-/*
-      const LastP = {"list":items_list,"title":"","total":this.state.Total};
-      this.LS.setPurchaseHistory(LastP).then(PurchaseList=>{
-        console.log("saving Done");
-        this.props.navigation.setParams({showSaveBtn : false ,});
-     });
-*/
-//////////////////////////////////////////////
+      if(!is_send){
+        this.props.navigation.setParams({hideT9dyaBtns:true});
+        this.backup.requestT9adya("done").then(o=>{
+          this.props.navigation.setParams({hideT9dyaBtns:false});
+        });
+      }else{
+        return items_list;
+      }
       this.setState({});
       this.props.navigation.setParams({showSaveBtn : false,})
 
     }
-    loadLastP = async()=>{
-
-      this.state.items_list = [];
-      let lastPurchaseList = await this.LS.getLastPurchaseList();
+    loadLastP = async(t9adya=false)=>{
+      if(this.state.notificationAction){
+        return ;
+      }
+      let items_list = [];
       let lastPurchaseList_  = await this.History_ob.filterWithExtra({},"hist_id DESC","",true);
-      lastPurchaseList = [];
+      let lastPurchaseList = [];
       for (let i = 0; i < lastPurchaseList_.length; i++) {
         const hist_elem = lastPurchaseList_[i];
         if(lastPurchaseList.length==0 || lastPurchaseList[0].hist_id == hist_elem.hist_id){
@@ -106,22 +259,45 @@ class ScanScreen extends React.Component {
 
         for (let i = 0; i < lastPurchaseList.length; i++) {
           const prod_h = lastPurchaseList[i];
-          
-          this.state.items_list.push(prod_h);
+          items_list.push(prod_h);
         }
-        this.Total(2);
+        if(this.state.items_list != items_list && ( this.state.items_list.length==0 ||  !this.state.items_list[0].is_hist)){
+          console.log("updating lastP");
+          this.state.items_list = items_list.slice();
+          this.Total(2);
+        }
+        
       }
       this.props.navigation.setParams({
-          TXT  : TXT,
-          disable:false,
-          check_price : ()=>{this.startScan(0);} ,
-          calculate : ()=>{this.startScan(1);} ,
-          saveLS : ()=>{this.saveLS()} ,
-          showSaveBtn : false,
-       })
+        TXT  : TXT,
+        disable:false,
+        check_price   : ()=>{this.startScan(0);} ,
+        calculate     : ()=>{this.startScan(1);} ,
+        saveHistory   : ()=>{this.saveHistory()} ,
+deleteRequestedT9adya : this.deleteRequestedT9adya ,
+updateRequestedT9adya : this.updateRequestedT9adya ,
+        requestT9adya : this.requestT9adya,
+        showSaveBtn   : false,
+        req_type      : "",
+        hideT9dyaBtns : false,
+        reqUpdated    : false,
+     })
     }
     componentDidMount(){
-      
+      this.props.navigation.setParams({
+        TXT  : TXT,
+        disable:false,
+        check_price   : ()=>{this.startScan(0);} ,
+        calculate     : ()=>{this.startScan(1);} ,
+        saveHistory   : ()=>{this.saveHistory()} ,
+deleteRequestedT9adya : this.deleteRequestedT9adya ,
+updateRequestedT9adya : this.updateRequestedT9adya ,
+        requestT9adya : this.requestT9adya,
+        showSaveBtn   : false,
+        req_type      : "",
+        hideT9dyaBtns : false,
+        reqUpdated    : false,
+     })
     }
   static navigationOptions =  ({ navigation  }) => ({
       title : navigation.getParam("title"),
@@ -134,11 +310,38 @@ class ScanScreen extends React.Component {
         }
         return (
           <View style={{flexDirection:"row"}}>
-            { params.showSaveBtn && 
+            { !params.hideT9dyaBtns && params.showSaveBtn==true &&  params.req_type == "rscv" &&
+            <HeaderButton 
+            name="trash"
+            disabled={params.disable}
+            onPress={()=>params.deleteRequestedT9adya()}
+            size={28} 
+            color="#e74c3c"
+            />
+            }
+            { !params.hideT9dyaBtns && params.showSaveBtn==true &&  params.req_type == "rscv" && params.reqUpdated == true &&
+            <HeaderButton 
+            name="cloud-upload"
+            disabled={params.disable}
+            onPress={()=>params.updateRequestedT9adya()}
+            size={28} 
+            color="#2ecc71"
+            />
+            }
+            { !params.hideT9dyaBtns && params.showSaveBtn==true &&  params.req_type != "rscv" &&
+            <HeaderButton 
+            name="send"
+            disabled={params.disable}
+            onPress={()=>params.requestT9adya()}
+            size={28} 
+            color="#2ecc71"
+            />
+            }
+            { !params.hideT9dyaBtns && params.showSaveBtn==true &&
             <HeaderButton 
             name="save"
             disabled={params.disable}
-            onPress={()=>params.saveLS()}
+            onPress={()=>params.saveHistory()}
             size={28} 
             color="#89ccf9"
             />
@@ -162,9 +365,11 @@ class ScanScreen extends React.Component {
         },
     });
     startScan(method){
+      this.state.notificationAction = false;
       if(method==2){
         this.continue_list = this.state.items_list;
         method = 1;
+        this.props.navigation.setParams({reqUpdated:true});
       }else{
         this.continue_list = [];
       }
@@ -196,7 +401,6 @@ class ScanScreen extends React.Component {
     Total(second_call){
       this.plusProd();
       const items_list = this.continue_list.concat(this.state.items_list);
-
       if(!items_list || items_list.length ==0){
         if(second_call){
           return;
@@ -222,10 +426,13 @@ class ScanScreen extends React.Component {
         }
       }
       this.setState({scanned:null,Total:total,isVisible_modal_scan:false});
-      this.props.navigation.setParams({showSaveBtn : this.state.items_list.length>0 && this.state.items_list[0].is_hist!=true ,});
+      this.props.navigation.setParams({
+        showSaveBtn : this.state.items_list.length>0 && this.state.items_list[0].is_hist!=true ,
+        req_type    : this.state.items_list.length>0 && this.state.items_list[0].is_rscv==true ? "rscv" : "" ,
+      });
     }
     loadItemsForSearch(){
-      if(this.products_list && this.products_list.length>0){
+      if(this.products_list && this.products_list.length>0  && 1==2){
         return new Promise(resolve=>{resolve(this.products_list);});
       }
       this.products_list = []
@@ -234,7 +441,7 @@ class ScanScreen extends React.Component {
               for (let i = 0; i < output["list"].length; i++) {
                   const prod = output["list"][i];
                   let prod_dict = {};
-                  prod_dict[prod.fields.id] = prod.fields.name 
+                  prod_dict[prod.fields.id] = prod.fields.name + " - "+prod.fields.price+"dh"
                   this.products_list.push(prod_dict);
               }
           }
@@ -247,17 +454,7 @@ class ScanScreen extends React.Component {
           new_prod.fields.desc = "PickProduct";
           new_prod.fields.price = "";
           new_prod.list=[]
-          /*
-          new_prod.filterWithExtra({"products.desc":"NoBarCode"}).then(output=>{
-            if(output["list"] && output["list"].length > 0){
-              for (let j = 0; j < output["list"].length; j++) {
-                const prod = output["list"][j];
-                let prod_dict = {};
-                prod_dict[prod.fields.id] = prod.fields.name 
-                new_prod.list.push(prod_dict);
-              }
-            }
-          });*/
+
           this.loadItemsForSearch().then(()=>{
             new_prod.list=this.products_list;
             this.setState({scanned:new_prod});
@@ -469,7 +666,6 @@ class ScanScreen extends React.Component {
         TXT.Confirmation,
         TXT.Are_you_sure_you_want_to_delete + `: \n  [`+item.fields.name+`] `,
         [
-
           {
             text: TXT.No, 
             onPress: () => {},
@@ -478,7 +674,14 @@ class ScanScreen extends React.Component {
           {
             text: TXT.Yes, 
             onPress: () => {
-              this.state.items_list.splice(index,1)
+              this.state.items_list.splice(index,1);
+              if(this.state.items_list.length>0 && this.state.items_list[0].is_rscv ){
+                this.props.navigation.setParams({reqUpdated:true});
+              }
+              const items_list__ = this.state.items_list.slice();
+              this.setState({items_list:[]});
+              console.log(items_list__);
+              this.state.items_list = items_list__;
               this.Total();
             },
           },
@@ -490,7 +693,19 @@ class ScanScreen extends React.Component {
         return (
           <View style={styles.container} >
             {this.state.hist_label &&
-            <Text  style={styles.textTotal}>{this.state.hist_label}</Text>
+            <Text  style={styles.textTotal}>{this.backup_status==true ? "." : "" }{this.state.hist_label}</Text>
+            }
+            {this.state.notificationAction ==true && this.state.items_list.length == 0 &&
+              <View style={{height:200,width:"100%",justifyContent:"center"}}>
+                <ActivityIndicator size="large" color="#00ff00" />
+                <View style={{width:"30%",alignSelf:"center",marginTop:50}}>
+                  <Button 
+                    color="black" 
+                    onPress={()=>{this.setState({notificationAction:false});}}
+                    title="Ignore"
+                    ></Button>
+                  </View>
+              </View>
             }
             {this.state.items_list.length>0 && this.state.Total>0 && 
               <ItemsList 
@@ -507,7 +722,7 @@ class ScanScreen extends React.Component {
               </Text>
                  
             }
-            { this.state.items_list.length>0 && this.state.Total>0 && this.state.items_list[0].is_hist!=true &&
+            { this.state.items_list.length>0 && this.state.Total>0 && this.state.items_list[0].is_hist!=true /*&& this.state.items_list[0].is_send!=true && this.state.items_list[0].is_rscv!=true */ &&
             <TouchableOpacity
               activeOpacity={0.7}
               onPress={()=>{this.startScan(2);}}

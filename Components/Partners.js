@@ -58,6 +58,9 @@ class Partners extends React.Component{
       if (this.state.partnersLoading){
         return <ActivityIndicator size="large" color="#00ff00" /> ;
       }
+      if(!this.state.partners.map){
+        return null;
+      }
       return this.state.partners.map( (value,i) =>{
         const is_invited = value.user1 == this.props.backup.email ? true : false;
         const partner = value.user1 == this.props.backup.email ? value.user2 : value.user1 ;
@@ -81,7 +84,10 @@ class Partners extends React.Component{
                 </View>
               }
               { value.is_active==false && is_invited==true &&
-                <Text style={{width:60,color:"black",backgroundColor:"#ffd798",alignSelf: 'center',}}>{TXT.Pending}</Text>
+                <Text style={{width:60,color:"black",textAlignVertical: "center",backgroundColor:"#ffd798",alignSelf: 'center',}}>{TXT.Pending}</Text>
+              }
+              { value.is_active==true &&
+                <Text style={{width:60,height:"98%",textAlignVertical: "center" ,color:"black",backgroundColor:"#03ce58",alignSelf: 'center',}}>{TXT.Partner}</Text>
               }
                 <View >
                   <Button

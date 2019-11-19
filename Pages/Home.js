@@ -8,6 +8,10 @@ import backUp from "../Libs/backUp";
 import History from "../Libs/History_module";
 import Credentials from "../Components/Credentials";
 import Partners from "../Components/Partners";
+import Icon from 'react-native-vector-icons/FontAwesome';
+import Constants from 'expo-constants';
+import { Notifications } from 'expo';
+import * as Permissions from 'expo-permissions';
 
 TXT = null;
 
@@ -31,16 +35,18 @@ class HomeScreen extends React.Component {
         synchLog : [],
         clear_database:true,
         modalVisible_partners : false,
+        version : "0.8.3.9.7",
 
       };
       this.LS = new LocalStorage();
       this.firstHistoryRender = true;
-      this.TXT_ob = new Translation(this.LS);
+      this.TXT_ob = new Translation(this.LS); 
       this.backup = new backUp();
       //this.backup.Company.DB.updateTables();
       this.backup._loadClient().then(output=>{
         this.setState({backup_email:this.backup.email,backup_lastActivity:this.backup.lastActivity, backup_is_admin:this.backup.admin});
       });
+      
       this.History_ob = new History();
       const didBlurSubscription = this.props.navigation.addListener(
         'didFocus',
@@ -53,18 +59,17 @@ class HomeScreen extends React.Component {
             this.setState({language:this.TXT_ob.language});
           }
           });
-          /*
-          this.History_ob.getCount().then(out=>{
-            let count = 0;
-            try { count = parseInt(out);
-            } catch (error) { count = 0;}
-            this.props.navigation.setParams({ items_count:count});
-            });
-            */
           this.loadHistory();
+          this.synch_history();
         }
       );
     }
+  
+    _handleNotification = notification => {
+      console.log(notification);
+      this.props.navigation.navigate("Scan_",{"action":"requestedT9dya","data":notification.data});
+      //this.setState({ notification: notification });
+    };
     openAddModal = () => {
       
       this.LS.getSettings().then(settings=>{
@@ -102,26 +107,56 @@ class HomeScreen extends React.Component {
           LastRemovedHistory : LastRemovedHistory});
       });
     }
-    componentDidMount(){
-      //this.loadHistory();
+    synch_history = ()=>{
+      this.setState({synchronize_btn_status:false,synchLog:[]});
+      this.props.navigation.setParams({disabled:true});
+      this.backup.synch_history(undefined,this.appendLog).then(o=>{
+        this.state.synchronize_btn_status = true;
+        this.loadHistory();
+        this.props.navigation.setParams({disabled:false});
+      });
+    }
+    componentDidMount = async()=>{
+      Notifications.createChannelAndroidAsync('Notifications', 
+      {
+        name: 'Notifications',
+        sound: true,
+        priority: 'max',
+        vibrate: [0, 250, 250, 250],
+      });
+
+      this._notificationSubscription = Notifications.addListener(
+        this._handleNotification
+      );
       this.props.navigation.setParams({
           openAddModal : this.openAddModal,
           TXT  : TXT,
           disable:false,
           items_count:0,
-       })
+          synch_history : this.synch_history,
+       });
+
     }
   static navigationOptions =  ({ navigation  }) => ({
-      title : navigation.getParam("title")+" ["+navigation.getParam("items_count",0)+"]",
+      title : navigation.getParam("title")+" ["+(navigation.getParam("items_count",0) !=undefined?navigation.getParam("items_count",0):0 )+"]",
       headerRight: a=>{
         const {params = {}} = navigation.state;
         return (
-          <HeaderButton 
-            name="cogs"
-            onPress={params.openAddModal}
-            size={28} 
-            color="#ecf0f1"
-            />
+          <View style={{flexDirection:"row"}}>
+            <HeaderButton 
+              name="refresh"
+              onPress={params.synch_history}
+              size={28} 
+              color={params.disabled ? "#03ce5800" : "#ecf0f1"}
+              disabled={params.disabled}
+              />
+            <HeaderButton 
+              name="cogs"
+              onPress={params.openAddModal}
+              size={28} 
+              color="#ecf0f1"
+              />
+            </View>
         )
         },
     });
@@ -323,8 +358,14 @@ class HomeScreen extends React.Component {
            } }
         >
             <View style={{flex:.1,backgroundColor:"#2c3e5066"}}></View>
-            <View style={{height:550,width:"100%",backgroundColor:"#646c78"}}>
+            <View style={{height:600,width:"100%",backgroundColor:"#646c78"}}>
               <Text style={styles_list.title_modals}> {TXT.Settings} : </Text>
+              {this.state.backup_email!=null && this.state.backup_email!="" && this.state.backup_email!=undefined &&
+              <View style={styles_list.row_view}>
+                <Text style={styles_list.text_k}> {TXT.Logged_as} : </Text>
+                <Text style={[styles_list.text_v,{color:"#55ff9d"}]} >{this.state.backup_email}</Text>
+              </View>
+              }
               <View style={styles_list.row_view}>
                 <Text style={styles_list.text_k}> {TXT.Language} : </Text>
                 <Picker
@@ -389,6 +430,7 @@ class HomeScreen extends React.Component {
                       });
                     }}
                 />
+                {this.state.backup_email!=null && this.state.backup_email!="" && this.state.backup_email!=undefined &&
                   <Button 
                     style={{marginLeft:10}}
                     title = {TXT.Clear_cloud}
@@ -406,6 +448,7 @@ class HomeScreen extends React.Component {
                       });
                     }}
                 />
+                  }
               </View>
               </View>
 
@@ -421,6 +464,7 @@ class HomeScreen extends React.Component {
                 />
                 </View>
               </View>
+              {this.state.backup_email!=null && this.state.backup_email!="" && this.state.backup_email!=undefined &&
               <View style={styles_list.row_view}>
                 <Text style={styles_list.text_k}> {TXT.Partners} : </Text>
                 <View style={styles_list.text_v} >
@@ -432,11 +476,12 @@ class HomeScreen extends React.Component {
                 />
                 </View>
               </View>
+              }
               <View style={styles_list.row_view}>
                 <Text style={styles_list.text_k}> {TXT.LastBackUp} : </Text>
                 <Text style={styles_list.text_v}>{this.state.backup_lastActivity+""} </Text>
               </View>
-              { this.state.backup_is_admin &&  
+              { this.state.backup_is_admin==true &&  
               <View style={styles_list.row_view}>
                 <Text style={styles_list.text_k}> {TXT.Clear_remote_Backup} : </Text>
                 <View style={styles_list.text_v} >
@@ -527,11 +572,17 @@ class HomeScreen extends React.Component {
                 />
               </View>
             </View>
-            
+            <View style={buttons_style.container_row}>
+            <View style={buttons_style.view_btn_row}>
               <Button 
-                title={TXT.Close}
-                onPress={()=>this.setState({modalVisible:false}) }
-              />
+                  style={[styles_list.small_elemnt,{marginLeft:10}]}
+                  title={TXT.Close}
+                  onPress={()=>this.setState({modalVisible:false}) }
+                />
+                </View>
+
+            </View>
+
             </View>
             <View style={{flex:1,backgroundColor:"#2c3e5066"}}></View>
 
@@ -566,7 +617,7 @@ class HomeScreen extends React.Component {
                 owner_ = <Text key={t9adya_key+prod.fields.owner } style={{color:"#91ffc0",fontSize:18}}>{prod.fields.owner}</Text>;
                 return (
                   <Text key={t9adya_key+prod.fields.product_id+k}  style={{color:"#bdc3c7",fontSize:18}}>
-                    x{prod.fields.quantity?prod.fields.quantity:1} -{prod.fields.product_id} - {prod.fields.price} dh
+                    x{prod.fields.quantity?prod.fields.quantity:1} -{prod.product_name} - {prod.fields.price} dh
                   </Text>
                   
                 );
@@ -618,9 +669,6 @@ class HomeScreen extends React.Component {
         <ScrollView style={{flex:1,flexDirection:"column",paddingRgith:10,marginLeft:10,}}>
           <Text style={{color:"white",width:"95%",paddingLeft:8,fontSize:30,}} > {TXT.History} :</Text>
           {t9dyat}
-          {this.state.LastRemovedHistory &&
-          <Text style={{color:"#f4caa5",fontSize:18}}>{TXT.Last_cleared_history} : {this.state.LastRemovedHistory}</Text>
-          }
         </ScrollView>
       );
     }
@@ -628,7 +676,29 @@ class HomeScreen extends React.Component {
       
         return (
           <View style={styles.container} >   
+              <View style={styles_list.row_view}>
+                <Text style={styles_list.text_k}> {TXT.Version} : </Text>
+                <Icon name="download" size={20} color="#0ad861" />
+                <Text style={styles_list.text_v} >
+                  {this.state.version}
+                </Text>
+              </View>
+
+              {this.state.backup_email!=null && this.state.backup_email!="" && this.state.backup_email!=undefined &&
+              <View style={styles_list.row_view}>
+                <Text style={styles_list.text_k}> {TXT.Logged_as} : </Text>
+                <Icon name={ this.state.backup_is_admin?"user-circle":"user" } size={20} color="#0ad861" />
+                <Text style={[styles_list.text_v,{color:"#55ff9d"}]} >
+                  {this.state.backup_email}
+                  </Text>
+              </View>
+              }
+
               {this.render_history()}
+              {this.state.LastRemovedHistory &&
+                <Text style={{color:"#f4caa5",fontSize:18}}>{TXT.Last_cleared_history} : {this.state.LastRemovedHistory}</Text>
+              }
+
               {this.render_modal_Settings()}
               {this.render_modal_credentials()}
               {this.render_modal_partners()}

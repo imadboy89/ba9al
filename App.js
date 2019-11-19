@@ -68,7 +68,7 @@ const Home_Stack = createStackNavigator({Home : {
   screen : HomeScreen,
   navigationOptions : navigationOptions()
 }  });
-const Scan_Stack = createStackNavigator({ Scan :{
+const Scan_Stack = createStackNavigator({ Scan_ :{
   screen : ScanScreen,
   navigationOptions : navigationOptions()
 } });

@@ -30,11 +30,12 @@ class Credentials extends React.Component{
                 placeholder={TXT.User_name+" .. "}
                 placeholderTextColor="#ecf0f1"
                 onChangeText ={newValue=>{
-                    this.setState({email:newValue});
+                    this.setState({email:newValue.toLowerCase()});
                 }}
                 value={this.state.email}
                 type="username"
                 autoCorrect={false}
+                autoCapitalize="none"
             />
             </View>
   
@@ -50,6 +51,7 @@ class Credentials extends React.Component{
                 type="password"
                 secureTextEntry={true}
                 autoCorrect={false}
+                autoCapitalize="none"
             />
             </View>
             <View style={buttons_style.container_row}>

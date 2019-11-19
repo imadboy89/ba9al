@@ -5,6 +5,9 @@ import Product from "./Product_module";
 import History from "./History_module";
 import { NetInfo  } from 'react-native';
 import { Stitch,RemoteMongoClient , AnonymousCredential,UserPasswordCredential,UserPasswordAuthProviderClient } from "mongodb-stitch-react-native-sdk";
+import Constants from 'expo-constants';
+import { Notifications } from 'expo';
+import * as Permissions from 'expo-permissions';
 
 
 class BackUp{
@@ -26,15 +29,42 @@ class BackUp{
         }
         this.admin = false;
         this.isConnected = false;
+        this.PushToken = "";
     }
+    registerForPushNotificationsAsync = async () => {
+      
+      if (Constants.isDevice) {
+        const { status: existingStatus } = await Permissions.getAsync(
+          Permissions.NOTIFICATIONS
+        );
+
+        let finalStatus = existingStatus;
+        if (existingStatus !== 'granted') {
+          const { status } = await Permissions.askAsync(
+            Permissions.NOTIFICATIONS
+          );
+          finalStatus = status;
+        }
+        if (finalStatus !== 'granted') {
+          alert('Failed to get push token for push notification!');
+          return;
+        }
+        let token = await Notifications.getExpoPushTokenAsync();
+        console.log(token);
+        this.PushToken = token ;
+        this.savePushToken();
+      } else {
+        alert('Must use physical device for Push Notifications');
+      }
+    };
     checkCnx = ()=>{
       return NetInfo.isConnected.fetch().then(isConnected => {
         this.isConnected = isConnected;
-        console.log("isConnected", isConnected);
+        //console.log("isConnected", isConnected);
         return isConnected;
       });
     }
-    setClientInfo(){
+    setClientInfo = async()=>{
       try {
         const stitchAppClient = Stitch.defaultAppClient;
         const mongoClient = stitchAppClient.getServiceClient(
@@ -47,7 +77,13 @@ class BackUp{
         return this.isAdmin();
 
       } catch (error) {
+        try {
+          this._loadClient();
+        } catch (error) {
+          
+        }
         console.log(error)
+        return new Promise(resolve=>{resolve(false);});
       }
 
     }
@@ -59,7 +95,7 @@ class BackUp{
         alert(err);
       });
     }
-    synch_history = async(history)=>{
+    synch_history = async(history=undefined,appendLog=undefined)=>{
       if(history == undefined){
         const histories_ = await this.History.filter();
         let hist_list = [];
@@ -71,6 +107,10 @@ class BackUp{
         if(hist_list.length==0){ // drop an recteate table if empty
           this.History.DB.drop_create_table();
         }
+      }
+      if(appendLog!=undefined){
+        this.appendLog = appendLog ;
+        this.appendLog("------synch History------");
       }
       let results = {};
       if(!this.client || !this.client.callFunction){
@@ -112,6 +152,47 @@ class BackUp{
       }
       return results["deleted"];
     }
+    savePushToken = async()=>{
+      if( ! await this.checkCnx()){
+        return new Promise(resolve=>{resolve(false);});
+      }
+      try {
+        results = await this.client.callFunction("savePushToken",[this.PushToken]);
+      } catch (error) {
+        console.log(error);
+        return false;
+      }
+      return results["deleted"];
+    }
+    requestT9adya = async(action="get", t9adya=[],partner=undefined)=>{
+      if( ! await this.checkCnx()){
+        return new Promise(resolve=>{resolve(false);});
+      }
+      const datetime = this.Product.DB.getDateTime();
+      let results = {};
+      try {
+        results = await this.client.callFunction("requestT9adya",[action,datetime,t9adya,partner]);
+      } catch (error) {
+        console.log("requestT9adya",error);
+        return false;
+      }
+      return results;
+    }
+    pushNotification = async(title="", body="",data={},partner=false)=>{
+      if( ! await this.checkCnx()){
+        return new Promise(resolve=>{resolve(false);});
+      }
+      const datetime = this.Product.DB.getDateTime();
+      let results = {};
+      try {
+        results = await this.client.callFunction("pushNotification",[partner,title,"Requested by : "+this.email+"\n"+body , data]);
+        console.log(results);
+      } catch (error) {
+        console.log("pushNotification",error);
+        return false;
+      }
+      return results;
+    }
     partnersManager = async(action,partner_username)=>{
       if( ! await this.checkCnx()){
         alert(this.TXT.You_need_internet_connection_for_this_action);
@@ -134,12 +215,31 @@ class BackUp{
       }
       this.email = "";
       this.lastActivity = "";
-      const app = Stitch.defaultAppClient;
+      let app = null;
+      try {
+        app = Stitch.defaultAppClient;
+      } catch (error) {
+        console.log(error);
+        try {
+          this._loadClient();
+        } catch (error) {
+          if(this.isAdmin){
+            alert("Error in backup service.");
+          }else{
+            alert("Error in backup service.");
+          }
+        }
+
+        
+        return false;
+      }
+      
       const credents = await this.LS.getCredentials();
       this.admin = true ;
       try {
-        const credential = new UserPasswordCredential(credents["email"],credents["password"]);
+        const credential = new UserPasswordCredential(credents["email"].toLowerCase(),credents["password"].toLowerCase());
         this.client = await app.auth.loginWithCredential(credential);
+        this.savePushToken();
         return this.setClientInfo(); 
       } catch (error) {
         alert(error);
@@ -160,8 +260,9 @@ class BackUp{
       const emailPasswordClient = Stitch.defaultAppClient.auth
         .getProviderClient(UserPasswordAuthProviderClient.factory);
 
-      return emailPasswordClient.registerWithEmail(username,password)
+      return emailPasswordClient.registerWithEmail(username.toLowerCase(),password.toLowerCase())
         .then((output) => {
+          this.savePushToken();
           console.log("Successfully sent account confirmation email!", JSON.stringify(output) );
           return output;
         })
@@ -179,7 +280,7 @@ class BackUp{
         let credential= new  AnonymousCredential();
         let usingAnon = true;
         if(credents && credents.email && credents.password){
-          credential = new UserPasswordCredential(credents["email"],credents["password"]);
+          credential = new UserPasswordCredential(credents["email"].toLowerCase(),credents["password"].toLowerCase());
           usingAnon = false;
         }
 
@@ -189,7 +290,9 @@ class BackUp{
           return this.client.auth
             .loginWithCredential(credential)
             .then(user => {
-              
+              if(credents && credents.email && credents.password){
+                this.registerForPushNotificationsAsync();
+              }
               this.currentUserId = user.id;
               this.admin = !usingAnon ;
               
@@ -312,9 +415,9 @@ class BackUp{
         
         let isRemoteNewer = false;
         if(item.updated ){
-          const date_l = item_ll.fields.updated ? this.parseDate2Int(item_ll.fields.updated) : 0;
+          const date_l = item_ll && item_ll.fields && item_ll.fields.updated ? this.parseDate2Int(item_ll.fields.updated) : 0;
           const date_r = item.updated ? this.parseDate2Int(item.updated) : 0;
-          isRemoteNewer = item_ll.fields.updated!=null ? date_r > date_l : true;
+          isRemoteNewer = item_ll && item_ll.fields && item_ll.fields.updated ? date_r > date_l : true;
         } 
         if (!item_ll || photo_cond || isRemoteNewer ){
 

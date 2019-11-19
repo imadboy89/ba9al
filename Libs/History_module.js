@@ -109,49 +109,64 @@ class History {
             return out && out["list"] && out["list"].length ? out["list"].length : 0;
         });
     }
-    gethistory(){
-        return this.filter({},"hist_id desc").then(output=>{
-            if(!output["success"] || !output["list"]){
-                return output;
+    gethistory=async()=>{
+        const output =  await this.filter({},"hist_id desc")
+        if(!output["success"] || !output["list"]){
+            return output;
+        }
+        let products_names = {};
+        /////////////// 
+        
+        let prods_id = [];
+        for (let k = 0; k < output["list"].length; k++) {
+            const hist = output["list"][k];
+            prods_id.push(hist.fields.product_id)
+        }
+        if(prods_id.length && prods_id.length>0){
+            const products_ = await new Product().filter({"id":prods_id});
+            if(products_ && products_["list"]){
+                for (let j = 0; j < products_["list"].length; j++) {
+                    const prod = products_["list"][j];
+                    products_names[prod.fields.id] = prod.fields.name;
+                }
             }
-            console.log("output[list].length",output["list"].length);
-            let list_by_month = {};
-            let total = 0 ;
-            let month_total = {};
-            let t9adya_total = {};
-            for (let i  = 0; i  < output["list"].length; i ++) {
-              const Hist = output["list"][i];
-
-              if(Hist.fields.month in list_by_month){
-                month_total[Hist.fields.month] += Hist.fields.quantity*Hist.fields.price;
-                  if (Hist.fields.hist_id in list_by_month[Hist.fields.month]){
-                    list_by_month[Hist.fields.month][Hist.fields.hist_id].push(Hist);
-                  }else{
-                    list_by_month[Hist.fields.month][Hist.fields.hist_id] = [Hist,];
-                  }
-              }else{
-                month_total[Hist.fields.month] = Hist.fields.quantity*Hist.fields.price;
-                list_by_month[Hist.fields.month] = {};
+        }
+       //////////////////
+        let list_by_month = {};
+        let total = 0 ;
+        let month_total = {};
+        let t9adya_total = {};
+        for (let i  = 0; i  < output["list"].length; i ++) {
+            const Hist = output["list"][i];
+            Hist.product_name = Hist.fields.product_id in products_names ? products_names[Hist.fields.product_id] : Hist.fields.product_id;
+            if(Hist.fields.month in list_by_month){
+            month_total[Hist.fields.month] += Hist.fields.quantity*Hist.fields.price;
+                if (Hist.fields.hist_id in list_by_month[Hist.fields.month]){
+                list_by_month[Hist.fields.month][Hist.fields.hist_id].push(Hist);
+                }else{
                 list_by_month[Hist.fields.month][Hist.fields.hist_id] = [Hist,];
-              }
-              
-              if(Hist.fields.hist_id in t9adya_total){
-                t9adya_total[Hist.fields.hist_id] += Hist.fields.quantity*Hist.fields.price;
-              }else{
-                t9adya_total[Hist.fields.hist_id] = Hist.fields.quantity*Hist.fields.price;
-              }
-              
+                }
+            }else{
+            month_total[Hist.fields.month] = Hist.fields.quantity*Hist.fields.price;
+            list_by_month[Hist.fields.month] = {};
+            list_by_month[Hist.fields.month][Hist.fields.hist_id] = [Hist,];
             }
-            return this.getCount().then(out=>{
-                let hist_count = 0;
-                try { hist_count = parseInt(out);
-                } catch (error) { hist_count = 0;}
-    
-                return [list_by_month,month_total,t9adya_total,hist_count] ;
-            });
             
+            if(Hist.fields.hist_id in t9adya_total){
+            t9adya_total[Hist.fields.hist_id] += Hist.fields.quantity*Hist.fields.price;
+            }else{
+            t9adya_total[Hist.fields.hist_id] = Hist.fields.quantity*Hist.fields.price;
+            }
+            
+        }
+        return this.getCount().then(out=>{
+            let hist_count = 0;
+            try { hist_count = parseInt(out);
+            } catch (error) { hist_count = 0;}
 
+            return [list_by_month,month_total,t9adya_total,hist_count] ;
         });
+
     }
     filterWithExtra = async(where={},orderby="",limit="",is_last_history=false)=>{
         let history_q = await this.filter(where,orderby,limit);
