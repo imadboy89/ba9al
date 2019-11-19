@@ -655,6 +655,8 @@ updateRequestedT9adya : this.updateRequestedT9adya ,
              } }
           >
               <BarcodeScanner setCode={this.setCode} TXT={TXT} IsCalc={true}></BarcodeScanner>
+
+            {this.render_modal_ScanResult()}
           </Modal>
         );
     }
@@ -734,7 +736,6 @@ updateRequestedT9adya : this.updateRequestedT9adya ,
             </TouchableOpacity>
             }
             {this.render_modal_BarcodeScanner()}
-            {this.render_modal_ScanResult()}
             
           </View>
         );

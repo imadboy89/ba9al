@@ -33,10 +33,19 @@
     "description": " 11-14",
 
     "notification": {
-      "icon": "./assets/icon.png",
+      "icon": "./assets/icon_light.png",
       "color": "#000000",
       "iosDisplayInForeground": true,
       "androidMode": "default"
+    },
+    "androidStatusBar": {
+      "barStyle": "dark-content",
+      "backgroundColor": "#000000"
+    },
+    "androidNavigationBar": {
+      "visible": true,
+      "barStyle": "dark-content",
+      "backgroundColor": "#000000"
     }
   }
 }

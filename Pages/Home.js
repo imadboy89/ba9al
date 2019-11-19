@@ -586,6 +586,10 @@ class HomeScreen extends React.Component {
             </View>
             <View style={{flex:1,backgroundColor:"#2c3e5066"}}></View>
 
+            
+          {this.render_modal_credentials()}
+          {this.render_modal_partners()}
+          {this.getLoadingModal()}
         </Modal>
       );
   }
@@ -700,9 +704,7 @@ class HomeScreen extends React.Component {
               }
 
               {this.render_modal_Settings()}
-              {this.render_modal_credentials()}
-              {this.render_modal_partners()}
-              {this.getLoadingModal()}
+
           </View>
         );
       }
