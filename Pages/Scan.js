@@ -3,7 +3,6 @@ import { ActivityIndicator, Text, View, Button, TouchableOpacity,TextInput,Image
 import {styles_Btn,styles_list,buttons_style,styles} from "../Styles/styles";
 import Company from "../Libs/Company_module";
 import Product from "../Libs/Product_module";
-import Translation from "../Libs/Translation";
 import ItemsList from '../Components/ItemsList';
 import BarcodeScanner from "../Components/BarcodeScanner";
 import Icon from 'react-native-vector-icons/FontAwesome';
@@ -12,12 +11,13 @@ import LocalStorage from "../Libs/LocalStorage";
 import AutoComplite from "../Components/autoComplite";
 import History from "../Libs/History_module";
 import backUp from "../Libs/backUp";
-TXT = null;
+import { Audio } from 'expo-av';
 
 
 class ScanScreen extends React.Component {
     constructor(props) {
       super(props);
+      this.loadMp3();
       this.state = {
         isCalcule : false,
         isVisible_modal_scan : false,
@@ -29,7 +29,6 @@ class ScanScreen extends React.Component {
         Total : 0,
         scanned : null,
         hist_label:null,
-        notificationAction:false,
         
       };
       this.last_requested_t9dya = "";
@@ -39,11 +38,11 @@ class ScanScreen extends React.Component {
       this.continue_list=[];
       this.LS = new LocalStorage();
       this.History_ob = new History();
-      this.notificationData = false;
+      this.lastNotifData = null;
       const didBlurSubscription = this.props.navigation.addListener(
         'didFocus',
         payload => {
-          new Translation().getTranslation().then(tr=>{
+          Translation_.getTranslation().then(tr=>{
             if(TXT != tr){
               TXT = tr;
               this.props.navigation.setParams({title:TXT.Scan});
@@ -52,9 +51,12 @@ class ScanScreen extends React.Component {
           const action = this.props["navigation"].getParam("action",false);
           if(action && action =="requestedT9dya"){
             try {
-              notificationData = this.props["navigation"].getParam("data",false);
-              this.checkingRequests(notificationData);
-              this.props["navigation"].setParams({"data":null,"requestedT9dya":null});
+              let notificationData = this.props["navigation"].getParam("data",false);
+              if(notificationData != this.lastNotifData){
+                this.checkingRequests(notificationData);
+              }
+              this.props.navigation.setParams({data:false,action:false});
+              this.lastNotifData = notificationData;
             } catch (error) {
               alert(error);
               this.notificationData = false;
@@ -62,8 +64,12 @@ class ScanScreen extends React.Component {
             
           }else{
             this.notificationData = false;
+            this.lastNotifData = null;
           }
-          //this.loadLastP();
+          if(!this.state.items_list || this.state.items_list.length==0 || this.state.items_list[0].is_hist){
+            this.loadLastP();
+          }
+          
         }
       );
       try {
@@ -80,7 +86,50 @@ class ScanScreen extends React.Component {
         alert(error);        
       }
       
+      
+    }
+    loadMp3(){
+      this.newOrderSound        = new Audio.Sound();
+      this.sendSound            = new Audio.Sound();
+      this.deleteSound          = new Audio.Sound();
+      this.notificationSound    = new Audio.Sound();
 
+      this.newOrderSound      .loadAsync(require('../assets/new_order.mp3'));
+      this.sendSound          .loadAsync(require('../assets/send.mp3'));
+      this.deleteSound        .loadAsync(require('../assets/trash.mp3'));
+      this.notificationSound  .loadAsync(require('../assets/notification.mp3'));
+    }
+    playNewOrder (){
+      try {
+        return this.newOrderSound.replayAsync().catch(err=>console.log(err));
+      } catch (error) {
+        console.log(error);
+        alert(`cannot play the sound file`, error);
+      }
+    }
+    playSend (){
+      try {
+        return this.sendSound.replayAsync().catch(err=>console.log(err));
+      } catch (error) {
+        console.log(error);
+        alert(`cannot play the sound file`, error);
+      }
+    }
+    playDelete (){
+      try {
+        return this.deleteSound.replayAsync().catch(err=>console.log(err));
+      } catch (error) {
+        console.log(error);
+        alert(`cannot play the sound file`, error);
+      }
+    }
+    playNotification (){
+      try {
+        return this.notificationSound.replayAsync().catch(err=>console.log(err));
+      } catch (error) {
+        console.log(error);
+        alert(`cannot play the sound file`, error);
+      }
     }
     checkClient = async()=>{
       await this.backup.setClientInfo();
@@ -95,22 +144,22 @@ class ScanScreen extends React.Component {
       return false;
     }
     checkingRequests = async(notificationData=false)=>{
-      console.log("checkingRequests 1 ");
+      console.log("checkingRequests 1 ",notificationData!=false);
       if(this.timer == undefined){
         this.timer = setInterval(()=> this.checkingRequests(), 10*1000);
       }
       if(!notificationData){
-        console.log("checkingRequests 2 ");
+        console.log("checkingRequests 2 ",notificationData!=false);
         if(this.state.isVisible_modal_scan || this.state.scanned!=null || this.props.navigation.getParam("showSaveBtn") == true){
           return false;
         }
-        console.log("checkingRequests 3 ");
+        console.log("checkingRequests 3 ",notificationData!=false);
         if(this.state.items_list && this.state.items_list.length > 0 && this.state.items_list[0].is_send){
           return false;
         }
       }
 
-      console.log("checkingRequests 4 ");
+      console.log("checkingRequests 4 ",notificationData!=false);
       if(!this.backup_status && !notificationData){
         if(this.state.items_list.length == 0){
           this.loadLastP();
@@ -120,15 +169,21 @@ class ScanScreen extends React.Component {
           return false;
         }
       }
-      console.log("checkingRequests 5 ");
+      console.log("checkingRequests 5 ",notificationData!=false);
       const res = !notificationData ? await this.backup.requestT9adya("get",[],false) : false;
-      t9adya = !notificationData && res && res["success"] == true && res["output"] && res["output"]["t9adya"] && res["output"]["t9adya"].length >0 
-                      ? res["output"]["t9adya"] 
-                      : notificationData["data"] ;
-      console.log("t9adya",t9adya);
-      console.log("notificationData['data']",notificationData["data"]);
-
+      console.log("checkingRequests 6 ",res!=false,notificationData!=false);
+      let t9adya = false;
+      if(!notificationData && res && res["success"] == true && res["output"] && res["output"]["t9adya"] && res["output"]["t9adya"].length >0 ){
+        t9adya = res["output"]["t9adya"];
+      }else if( notificationData && notificationData.data ){
+        t9adya = notificationData["data"];
+      }else{
+        t9adya = false;
+      }
       if(t9adya){
+        if(!notificationData){
+          this.playNotification();
+        }
         let items_list = [];
         const t9dya_entered = res ? res["output"]["entered"] : t9adya[0]["entered"] ;
         if(t9dya_entered == this.last_requested_t9dya ){
@@ -157,6 +212,7 @@ class ScanScreen extends React.Component {
           this.state.hist_label = this.state.hist_label.split("@")[0];
           this.Total(2);
         }
+        this.props.navigation.setParams({hideT9dyaBtns:false});
       }else{
         this.loadLastP();
       }
@@ -168,9 +224,9 @@ class ScanScreen extends React.Component {
       const output1 = await this.requestT9adya();
     }
     deleteRequestedT9adya = async()=>{
-      this.props.navigation.setParams({hideT9dyaBtns:true,reqUpdated:false});
+      this.props.navigation.setParams({hideT9dyaBtns:true,reqUpdated:false,data:null,action:null});
       const output = await this.backup.requestT9adya("delete");
-
+      this.playDelete();
       this.setState({items_list:[]});
       this.loadLastP();
     }
@@ -178,13 +234,15 @@ class ScanScreen extends React.Component {
       
       this.props.navigation.setParams({hideT9dyaBtns:true,reqUpdated:false});
       let t9adya = this.saveHistory(is_send=true);
-      let title = "New request "+this.state.items_list.length+" items , Total:"+this.state.Total;
-      let body =  "";
+      let title = TXT.New_order_X_items__Total.replace("X",this.state.items_list.length) +": "+ this.state.Total + " dh";
+      
+      let body =  TXT.Ordered_by + " : "+this.backup.email+"\n";
       for (let i = 0; i < this.state.items_list.length; i++) {
-        body+=this.state.items_list[i].quantity+"x "+this.state.items_list[i].fields.name+" - "+this.state.items_list[i].fields.price+"\n"
+        body+=this.state.items_list[i].quantity+"x "+this.state.items_list[i].fields.name+" - "+this.state.items_list[i].fields.price+" dh\n"
       }
       const output = await this.backup.requestT9adya("request",t9adya,false);
       const outpu1 = await this.backup.pushNotification(title,body,{data:t9adya,from:this.backup.email},false);
+      this.playSend();
       console.log(outpu1);
       for (let i = 0; i < this.state.items_list.length; i++) {
         this.state.items_list[i] . req_type = "rscv" ;
@@ -201,7 +259,7 @@ class ScanScreen extends React.Component {
     saveHistory = (is_send=false)=>{
       let items_list = [];
       const hist_id  = new History().DB.getDateTime();
-      
+      let is_req_list = false;
       const month    = hist_id.split(" ")[0].split("-").slice(0,2).join("-");
       for (let i = 0; i < this.state.items_list.length; i++) {
         const item = this.state.items_list[i];
@@ -228,23 +286,27 @@ class ScanScreen extends React.Component {
           this.state.items_list[i].is_hist = false;
           this.state.items_list[i].is_send = true;
         }
+        if(item.is_send || item.is_rscv){
+          is_req_list = true;
+        }
+        
       }
       if(!is_send){
         this.props.navigation.setParams({hideT9dyaBtns:true});
-        this.backup.requestT9adya("done").then(o=>{
-          this.props.navigation.setParams({hideT9dyaBtns:false});
-        });
+        if(is_req_list){
+          this.backup.requestT9adya("done").then(o=>{
+            this.props.navigation.setParams({hideT9dyaBtns:false});
+          });
+        }
       }else{
         return items_list;
       }
+      
       this.setState({});
       this.props.navigation.setParams({showSaveBtn : false,})
-
+      this.playNewOrder();
     }
     loadLastP = async(t9adya=false)=>{
-      if(this.state.notificationAction){
-        return ;
-      }
       let items_list = [];
       let lastPurchaseList_  = await this.History_ob.filterWithExtra({},"hist_id DESC","",true);
       let lastPurchaseList = [];
@@ -261,7 +323,7 @@ class ScanScreen extends React.Component {
           const prod_h = lastPurchaseList[i];
           items_list.push(prod_h);
         }
-        if(this.state.items_list != items_list && ( this.state.items_list.length==0 ||  !this.state.items_list[0].is_hist)){
+        if(this.state.items_list != items_list  && ( this.state.items_list.length==0 ||  this.state.items_list[0].fields.entered !=items_list[0].fields.entered ) ){
           console.log("updating lastP");
           this.state.items_list = items_list.slice();
           this.Total(2);
@@ -365,7 +427,6 @@ updateRequestedT9adya : this.updateRequestedT9adya ,
         },
     });
     startScan(method){
-      this.state.notificationAction = false;
       if(method==2){
         this.continue_list = this.state.items_list;
         method = 1;
@@ -430,6 +491,7 @@ updateRequestedT9adya : this.updateRequestedT9adya ,
         showSaveBtn : this.state.items_list.length>0 && this.state.items_list[0].is_hist!=true ,
         req_type    : this.state.items_list.length>0 && this.state.items_list[0].is_rscv==true ? "rscv" : "" ,
       });
+      this.continue_list = [];
     }
     loadItemsForSearch(){
       if(this.products_list && this.products_list.length>0  && 1==2){
@@ -676,15 +738,22 @@ updateRequestedT9adya : this.updateRequestedT9adya ,
           {
             text: TXT.Yes, 
             onPress: () => {
-              this.state.items_list.splice(index,1);
+
               if(this.state.items_list.length>0 && this.state.items_list[0].is_rscv ){
                 this.props.navigation.setParams({reqUpdated:true});
               }
+              /*
               const items_list__ = this.state.items_list.slice();
-              this.setState({items_list:[]});
-              console.log(items_list__);
-              this.state.items_list = items_list__;
-              this.Total();
+              items_list__.splice(index,1);
+              this.setState({items_list:[null,]} , ()=>{
+                console.log("delete",this.state.items_list.length);
+                this.state.items_list = items_list__.slice();
+                console.log("delete",this.state.items_list.length);
+                this.Total();
+              });
+              */
+              delete this.state.items_list[index];
+              this.Total();              
             },
           },
         ],
@@ -697,19 +766,7 @@ updateRequestedT9adya : this.updateRequestedT9adya ,
             {this.state.hist_label &&
             <Text  style={styles.textTotal}>{this.backup_status==true ? "." : "" }{this.state.hist_label}</Text>
             }
-            {this.state.notificationAction ==true && this.state.items_list.length == 0 &&
-              <View style={{height:200,width:"100%",justifyContent:"center"}}>
-                <ActivityIndicator size="large" color="#00ff00" />
-                <View style={{width:"30%",alignSelf:"center",marginTop:50}}>
-                  <Button 
-                    color="black" 
-                    onPress={()=>{this.setState({notificationAction:false});}}
-                    title="Ignore"
-                    ></Button>
-                  </View>
-              </View>
-            }
-            {this.state.items_list.length>0 && this.state.Total>0 && 
+            {this.state.items_list.length>0 && this.state.Total>0 }
               <ItemsList 
                 items_list={this.state.items_list}
                 setItemParent={this.setItemParent}
@@ -717,14 +774,14 @@ updateRequestedT9adya : this.updateRequestedT9adya ,
                 isCalculate={true}
                  />
 
-            }
+            
             {this.state.items_list.length>0 &&
               <Text style={styles.textTotal}>
                 {TXT.Total} : {this.state.Total}
               </Text>
                  
             }
-            { this.state.items_list.length>0 && this.state.Total>0 && this.state.items_list[0].is_hist!=true /*&& this.state.items_list[0].is_send!=true && this.state.items_list[0].is_rscv!=true */ &&
+            { this.state.items_list.length>0 && this.state.Total>0 && this.state.items_list[0] && this.state.items_list[0].is_hist!=true /*&& this.state.items_list[0].is_send!=true && this.state.items_list[0].is_rscv!=true */ &&
             <TouchableOpacity
               activeOpacity={0.7}
               onPress={()=>{this.startScan(2);}}

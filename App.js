@@ -11,8 +11,8 @@ import {header_style} from "./Styles/styles";
 import Icon from 'react-native-vector-icons/FontAwesome';
 import Translation from "./Libs/Translation";
 
-TXT = new Translation().getTranslation();
-
+Translation_ = new Translation();
+TXT = Translation_.getTranslation();
 const tabBarOptions= {
   activeTintColor: '#ecf0f1',
   activeBackgroundColor : '#596d82',

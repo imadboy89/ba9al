@@ -1,7 +1,6 @@
 import React from 'react';
 import { Switch, Text, View, Button, TouchableOpacity,Picker,ScrollView,Modal,TextInput, Alert,ActivityIndicator } from 'react-native';
 import {buttons_style,styles_list,styles_itemRow,styles} from "../Styles/styles";
-import Translation from "../Libs/Translation";
 import LocalStorage from "../Libs/LocalStorage";
 import HeaderButton from "../Components/HeaderButton";
 import backUp from "../Libs/backUp";
@@ -9,11 +8,7 @@ import History from "../Libs/History_module";
 import Credentials from "../Components/Credentials";
 import Partners from "../Components/Partners";
 import Icon from 'react-native-vector-icons/FontAwesome';
-import Constants from 'expo-constants';
 import { Notifications } from 'expo';
-import * as Permissions from 'expo-permissions';
-
-TXT = null;
 
 class HomeScreen extends React.Component {
     constructor(props) {
@@ -35,12 +30,11 @@ class HomeScreen extends React.Component {
         synchLog : [],
         clear_database:true,
         modalVisible_partners : false,
-        version : "0.8.3.9.7",
+        version : "0.8.4.2",
 
       };
       this.LS = new LocalStorage();
       this.firstHistoryRender = true;
-      this.TXT_ob = new Translation(this.LS); 
       this.backup = new backUp();
       //this.backup.Company.DB.updateTables();
       this.backup._loadClient().then(output=>{
@@ -51,12 +45,12 @@ class HomeScreen extends React.Component {
       const didBlurSubscription = this.props.navigation.addListener(
         'didFocus',
         payload => {
-          new Translation().getTranslation().then(tr=>{
+          Translation_.getTranslation().then(tr=>{
           if(TXT != tr){
             TXT = tr;
             this.backup.TXT = TXT;
             this.props.navigation.setParams({title:TXT.Home});
-            this.setState({language:this.TXT_ob.language});
+            this.setState({language:Translation_.language});
           }
           });
           this.loadHistory();
@@ -66,8 +60,13 @@ class HomeScreen extends React.Component {
     }
   
     _handleNotification = notification => {
-      console.log(notification);
-      this.props.navigation.navigate("Scan_",{"action":"requestedT9dya","data":notification.data});
+      let screen = "Home";
+      let params = {};
+      if(notification.data && notification.data.length  && notification.data.length > 0 && notification.data[0].hist_id){
+        screen = "Scan_";
+        params = {"action":"requestedT9dya","data":notification.data} ;
+      }
+      this.props.navigation.navigate(screen,params);
       //this.setState({ notification: notification });
     };
     openAddModal = () => {
@@ -119,10 +118,19 @@ class HomeScreen extends React.Component {
     componentDidMount = async()=>{
       Notifications.createChannelAndroidAsync('Notifications', 
       {
-        name: 'Notifications',
-        sound: true,
-        priority: 'max',
-        vibrate: [0, 250, 250, 250],
+        name     : 'Notifications',
+        sound    : true,
+        priority : 'max',
+        vibrate  : [0, 250, 100, 250,100,250],
+        badge    : true,
+      });
+      Notifications.createChannelAndroidAsync('Notifications_lessImportant', 
+      {
+        name     : 'Notifications_lessImportant',
+        sound    : false,
+        priority : 'default',
+        vibrate  : false,
+        badge    : true,
       });
 
       this._notificationSubscription = Notifications.addListener(
@@ -163,7 +171,7 @@ class HomeScreen extends React.Component {
     saveConfig = async (key,value) => {
       await this.LS.setSetting(key,value);
       if(key=="language"){
-        const transl = await this.TXT_ob.getTranslation();
+        const transl = await Translation_.getTranslation();
         TXT = transl;
       }
       let state_ = {};
@@ -276,6 +284,9 @@ class HomeScreen extends React.Component {
           return false;
         }
         this.backup.changeClient().then(()=>{
+          this.History_ob.DB.empty().then(()=>{
+              this.loadHistory();
+          });
           this.closeModal_credents();
           this.setState({
             synchronize_btn_status:true,
@@ -586,7 +597,7 @@ class HomeScreen extends React.Component {
             </View>
             <View style={{flex:1,backgroundColor:"#2c3e5066"}}></View>
 
-            
+
           {this.render_modal_credentials()}
           {this.render_modal_partners()}
           {this.getLoadingModal()}

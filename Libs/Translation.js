@@ -4,6 +4,12 @@ class translation{
     constructor(LS){
         this.language = "en";
         this.translation = {
+            
+            "New_Updates_for_products_database"             : {"ar":"تحديثات جديدة لقاعدة بيانات المنتجات"         ,"fr":"Nouvelles mises à jour pour la base de données de produits","dr":"Ta7dit jdid n base donne dyal prodwiyats",},
+            "New_products"             : {"ar":"منتجات جديدة"         ,"fr":"Nouveaux produits","dr":"Prodwiyat jdad",},
+            "Updated_products"             : {"ar":"المنتجات المحدثة"         ,"fr":"Produits mis à jour","dr":"Prodwiyat tbdlo",},
+            "New_order_X_items__Total"             : {"ar":"طلب جديد: X عناصر ، المجموع"         ,"fr":"Nouvelle commande: X items, Total","dr":"Commande jdida , X d 7ajat, total",},
+            "Ordered_by"             : {"ar":"بطلب من"         ,"fr":"Commandé par","dr":"command mn",},
             "Version"             : {"ar":"الإصدار"         ,"fr":"Version","dr":"Version",},
             "Logged_as"             : {"ar":"متصل ك"         ,"fr":"Connecté","dr":"Mconnecti b",},
             "Cloud_history_cleaned_successfully"             : {"ar":"سحابة التاريخ تنظيفها بنجاح"         ,"fr":"L'historique des cloud ​​nettoyé avec succès","dr":"historique d cloud tms7o",},

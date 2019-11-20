@@ -50,19 +50,24 @@ class BackUp{
           return;
         }
         let token = await Notifications.getExpoPushTokenAsync();
-        console.log(token);
+        console.log("getExpoPushTokenAsync ",token);
         this.PushToken = token ;
         this.savePushToken();
       } else {
         alert('Must use physical device for Push Notifications');
       }
     };
-    checkCnx = ()=>{
-      return NetInfo.isConnected.fetch().then(isConnected => {
-        this.isConnected = isConnected;
-        //console.log("isConnected", isConnected);
-        return isConnected;
-      });
+    checkCnx = async(check_client=true)=>{
+      const isConnected = await NetInfo.isConnected.fetch();
+      this.isConnected = isConnected;
+      //console.log("isConnected", isConnected);
+      if(check_client && (!this.client || !this.client.callFunction )){
+        await this.setClientInfo();
+      }
+      if(isConnected && check_client){
+        await this.checkConnectedUserChange();
+      }
+      return isConnected;
     }
     setClientInfo = async()=>{
       try {
@@ -157,7 +162,8 @@ class BackUp{
         return new Promise(resolve=>{resolve(false);});
       }
       try {
-        results = await this.client.callFunction("savePushToken",[this.PushToken]);
+
+        results = await this.client.callFunction("savePushToken",[this.PushToken,Translation_.language]);
       } catch (error) {
         console.log(error);
         return false;
@@ -168,6 +174,7 @@ class BackUp{
       if( ! await this.checkCnx()){
         return new Promise(resolve=>{resolve(false);});
       }
+      
       const datetime = this.Product.DB.getDateTime();
       let results = {};
       try {
@@ -178,14 +185,18 @@ class BackUp{
       }
       return results;
     }
-    pushNotification = async(title="", body="",data={},partner=false)=>{
+    pushNotification = async(title="", body="",data={},partner=false,chanelId=false)=>{
       if( ! await this.checkCnx()){
         return new Promise(resolve=>{resolve(false);});
       }
       const datetime = this.Product.DB.getDateTime();
       let results = {};
       try {
-        results = await this.client.callFunction("pushNotification",[partner,title,"Requested by : "+this.email+"\n"+body , data]);
+        let args = [partner,title,body , data] ;
+        if(chanelId){
+          args.push(chanelId);
+        }
+        results = await this.client.callFunction("pushNotification",args);
         console.log(results);
       } catch (error) {
         console.log("pushNotification",error);
@@ -208,7 +219,14 @@ class BackUp{
       }
       return results;
     }
-    changeClient = async (eml,pass)=>{
+    checkConnectedUserChange = async()=>{
+      const credents = await this.LS.getCredentials();
+      if(credents["email"].trim().toLowerCase()!=this.email ){
+        return this.setClientInfo();
+      }
+      return credents;
+    }
+    changeClient = async ()=>{
       if( ! await this.checkCnx()){
         alert(this.TXT.You_need_internet_connection_to+(this.TXT.language=="en"?" ":"")+this.TXT.Sign_in);
         return false;
@@ -239,7 +257,7 @@ class BackUp{
       try {
         const credential = new UserPasswordCredential(credents["email"].toLowerCase(),credents["password"].toLowerCase());
         this.client = await app.auth.loginWithCredential(credential);
-        this.savePushToken();
+        this.registerForPushNotificationsAsync();
         return this.setClientInfo(); 
       } catch (error) {
         alert(error);
@@ -262,7 +280,7 @@ class BackUp{
 
       return emailPasswordClient.registerWithEmail(username.toLowerCase(),password.toLowerCase())
         .then((output) => {
-          this.savePushToken();
+          this.registerForPushNotificationsAsync();
           console.log("Successfully sent account confirmation email!", JSON.stringify(output) );
           return output;
         })
@@ -273,7 +291,7 @@ class BackUp{
     }
     _loadClient = async () => {
         
-        if( ! await this.checkCnx()){
+        if( ! await this.checkCnx(false)){
           return false;
         }
         const credents = await this.LS.getCredentials();
@@ -488,6 +506,21 @@ class BackUp{
         }
       }
       this.appendLog ("    rUpdated : "+updated);
+      
+      if(Items_clss == Product && (uploaded>0 || updated>0)){
+        let body = TXT.New_products +" : "+uploaded + " ; "+TXT.Updated_products+" : "+updated ;
+        this.pushNotification (TXT.New_Updates_for_products_database+"!", body,{},"all","Notifications_lessImportant").then(res=>{
+          let pushednotifto=0;
+          if(res && res["data"] && res["data"].length>0){
+            for (let i = 0; i < res["data"].length; i++) {
+              pushednotifto += res["data"][i]["status"] && res["data"][i]["status"]=="ok" ? 1 : 0 ;
+            }
+          }
+          this.appendLog ("----Notification pushed to : "+pushednotifto);
+  
+        });
+      }
+
       return true;
     }
     parseDate2Int(date_str){

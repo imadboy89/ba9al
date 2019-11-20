@@ -105,7 +105,6 @@ class ItemsList extends React.Component {
       this.setItemParent = this.props.setItemParent;
     }
     render() {
-
         return (
         <View style={styles.container} >
             <Text style={{color:"white",fontSize:18}}> {TXT.Items_count} : {this.props.items_list.length}</Text>
@@ -115,6 +114,7 @@ class ItemsList extends React.Component {
                 <FlatList
                     data={this.props.items_list}
                     renderItem={({ item,index  }) =>{
+                      if(!item){return null;}
                       return (<ItemRow 
                                 item={item} 
                                 index_={index}
@@ -123,8 +123,9 @@ class ItemsList extends React.Component {
                                 showProducts={this.props.showProducts}
                               />);
                     }}
-                    keyExtractor={item => {
-                      return this.props.isCalculate ? item.rand+""+item.quantity : item.fields.id+"-"+item.fields.name ;
+                    keyExtractor={ (item,i) => {
+                      if(!item){return i;}
+                      return this.props.isCalculate  ? item.rand+""+item.quantity : item.fields.id+"-"+item.fields.name ;
                     } }
                 />
             </ScrollView>

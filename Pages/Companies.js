@@ -2,15 +2,11 @@ import React from 'react';
 import { Alert, Text, View, Button,TextInput,Modal } from 'react-native';
 import {styles_list,buttons_style,styles} from "../Styles/styles";
 import Company from "../Libs/Company_module";
-import Translation from "../Libs/Translation";
 import ItemsList from '../Components/ItemsList';
 import BarcodeScanner from "../Components/BarcodeScanner";
 import getCountry from "../Libs/Countries";
 import HeaderButton from "../Components/HeaderButton";
 import Next_previous from "../Components/nex_previous";
-
-TXT = null;
-
 
 class CompaniesScreen extends React.Component {
     constructor(props) {
@@ -26,15 +22,11 @@ class CompaniesScreen extends React.Component {
       };
       this.items_number_perpage = 20;
       this.company = new Company();
-      
-      new Translation().getTranslation().then(tr=>{
-        TXT = tr;
-        this.setState({});
-      });
+    
       const didBlurSubscription = this.props.navigation.addListener(
         'didFocus',
         payload => {
-          new Translation().getTranslation().then(tr=>{
+            Translation_.getTranslation().then(tr=>{
             if(TXT != tr){
                 TXT = tr;
                 this.props.navigation.setParams({title:TXT.Companies});

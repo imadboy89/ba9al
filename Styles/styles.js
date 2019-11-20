@@ -240,7 +240,7 @@ const styles = StyleSheet.create({
     textTotal:{
         width:"100%",
         color : "white",
-        fontSize : 35,
+        fontSize : 28,
         fontFamily:"Roboto",
         textAlign:"center",
         justifyContent:"center"

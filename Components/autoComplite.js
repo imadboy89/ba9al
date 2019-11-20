@@ -88,6 +88,7 @@ class AutoComplite extends React.Component {
                     value={this.state.q}
                     autoFocus={true}
                     autoCompleteType="off"
+                    autoCorrect={false}
                     focus={this.state.focusAutoCompliteInput}
                 />
                 <ScrollView style={{marginRight:5,marginLeft:5,height:200,}}>

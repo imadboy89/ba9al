@@ -2,7 +2,6 @@ import React from 'react';
 import { Text, View, Button,TextInput,Image,Modal,TouchableHighlight,Alert } from 'react-native';
 import {buttons_style,styles_list,styles_itemRow,styles} from "../Styles/styles";
 import Product from "../Libs/Product_module";
-import Translation from "../Libs/Translation";
 import ItemsList from '../Components/ItemsList';
 import BarcodeScanner from "../Components/BarcodeScanner";
 import HeaderButton from "../Components/HeaderButton";
@@ -30,7 +29,7 @@ class ProductsScreen extends React.Component {
       const didBlurSubscription = this.props.navigation.addListener(
         'didFocus',
         payload => {
-          new Translation().getTranslation().then(tr=>{
+            Translation_.getTranslation().then(tr=>{
             if(TXT != tr){
                 TXT = tr;
                 this.props.navigation.setParams({title:TXT.Products});

@@ -33,9 +33,10 @@ class Credentials extends React.Component{
                     this.setState({email:newValue.toLowerCase()});
                 }}
                 value={this.state.email}
-                type="username"
+                autoCompleteType="email"
                 autoCorrect={false}
                 autoCapitalize="none"
+                keyboardType="email-address"
             />
             </View>
   
