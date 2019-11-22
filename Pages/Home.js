@@ -30,7 +30,7 @@ class HomeScreen extends React.Component {
         synchLog : [],
         clear_database:true,
         modalVisible_partners : false,
-        version : "0.8.4.2",
+        version : "0.8.5",
 
       };
       this.LS = new LocalStorage();
@@ -62,7 +62,7 @@ class HomeScreen extends React.Component {
     _handleNotification = notification => {
       let screen = "Home";
       let params = {};
-      if(notification.data && notification.data.length  && notification.data.length > 0 && notification.data[0].hist_id){
+      if(notification.data && notification.data.data && notification.data.data.length  && notification.data.data.length > 0 && notification.data.data[0].hist_id){
         screen = "Scan_";
         params = {"action":"requestedT9dya","data":notification.data} ;
       }

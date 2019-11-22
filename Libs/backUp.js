@@ -30,6 +30,10 @@ class BackUp{
         this.admin = false;
         this.isConnected = false;
         this.PushToken = "";
+
+        this.executingQueued_running = false;
+        this.queue = [];
+        
     }
     registerForPushNotificationsAsync = async () => {
       
@@ -90,7 +94,28 @@ class BackUp{
         console.log(error)
         return new Promise(resolve=>{resolve(false);});
       }
-
+      
+    }
+    executingQueued = async()=>{
+      if(this.executingQueued_running){
+        return ;
+      }
+      this.executingQueued_running = true ;
+      if(this.timer == undefined){
+        this.timer = setInterval(()=> this.executingQueued(), 10*1000);
+      }
+      const queue = this.queue.slice();
+      for (let i = 0; i < this.queue.length; i++) {
+        const task = queue[i];
+        console.log("executingQueued "+i,task[0]);
+        try {
+          task[0].apply(this,task[1]) ;
+        } catch (error) {
+          console.log(error);
+        }
+      }
+      this.queue=[];
+      this.executingQueued_running = false ;
     }
     isAdmin(){
       return this.client.callFunction("isAdmin").then(result => {
@@ -172,15 +197,17 @@ class BackUp{
     }
     requestT9adya = async(action="get", t9adya=[],partner=undefined)=>{
       if( ! await this.checkCnx()){
+        alert(TXT.You_need_internet_connection_for_this_action);
         return new Promise(resolve=>{resolve(false);});
       }
       
       const datetime = this.Product.DB.getDateTime();
-      let results = {};
+      let results = false;
       try {
         results = await this.client.callFunction("requestT9adya",[action,datetime,t9adya,partner]);
       } catch (error) {
         console.log("requestT9adya",error);
+        this.queue.push([this.requestT9adya,[action, t9adya,partner]]);
         return false;
       }
       return results;
@@ -189,24 +216,31 @@ class BackUp{
       if( ! await this.checkCnx()){
         return new Promise(resolve=>{resolve(false);});
       }
+      if(title=="" || body==""){
+        return false;
+      }
       const datetime = this.Product.DB.getDateTime();
       let results = {};
+      let args = [partner,title,body , data,datetime] ;
+      if(chanelId){
+        args.push(chanelId);
+      }
       try {
-        let args = [partner,title,body , data] ;
-        if(chanelId){
-          args.push(chanelId);
-        }
         results = await this.client.callFunction("pushNotification",args);
-        console.log(results);
       } catch (error) {
         console.log("pushNotification",error);
+        this.queue.push([this.pushNotification,[title, body,data,partner,chanelId]]);
+        /*
+        if(error.errorCode==41){
+          this.queue.push([this.pushNotification,[title, body,data,partner,chanelId]]);
+        }*/
         return false;
       }
       return results;
     }
     partnersManager = async(action,partner_username)=>{
       if( ! await this.checkCnx()){
-        alert(this.TXT.You_need_internet_connection_for_this_action);
+        alert(TXT.You_need_internet_connection_for_this_action);
         return false;
       }
       const datetime = this.Product.DB.getDateTime();
@@ -228,7 +262,7 @@ class BackUp{
     }
     changeClient = async ()=>{
       if( ! await this.checkCnx()){
-        alert(this.TXT.You_need_internet_connection_to+(this.TXT.language=="en"?" ":"")+this.TXT.Sign_in);
+        alert(TXT.You_need_internet_connection_to+(TXT.language=="en"?" ":"")+TXT.Sign_in);
         return false;
       }
       this.email = "";
@@ -271,7 +305,7 @@ class BackUp{
     }
     newUser = async(username,password)=>{
       if( ! await this.checkCnx()){
-        alert(this.TXT.You_need_internet_connection_to+(this.TXT.language=="en"?" ":"")+this.TXT.Sign_up);
+        alert(TXT.You_need_internet_connection_to+(TXT.language=="en"?" ":"")+TXT.Sign_up);
         return false;
       }
       
@@ -533,7 +567,7 @@ class BackUp{
     synchronize = async(appendLog)=>{
       this.appendLog = appendLog ;
       if( ! await this.checkCnx()){
-        alert(this.TXT.You_need_internet_connection_to+(this.TXT.language=="en"?" ":"")+this.TXT.Sych_Now);
+        alert(TXT.You_need_internet_connection_to+(TXT.language=="en"?" ":"")+TXT.Sych_Now);
         return false;
       }
       await this.initDb();

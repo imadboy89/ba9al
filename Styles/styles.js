@@ -245,6 +245,13 @@ const styles = StyleSheet.create({
         textAlign:"center",
         justifyContent:"center"
     },
+    hist_label:{
+        width:"100%",
+        color : "white",
+        fontSize : 28,
+        fontFamily:"Roboto",
+        textAlign:"left",
+    },
     product_title :{
         fontFamily:"Roboto",
         fontSize:35,

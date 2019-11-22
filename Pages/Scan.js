@@ -12,12 +12,13 @@ import AutoComplite from "../Components/autoComplite";
 import History from "../Libs/History_module";
 import backUp from "../Libs/backUp";
 import { Audio } from 'expo-av';
-
+import { Notifications } from 'expo';
 
 class ScanScreen extends React.Component {
     constructor(props) {
       super(props);
-      this.loadMp3();
+      this.loadMp3(true);
+      this.checkingRequests_inProcess = false;
       this.state = {
         isCalcule : false,
         isVisible_modal_scan : false,
@@ -48,24 +49,8 @@ class ScanScreen extends React.Component {
               this.props.navigation.setParams({title:TXT.Scan});
             }
           });
-          const action = this.props["navigation"].getParam("action",false);
-          if(action && action =="requestedT9dya"){
-            try {
-              let notificationData = this.props["navigation"].getParam("data",false);
-              if(notificationData != this.lastNotifData){
-                this.checkingRequests(notificationData);
-              }
-              this.props.navigation.setParams({data:false,action:false});
-              this.lastNotifData = notificationData;
-            } catch (error) {
-              alert(error);
-              this.notificationData = false;
-            }
-            
-          }else{
-            this.notificationData = false;
-            this.lastNotifData = null;
-          }
+          this.handle_navigation_notification();
+
           if(!this.state.items_list || this.state.items_list.length==0 || this.state.items_list[0].is_hist){
             this.loadLastP();
           }
@@ -76,6 +61,7 @@ class ScanScreen extends React.Component {
         this.backup_status = false;
         try {
           this.backup = new backUp();
+          this.backup.executingQueued();
           this.backup_status = false;
         } catch (error) {
           alert(error);
@@ -88,47 +74,106 @@ class ScanScreen extends React.Component {
       
       
     }
-    loadMp3(){
-      this.newOrderSound        = new Audio.Sound();
-      this.sendSound            = new Audio.Sound();
-      this.deleteSound          = new Audio.Sound();
-      this.notificationSound    = new Audio.Sound();
+    componentDidMount = async()=>{
+      this._notificationSubscription = Notifications.addListener(
+        this._handleNotification
+      );
+    }
+    handle_navigation_notification(){
+      const action = this.props["navigation"].getParam("action",false);
+      if(action && action =="requestedT9dya"){
+        try {
+          let notificationData = this.props["navigation"].getParam("data",false);
+          if(notificationData != this.lastNotifData){
+            this.state.new_requestedT9dya_read = false;
+            this.checkingRequests(notificationData);
+            this.backup.requestT9adya("viewed","received");
+          }else{
+          }
+          this.props.navigation.setParams({data:false,action:false});
+          this.lastNotifData = notificationData;
+        } catch (error) {
+          alert(error);
+          this.notificationData = false;
+        }
+        
+      }else{
+        this.notificationData = false;
+        this.lastNotifData = null;
+      }
 
-      this.newOrderSound      .loadAsync(require('../assets/new_order.mp3'));
-      this.sendSound          .loadAsync(require('../assets/send.mp3'));
-      this.deleteSound        .loadAsync(require('../assets/trash.mp3'));
-      this.notificationSound  .loadAsync(require('../assets/notification.mp3'));
+
+    }
+    _handleNotification = notification => {
+      console.log("notif");
+      let screen = "Home";
+      let params = {};
+      if(notification.data && notification.data.data && notification.data.data.length  && notification.data.data.length > 0 && notification.data.data[0].hist_id){
+        screen = "Scan_";
+        params = {"action":"requestedT9dya","data":notification.data} ;
+
+        return this.handle_navigation_notification();
+      }
+      this.props.navigation.navigate(screen,params);
+      //this.setState({ notification: notification });
+    };
+    loadMp3(firstload=false){
+      if(firstload){
+        this.newOrderSound        = new Audio.Sound();
+        this.sendSound            = new Audio.Sound();
+        this.deleteSound          = new Audio.Sound();
+        this.notificationSound    = new Audio.Sound();
+        this.newOrderSound      .loadAsync(require('../assets/new_order.mp3'));
+        this.sendSound          .loadAsync(require('../assets/send.mp3'));
+        this.deleteSound        .loadAsync(require('../assets/trash.mp3'));
+        this.notificationSound  .loadAsync(require('../assets/notification.mp3'));
+  
+      }else{
+        this.newOrderSound      .unloadAsync();
+        this.sendSound          .unloadAsync();
+        this.deleteSound        .unloadAsync();
+        this.notificationSound  .unloadAsync();
+
+        this.newOrderSound      .loadAsync(require('../assets/new_order.mp3'));
+        this.sendSound          .loadAsync(require('../assets/send.mp3'));
+        this.deleteSound        .loadAsync(require('../assets/trash.mp3'));
+        this.notificationSound  .loadAsync(require('../assets/notification.mp3'));
+
+
+      }
+
+
     }
     playNewOrder (){
       try {
-        return this.newOrderSound.replayAsync().catch(err=>console.log(err));
+        return this.newOrderSound.replayAsync().catch(err=>{console.log(err);});
       } catch (error) {
         console.log(error);
-        alert(`cannot play the sound file`, error);
+        this.loadMp3();
       }
     }
     playSend (){
       try {
-        return this.sendSound.replayAsync().catch(err=>console.log(err));
+        return this.sendSound.replayAsync().catch(err=>{console.log(err);});
       } catch (error) {
         console.log(error);
-        alert(`cannot play the sound file`, error);
+        this.loadMp3();
       }
     }
     playDelete (){
       try {
-        return this.deleteSound.replayAsync().catch(err=>console.log(err));
+        return this.deleteSound.replayAsync().catch(err=>{console.log(err);});
       } catch (error) {
+        this.loadMp3();
         console.log(error);
-        alert(`cannot play the sound file`, error);
       }
     }
     playNotification (){
       try {
-        return this.notificationSound.replayAsync().catch(err=>console.log(err));
+        return this.notificationSound.replayAsync().catch(err=>{console.log(err);});
       } catch (error) {
+        this.loadMp3();
         console.log(error);
-        alert(`cannot play the sound file`, error);
       }
     }
     checkClient = async()=>{
@@ -144,56 +189,77 @@ class ScanScreen extends React.Component {
       return false;
     }
     checkingRequests = async(notificationData=false)=>{
-      console.log("checkingRequests 1 ",notificationData!=false);
+      console.log("checkingRequests");
+      if(this.checkingRequests_inProcess){
+        return ;
+      }
+      this.checkingRequests_inProcess = true ;
       if(this.timer == undefined){
         this.timer = setInterval(()=> this.checkingRequests(), 10*1000);
       }
+      if(this.props.navigation.getParam("hideT9dyaBtns") != true && this.props.navigation.getParam("showSaveBtn")==true && this.props.navigation.getParam("req_type") != "rscv"){
+        this.checkingRequests_inProcess = false ;
+        return false;
+      }
+
       if(!notificationData){
-        console.log("checkingRequests 2 ",notificationData!=false);
-        if(this.state.isVisible_modal_scan || this.state.scanned!=null || this.props.navigation.getParam("showSaveBtn") == true){
+        if(this.state.isVisible_modal_scan || this.state.scanned!=null || this.props.navigation.getParam("reqUpdated") == true){//reqUpdated
+          this.checkingRequests_inProcess = false ;
           return false;
         }
-        console.log("checkingRequests 3 ",notificationData!=false);
         if(this.state.items_list && this.state.items_list.length > 0 && this.state.items_list[0].is_send){
+          this.checkingRequests_inProcess = false ;
           return false;
         }
       }
 
-      console.log("checkingRequests 4 ",notificationData!=false);
       if(!this.backup_status && !notificationData){
         if(this.state.items_list.length == 0){
           this.loadLastP();
         }
         const res_ = await this.checkClient();
         if(!res_){
+          this.checkingRequests_inProcess = false ;
           return false;
         }
       }
-      console.log("checkingRequests 5 ",notificationData!=false);
       const res = !notificationData ? await this.backup.requestT9adya("get",[],false) : false;
-      console.log("checkingRequests 6 ",res!=false,notificationData!=false);
+      const new_requestedT9dya_count = res && res["success"] == true && res["count"] ? res["count"] : 0;
+      const new_requestedT9dya_read = res && res["success"] == true && res["output"] && res["output"]["viewed"] ? res["output"]["viewed"] : false;
+      const actual_t9dya_id = res && res["success"] == true && res["output"] && res["output"] ["_id"]? res["output"] ["_id"] : false;
+      if(new_requestedT9dya_count != this.state.requestedT9dya_count){
+        this.setState({requestedT9dya_count :new_requestedT9dya_count });
+      }
+      if(new_requestedT9dya_read != this.state.new_requestedT9dya_read){
+        this.setState({new_requestedT9dya_read :new_requestedT9dya_read });
+      }
       let t9adya = false;
       if(!notificationData && res && res["success"] == true && res["output"] && res["output"]["t9adya"] && res["output"]["t9adya"].length >0 ){
         t9adya = res["output"]["t9adya"];
+      }else if( !notificationData && res &&  res["success"] == true && res["output"]==null && res["error"]==false && this.props.navigation.getParam("showSaveBtn")==true){
+        this.state.items_list = [];
+        t9adya = false;
       }else if( notificationData && notificationData.data ){
         t9adya = notificationData["data"];
       }else{
         t9adya = false;
       }
       if(t9adya){
-        if(!notificationData){
-          this.playNotification();
-        }
         let items_list = [];
         const t9dya_entered = res ? res["output"]["entered"] : t9adya[0]["entered"] ;
         if(t9dya_entered == this.last_requested_t9dya ){
           if(this.state.items_list.length == 0 || !this.state.items_list[0].is_hist){
+            this.checkingRequests_inProcess = false ;
             return ;
           }
 
         }
+        if(!notificationData){
+          this.playNotification();
+          this.actual_t9dya_id = actual_t9dya_id;
+        }
         this.last_requested_t9dya = t9dya_entered;
-
+        
         for (let i = 0; i < t9adya.length; i++) {
           const prod_req = new Product();
           await prod_req.get({id : t9adya[i].product_id});
@@ -203,35 +269,44 @@ class ScanScreen extends React.Component {
           items_list.push(prod_req);  
         }
 
-        if(this.state.isVisible_modal_scan || this.state.scanned!=null || this.props.navigation.getParam("showSaveBtn") == true || this.props.navigation.getParam("reqUpdated") == true){
-          return false;
-        }
+
         this.state.items_list = items_list;
         if(items_list.length > 0){
           this.state.hist_label = !notificationData ? res["output"]["owner"] : notificationData["from"];
           this.state.hist_label = this.state.hist_label.split("@")[0];
+          
           this.Total(2);
         }
         this.props.navigation.setParams({hideT9dyaBtns:false});
       }else{
         this.loadLastP();
       }
+      this.checkingRequests_inProcess = false ;
     }
     
     updateRequestedT9adya = async()=>{
+      this.state.new_requestedT9dya_read = false;
       this.props.navigation.setParams({hideT9dyaBtns:true,reqUpdated:false});
-      const output  = await this.backup.requestT9adya("delete");
+      const output  = await this.backup.requestT9adya("delete",this.actual_t9dya_id);
+      if(!output){
+        return false;
+      }
       const output1 = await this.requestT9adya();
     }
     deleteRequestedT9adya = async()=>{
+      this.state.new_requestedT9dya_read = false;
       this.props.navigation.setParams({hideT9dyaBtns:true,reqUpdated:false,data:null,action:null});
-      const output = await this.backup.requestT9adya("delete");
+      const output = await this.backup.requestT9adya("delete",this.actual_t9dya_id);
+      if(!output){
+        return false;
+      }
+      this.actual_t9dya_id= false;
       this.playDelete();
       this.setState({items_list:[]});
-      this.loadLastP();
+      this.checkingRequests();
     }
     requestT9adya = async()=>{
-      
+      this.state.new_requestedT9dya_read = false;
       this.props.navigation.setParams({hideT9dyaBtns:true,reqUpdated:false});
       let t9adya = this.saveHistory(is_send=true);
       let title = TXT.New_order_X_items__Total.replace("X",this.state.items_list.length) +": "+ this.state.Total + " dh";
@@ -241,9 +316,11 @@ class ScanScreen extends React.Component {
         body+=this.state.items_list[i].quantity+"x "+this.state.items_list[i].fields.name+" - "+this.state.items_list[i].fields.price+" dh\n"
       }
       const output = await this.backup.requestT9adya("request",t9adya,false);
+      if(!output){
+        return false;
+      }
       const outpu1 = await this.backup.pushNotification(title,body,{data:t9adya,from:this.backup.email},false);
       this.playSend();
-      console.log(outpu1);
       for (let i = 0; i < this.state.items_list.length; i++) {
         this.state.items_list[i] . req_type = "rscv" ;
         this.state.items_list[i] . is_send = false ;
@@ -317,15 +394,19 @@ class ScanScreen extends React.Component {
         }
       }
       if(lastPurchaseList && lastPurchaseList.length > 0){
-        this.setState({hist_label:lastPurchaseList[0].hist_id});
+        if(this.state.hist_label != lastPurchaseList[0].hist_id){
+          this.setState({hist_label:lastPurchaseList[0].hist_id , new_requestedT9dya_read:false});
+        }
 
         for (let i = 0; i < lastPurchaseList.length; i++) {
           const prod_h = lastPurchaseList[i];
           items_list.push(prod_h);
         }
         if(this.state.items_list != items_list  && ( this.state.items_list.length==0 ||  this.state.items_list[0].fields.entered !=items_list[0].fields.entered ) ){
-          console.log("updating lastP");
+          
           this.state.items_list = items_list.slice();
+          this.state.new_requestedT9dya_read = false;
+          this.state.requestedT9dya_count = 0;
           this.Total(2);
         }
         
@@ -440,6 +521,7 @@ updateRequestedT9adya : this.updateRequestedT9adya ,
           disable_btns:true,
           Total : 0,
           hist_label : null,
+          new_requestedT9dya_read:false,
         });
         
         this.state.items_list = [] ;
@@ -763,8 +845,20 @@ updateRequestedT9adya : this.updateRequestedT9adya ,
       
         return (
           <View style={styles.container} >
+            {this.state.requestedT9dya_count!=undefined && this.state.requestedT9dya_count>1 &&
+              <Text  style={{color:"orange",fontSize:20}}>{TXT.Orders_count} : {this.state.requestedT9dya_count}</Text>
+            }
             {this.state.hist_label &&
-            <Text  style={styles.textTotal}>{this.backup_status==true ? "." : "" }{this.state.hist_label}</Text>
+            <Text  style={styles.hist_label}>
+            {this.backup_status==true ? "." : "" }{this.state.hist_label+" "}
+            {this.state.new_requestedT9dya_read!=false &&
+              <Icon
+                name="check"
+                color={this.state.new_requestedT9dya_read == "received" ? "#95a5a6" : "#23ea78"}
+                size={styles.hist_label.fontSize}
+              ></Icon>
+            }
+            </Text>
             }
             {this.state.items_list.length>0 && this.state.Total>0 }
               <ItemsList 

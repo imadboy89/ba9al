@@ -4,7 +4,7 @@ class translation{
     constructor(LS){
         this.language = "en";
         this.translation = {
-            
+            "Orders_count"                : {"ar":"عدد الطلبات"        ,"fr":"Le nombre de commandes","dr":"3adad d commandes",},
             "New_Updates_for_products_database"             : {"ar":"تحديثات جديدة لقاعدة بيانات المنتجات"         ,"fr":"Nouvelles mises à jour pour la base de données de produits","dr":"Ta7dit jdid n base donne dyal prodwiyats",},
             "New_products"             : {"ar":"منتجات جديدة"         ,"fr":"Nouveaux produits","dr":"Prodwiyat jdad",},
             "Updated_products"             : {"ar":"المنتجات المحدثة"         ,"fr":"Produits mis à jour","dr":"Prodwiyat tbdlo",},
