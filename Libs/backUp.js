@@ -158,7 +158,13 @@ class BackUp{
         this.appendLog ("    XXX synch_history function : "+results.error);
         return;
       }
-      
+      for (let i = 0; i < results["items_to_saveLC"].length; i++) {
+        const hist_r = results["items_to_saveLC"][i];
+        delete hist_r["_id"];
+        delete hist_r["id"];
+        const hist_tosave = new History(hist_r);
+        await hist_tosave.delete();
+      }      
       for (let i = 0; i < results["items_to_saveLC"].length; i++) {
         const hist_r = results["items_to_saveLC"][i];
         delete hist_r["_id"];
@@ -197,7 +203,9 @@ class BackUp{
     }
     requestT9adya = async(action="get", t9adya=[],partner=undefined)=>{
       if( ! await this.checkCnx()){
-        alert(TXT.You_need_internet_connection_for_this_action);
+        if(action!="get"){
+          alert(TXT.You_need_internet_connection_for_this_action);
+        }
         return new Promise(resolve=>{resolve(false);});
       }
       
@@ -227,6 +235,13 @@ class BackUp{
       }
       try {
         results = await this.client.callFunction("pushNotification",args);
+        let pushednotifto=0;
+        if(results && results["data"] && results["data"].length>0){
+          for (let i = 0; i < results["data"].length; i++) {
+            pushednotifto += results["data"][i]["status"] && results["data"][i]["status"]=="ok" ? 1 : 0 ;
+          }
+        }
+        return pushednotifto;
       } catch (error) {
         console.log("pushNotification",error);
         this.queue.push([this.pushNotification,[title, body,data,partner,chanelId]]);
@@ -542,15 +557,16 @@ class BackUp{
       this.appendLog ("    rUpdated : "+updated);
       
       if(Items_clss == Product && (uploaded>0 || updated>0)){
-        let body = TXT.New_products +" : "+uploaded + " ; "+TXT.Updated_products+" : "+updated ;
-        this.pushNotification (TXT.New_Updates_for_products_database+"!", body,{},"all","Notifications_lessImportant").then(res=>{
-          let pushednotifto=0;
-          if(res && res["data"] && res["data"].length>0){
-            for (let i = 0; i < res["data"].length; i++) {
-              pushednotifto += res["data"][i]["status"] && res["data"][i]["status"]=="ok" ? 1 : 0 ;
-            }
-          }
-          this.appendLog ("----Notification pushed to : "+pushednotifto);
+        const titles = Translation_.getTrans("New_Updates_for_products_database","!");
+        let bodies   = Translation_.getTrans("New_products"," : "+uploaded + " \n");
+        let bodies2  = Translation_.getTrans("Updated_products"," : "+updated );
+        bodies["en"] += bodies2["en"]
+        bodies["ar"] += bodies2["ar"]
+        bodies["fr"] += bodies2["fr"]
+        bodies["dr"] += bodies2["dr"]
+
+        this.pushNotification (titles, bodies,{},"all","Notifications_lessImportant").then(res=>{
+          this.appendLog ("----Notification pushed to : "+res);
   
         });
       }

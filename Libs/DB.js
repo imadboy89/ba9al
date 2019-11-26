@@ -130,6 +130,9 @@ class DB {
       if (this.module.fields.id!=null){
         const query = "DELETE FROM "+this.module.table_name+" WHERE id=?";
         return this.executeSql(query,[this.module.fields.id,]);
+      }else if (this.module.fields.hist_id!=null){
+        const query = "DELETE FROM "+this.module.table_name+" WHERE hist_id=?";
+        return this.executeSql(query,[this.module.fields.hist_id,]);
       }
     }
     get(where){

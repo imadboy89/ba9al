@@ -607,6 +607,41 @@ class HomeScreen extends React.Component {
     getMonth(date){
       return date.split(" ")[0].split("-").slice(0,2).join("-");
     }
+    deleteHistoryId = (t9adya_key)=>{
+      Alert.alert(
+        TXT.Confirmation,
+        TXT.Are_you_sure_you_want_to_delete +" "+(this.state.t9adya_total[t9adya_key] ? "["+this.state.t9adya_total[t9adya_key]+" dh]" : "")+" ?",
+        [
+          {
+            text: TXT.Yes,
+            onPress: () => {
+///////////////////////////////////////////////////
+this.setState({synchronize_btn_status:false});
+this.backup.client.callFunction("synch_history",[[],false,t9adya_key]).then(res=>{
+  if(res["deleted"]>=1){
+    this.History_ob.DB.empty().then(()=>{
+        this.synch_history();
+    });
+    alert("history ["+t9adya_key+"] is deleted !");
+  }
+}).catch(err=>{
+  console.log(err);
+  this.setState({synchronize_btn_status:true});
+});
+///////////////////////////////////////
+            },
+            
+          },
+          {
+            text: TXT.No, 
+            style: 'cancel',
+          },
+        ],
+      );
+
+
+    
+    }
     render_history(){
       this.state.months_total = {};
       let j = 0;
@@ -623,15 +658,30 @@ class HomeScreen extends React.Component {
             if (month_hist.hasOwnProperty(t9adya_key)) {
               const t9adya = month_hist[t9adya_key];
               let owner_ = null;
+              let isOwner = false;
               let list_details = t9adya.map((prod,k)=>{
           
                 if(prod.fields.product_id==null){
                   is_OK = false;
                   return <Text>Not Found</Text>;
                 }
-                owner_ = <Text key={t9adya_key+prod.fields.owner } style={{color:"#91ffc0",fontSize:18}}>{prod.fields.owner}</Text>;
+                isOwner = prod.fields.owner.toLowerCase().trim() == this.backup.email.toLowerCase().trim() ;
+                const owner_color = isOwner ? "#afd4ca" : "#62da95";
+                const prod_color = prod.fields.price == 0 ? "#9da0a2" : "#bdc3c7"; 
+                owner_ = <View style={{flexDirection:"row",}}>
+                      {this.state.showDetails && this.state.showDetails==t9adya_key &&this.state.t9adya_total[t9adya_key]!=undefined && this.state.t9adya_total[t9adya_key]>0 && (isOwner==true || this.backup.admin==true )&&
+                      <TouchableOpacity 
+                      style={{backgroundColor:"#9b59b65c"}} 
+                        onPress={()=>this.deleteHistoryId(t9adya_key)}
+                        disabled={!this.state.synchronize_btn_status}
+                        >
+                        <Icon name="trash" color="#e84118" size={20} style={{padding:5}} />
+                      </TouchableOpacity>
+                    }
+                    <Text key={t9adya_key+prod.fields.owner } style={{color:owner_color,fontSize:18,marginLeft:5}}>{prod.fields.owner}</Text>
+                  </View>;
                 return (
-                  <Text key={t9adya_key+prod.fields.product_id+k}  style={{color:"#bdc3c7",fontSize:18}}>
+                  <Text key={t9adya_key+prod.fields.product_id+k}  style={{color:prod_color,fontSize:18}}>
                     x{prod.fields.quantity?prod.fields.quantity:1} -{prod.product_name} - {prod.fields.price} dh
                   </Text>
                   
@@ -652,20 +702,20 @@ class HomeScreen extends React.Component {
                   }}
                 >
                   <View style={{alignSelf: 'stretch',flexDirection:"row"}}>
-                    <Text style={{color:"white",width:"70%",fontSize:20}}> 
+                    <Text style={{color:"white",width:"70%",fontSize:20,textDecorationLine:isOwner==true?"none":"underline"}}> 
                       {t9adya_key}
                     </Text>
-                    {this.state.t9adya_total[t9adya_key] && 
-                        <Text style={{color:"#f5e295fc",padding:0,backgroundColor:"#2980b970",textAlign:"right",fontSize:20,width:"30%"}}>
-                          { this.state.t9adya_total[t9adya_key] +" DH"}
+                    {this.state.t9adya_total[t9adya_key]>=0 && 
+                        <Text style={{height:"99%",color:"#f5e295fc",padding:0,backgroundColor:"#2980b970",textAlign:"right",fontSize:20,width:"30%"}}>
+                          { this.state.t9adya_total[t9adya_key]!=undefined ? this.state.t9adya_total[t9adya_key] +" DH" : "-"}
                         </Text>
                       } 
                   </View>
                   <View >
-                  {this.state.showDetails && this.state.showDetails==t9adya_key &&
+                  {this.state.showDetails==t9adya_key &&
                     owner_
                   }
-                  {this.state.showDetails && this.state.showDetails==t9adya_key &&
+                  {this.state.showDetails==t9adya_key &&
                     list_details 
                     }
                   </View>
@@ -687,16 +737,36 @@ class HomeScreen extends React.Component {
         </ScrollView>
       );
     }
+    send_version_update_notification = async()=>{
+      this.setState({synchronize_btn_status:false});
+      try {
+        titles = Translation_.getTrans("New_update_available");
+        bodies = Translation_.getTrans("Please_open_and_clode_the_app_to_auto_update");
+        const out = await this.backup.pushNotification(titles,bodies,{},"all","Notifications_lessImportant");
+        alert("Notified users : "+out);
+      } catch (error) {
+        console.log(error);
+      }
+      this.setState({synchronize_btn_status:true});
+    }
     render() {
       
         return (
           <View style={styles.container} >   
-              <View style={styles_list.row_view}>
+              <View style={[styles_list.row_view,{alignItems: 'flex-start',justifyContent:"flex-start"}]}>
                 <Text style={styles_list.text_k}> {TXT.Version} : </Text>
                 <Icon name="download" size={20} color="#0ad861" />
-                <Text style={styles_list.text_v} >
+                <Text style={[styles_list.text_k,{textAlign: 'left',width:"30%"}]} >
+                  <Text>  </Text>
                   {this.state.version}
                 </Text>
+                { this.state.backup_is_admin==true && this.state.synchronize_btn_status &&  
+                  <Icon name="paper-plane" size={25} color="#fbc531"
+                      onPress={()=>{
+                        this.send_version_update_notification();
+                      }}
+                    />
+                }
               </View>
 
               {this.state.backup_email!=null && this.state.backup_email!="" && this.state.backup_email!=undefined &&

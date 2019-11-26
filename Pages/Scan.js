@@ -85,7 +85,7 @@ class ScanScreen extends React.Component {
         try {
           let notificationData = this.props["navigation"].getParam("data",false);
           if(notificationData != this.lastNotifData){
-            this.state.new_requestedT9dya_read = false;
+            this.state.new_requestedT9dya_read = true;
             this.checkingRequests(notificationData);
             this.backup.requestT9adya("viewed","received");
           }else{
@@ -319,7 +319,13 @@ class ScanScreen extends React.Component {
       if(!output){
         return false;
       }
-      const outpu1 = await this.backup.pushNotification(title,body,{data:t9adya,from:this.backup.email},false);
+      let titles = Translation_.getTrans("New_order_X_items__Total",  ": "+ this.state.Total + " dh");
+      titles["en"] = titles["en"].replace("X",this.state.items_list.length)
+      titles["ar"] = titles["ar"].replace("X",this.state.items_list.length)
+      titles["fr"] = titles["fr"].replace("X",this.state.items_list.length)
+      titles["dr"] = titles["dr"].replace("X",this.state.items_list.length)
+
+      const outpu1 = await this.backup.pushNotification(titles,body,{data:t9adya,from:this.backup.email},false);
       this.playSend();
       for (let i = 0; i < this.state.items_list.length; i++) {
         this.state.items_list[i] . req_type = "rscv" ;

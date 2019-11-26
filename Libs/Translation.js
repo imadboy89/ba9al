@@ -4,6 +4,9 @@ class translation{
     constructor(LS){
         this.language = "en";
         this.translation = {
+            
+"Please_open_and_clode_the_app_to_auto_update"                : {"ar":"الرجاء فتح التطبيق وإغلاقه للتحديث التلقائي."        ,"fr":"S'il vous plaît ouvrir et fermer l'application pour la mise à jour automatique","dr":"pls chod w fta7 l app bach t3ml ta7dit .",},
+            "New_update_available"                : {"ar":"تحديث جديد متاح"        ,"fr":"Nouvelle mise à jour disponible","dr":"ta7dit jdid",},
             "Orders_count"                : {"ar":"عدد الطلبات"        ,"fr":"Le nombre de commandes","dr":"3adad d commandes",},
             "New_Updates_for_products_database"             : {"ar":"تحديثات جديدة لقاعدة بيانات المنتجات"         ,"fr":"Nouvelles mises à jour pour la base de données de produits","dr":"Ta7dit jdid n base donne dyal prodwiyats",},
             "New_products"             : {"ar":"منتجات جديدة"         ,"fr":"Nouveaux produits","dr":"Prodwiyat jdad",},
@@ -107,7 +110,24 @@ class translation{
 
         this.LS = LS;
     }
-
+    getTrans(string_,addstr=""){
+        let obj = {};
+        for (let key in this.translation){
+            if(this.translation.hasOwnProperty(key)){
+              if(key == string_){
+                tr = this.translation[key];
+                tr["en"] = key.replace(/_/g," ");
+                obj = Object.assign({}, tr);
+                obj["en"] += addstr;
+                obj["ar"] += addstr;
+                obj["fr"] += addstr;
+                obj["dr"] += addstr;
+                break;
+              }
+            }
+         }
+         return obj;
+    }
     getTranslation = async () => {
         if(this.LS && this.LS.getSettings){
 
