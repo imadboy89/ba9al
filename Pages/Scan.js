@@ -325,7 +325,8 @@ class ScanScreen extends React.Component {
       titles["fr"] = titles["fr"].replace("X",this.state.items_list.length)
       titles["dr"] = titles["dr"].replace("X",this.state.items_list.length)
 
-      const outpu1 = await this.backup.pushNotification(titles,body,{data:t9adya,from:this.backup.email},false);
+      //const outpu1 = await this.backup.pushNotification(titles,body,{data:t9adya,from:this.backup.email},false);
+      await this.pushNotification_newOrder(t9adya,true);
       this.playSend();
       for (let i = 0; i < this.state.items_list.length; i++) {
         this.state.items_list[i] . req_type = "rscv" ;
@@ -338,6 +339,26 @@ class ScanScreen extends React.Component {
         hideT9dyaBtns:false
       });
       
+    }
+    pushNotification_newOrder(t9adya,isReqeust=true){
+      let bodies =  isReqeust ? TXT.Ordered_by + " : "+this.backup.email+"\n" : Translation_.getTrans("Total",  ": "+ this.state.Total + " dh");
+      if(isReqeust){
+        let order_list = "";
+        for (let i = 0; i < this.state.items_list.length; i++) {
+          order_list+=this.state.items_list[i].quantity+"x "+this.state.items_list[i].fields.name+" - "+this.state.items_list[i].fields.price+" dh\n"
+        }
+        bodies = Translation_.getTrans("Ordered_by",  ": "+ this.backup.email + " \n"+order_list);
+      }
+      let titles = isReqeust 
+                    ? Translation_.getTrans("New_order_X_items__Total",  ": "+ this.state.Total + " dh") 
+                    : Translation_.getTrans("New_purchase_by",  ": "+ this.backup.email) ;
+      titles["en"] = titles["en"].replace("X",this.state.items_list.length)
+      titles["ar"] = titles["ar"].replace("X",this.state.items_list.length)
+      titles["fr"] = titles["fr"].replace("X",this.state.items_list.length)
+      titles["dr"] = titles["dr"].replace("X",this.state.items_list.length)
+
+      const chanelId = isReqeust ? false : "Notifications_lessImportant";
+      return this.backup.pushNotification(titles,bodies,{data:t9adya,from:this.backup.email},false,chanelId);
     }
     saveHistory = (is_send=false)=>{
       let items_list = [];
@@ -388,6 +409,7 @@ class ScanScreen extends React.Component {
       this.setState({});
       this.props.navigation.setParams({showSaveBtn : false,})
       this.playNewOrder();
+      this.pushNotification_newOrder([],false).then(o=>{this.playSend();});
     }
     loadLastP = async(t9adya=false)=>{
       let items_list = [];

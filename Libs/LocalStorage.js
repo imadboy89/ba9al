@@ -3,7 +3,7 @@ import { Platform, AsyncStorage } from 'react-native';
 
 class LocalStorage{
     constructor() {
-        this.settings = {"language":"en","image_quality":0.2,"ratio":"4:3","autoFocus":true,"availableRatios":[],"LastRemovedHistory":null}
+        this.settings = {"language":"en","image_quality":0.2,"ratio":"4:3","autoFocus":true,"availableRatios":[],"LastRemovedHistory":null,"currentVersion":"0"}
 
         //this.settings = this.getSettings();
         this.languages = {"fr":"Français","en":"English","dr":"Darija","ar":"العربية"}

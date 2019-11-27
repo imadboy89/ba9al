@@ -5,6 +5,7 @@ class translation{
         this.language = "en";
         this.translation = {
             
+            "New_purchase_by"                : {"ar":"شراء جديد من قبل"        ,"fr":"Nouvel achat par","dr":"T9adya jdida mn",},
 "Please_open_and_clode_the_app_to_auto_update"                : {"ar":"الرجاء فتح التطبيق وإغلاقه للتحديث التلقائي."        ,"fr":"S'il vous plaît ouvrir et fermer l'application pour la mise à jour automatique","dr":"pls chod w fta7 l app bach t3ml ta7dit .",},
             "New_update_available"                : {"ar":"تحديث جديد متاح"        ,"fr":"Nouvelle mise à jour disponible","dr":"ta7dit jdid",},
             "Orders_count"                : {"ar":"عدد الطلبات"        ,"fr":"Le nombre de commandes","dr":"3adad d commandes",},

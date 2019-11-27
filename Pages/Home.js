@@ -30,15 +30,20 @@ class HomeScreen extends React.Component {
         synchLog : [],
         clear_database:true,
         modalVisible_partners : false,
-        version : "0.8.5",
+        version : "0.8.5.5",
 
       };
       this.LS = new LocalStorage();
+      this.checkVersion();
       this.firstHistoryRender = true;
       this.backup = new backUp();
+      this.backup.executingQueued();
       //this.backup.Company.DB.updateTables();
       this.backup._loadClient().then(output=>{
         this.setState({backup_email:this.backup.email,backup_lastActivity:this.backup.lastActivity, backup_is_admin:this.backup.admin});
+        if(this.do_synch_now){
+          this.synch_now();
+        }
       });
       
       this.History_ob = new History();
@@ -58,14 +63,74 @@ class HomeScreen extends React.Component {
         }
       );
     }
-  
+    checkVersion = async()=>{
+      const currentVersion = await this.LS.getSettings("currentVersion");
+      console.log(currentVersion, currentVersion == this.state.version);
+      if(currentVersion=="0"){
+        this.do_synch_now = true;
+      }
+      if(currentVersion!=this.state.version){
+        this.state.appUpdated = currentVersion!="0" ? true : false;
+        this.LS.setSetting("currentVersion",this.state.version);
+      }
+    }
+    handle_navigation_notification(){
+      const action = this.props["navigation"].getParam("action",false);
+      if(action && action !="requestedT9dya"){
+        try {
+          let notificationData = this.props["navigation"].getParam("data",false);
+          if(notificationData != this.lastNotifData){
+            this.synch_now();
+          }else{
+
+          }
+          this.props.navigation.setParams({data:false,action:false});
+          this.lastNotifData = notificationData;
+        } catch (error) {
+          alert(error);
+          this.notificationData = false;
+        }
+        
+      }else{
+        this.notificationData = false;
+        this.lastNotifData = null;
+      }
+
+
+    }
+
+    synch_now = ()=>{
+      this.setState({synchronize_btn_status:false,synchLog:[]});
+      this.backup.synchronize(this.appendLog).then(out=>{
+        this.state.synchronize_btn_status = true;
+        this.state.backup_lastActivity = this.backup.lastActivity;
+        this.state.backup_email = this.backup.email;
+        this.do_synch_now = false;
+        this.loadHistory();
+      });
+    }
     _handleNotification = notification => {
       let screen = "Home";
       let params = {};
-      if(notification.data && notification.data.data && notification.data.data.length  && notification.data.data.length > 0 && notification.data.data[0].hist_id){
-        screen = "Scan_";
-        params = {"action":"requestedT9dya","data":notification.data} ;
+      console.log("Home _handleNotification : ",notification);
+      try {
+        if(notification.data && notification.data.data && notification.data.data.length  && notification.data.data.length > 0 && notification.data.data[0].hist_id){
+          screen = "Scan_";
+          params = {"action":"requestedT9dya","data":notification.data} ;
+        }else if(notification.data && notification.data.action && notification.data.action=="db_update"){
+          this.do_synch_now = true;
+          if(this.backup.email){
+            try {
+              console.log("_handleNotification synchnow start");
+              this.synch_now();
+            } catch (error) { console.log("_handleNotification synchno ",error);}
+          }
+          return ;
+        }
+      } catch (error) {
+        console.log(error);
       }
+
       this.props.navigation.navigate(screen,params);
       //this.setState({ notification: notification });
     };
@@ -107,6 +172,9 @@ class HomeScreen extends React.Component {
       });
     }
     synch_history = ()=>{
+      if(this.state.synchronize_btn_status===false){
+        return false;
+      }
       this.setState({synchronize_btn_status:false,synchLog:[]});
       this.props.navigation.setParams({disabled:true});
       this.backup.synch_history(undefined,this.appendLog).then(o=>{
@@ -368,232 +436,220 @@ class HomeScreen extends React.Component {
               this.setState({ modalVisible:false,});
            } }
         >
-            <View style={{flex:.1,backgroundColor:"#2c3e5066"}}></View>
-            <View style={{height:600,width:"100%",backgroundColor:"#646c78"}}>
-              <Text style={styles_list.title_modals}> {TXT.Settings} : </Text>
-              {this.state.backup_email!=null && this.state.backup_email!="" && this.state.backup_email!=undefined &&
-              <View style={styles_list.row_view}>
-                <Text style={styles_list.text_k}> {TXT.Logged_as} : </Text>
-                <Text style={[styles_list.text_v,{color:"#55ff9d"}]} >{this.state.backup_email}</Text>
-              </View>
-              }
-              <View style={styles_list.row_view}>
-                <Text style={styles_list.text_k}> {TXT.Language} : </Text>
-                <Picker
-                selectedValue={this.state.language}
-                style={styles_list.text_v}
-                onValueChange={(itemValue, itemIndex) =>
-                    this.saveConfig("language", itemValue)
-                    
-                }>
-                    {this.get_languages()}
-                </Picker>
-              </View>
-              <View style={styles_list.row_view}>
-                <Text style={styles_list.text_k}> {TXT.Image_quality} : </Text>
-                <Picker
-                selectedValue={this.state.image_quality}
-                style={styles_list.text_v}
-                onValueChange={(itemValue, itemIndex) =>
-                    this.saveConfig("image_quality", itemValue)
-                    
-                }>
-                    {this.get_Qualities()}
-                </Picker>
-              </View>
-              <View style={styles_list.row_view}>
-                <Text style={styles_list.text_k}> {TXT.Ratio} : </Text>
-                <Picker
-                selectedValue={this.state.ratio}
-                style={styles_list.text_v}
-                onValueChange={(itemValue, itemIndex) =>
-                    this.saveConfig("ratio", itemValue)
-                    
-                }>
-                    {this.get_Ratios()}
-                </Picker>
-              </View>
-              <View style={styles_list.row_view}>
-                <Text style={styles_list.text_k}> {TXT.AutoFocus} : </Text>
-                <View style={styles_list.text_v} >
-                  <Switch 
-                    style={{flex:1, alignSelf:"flex-start"}}
-                    value = {this.state.autoFocus}
-                    onValueChange={ (newValue)=> {
-                        this.saveConfig("autoFocus", newValue)
-                    }}
-                />
-                </View>
-              </View>
-              <View style={styles_list.row_view}>
-                <Text style={styles_list.text_k}> {TXT.Clear_history} : </Text>
-                <View style={[styles_list.text_v,{flexDirection:"row"}]} >
-                  <Button 
-                    style={{marginLeft:10}}
-                    title = {TXT.Clear_local}
-                    disabled={this.state.history_list!=-1 && (!this.state.history_list || this.state.history_list.length==0)}
-                    color="#f1c40f"
-                    onPress={ ()=> {
-                      this.History_ob.DB.empty().then(()=>{
-                        this.LS.clearHistory().then(()=>{
-                          this.loadHistory();
-                        });
-                      });
-                    }}
-                />
-                {this.state.backup_email!=null && this.state.backup_email!="" && this.state.backup_email!=undefined &&
-                  <Button 
-                    style={{marginLeft:10}}
-                    title = {TXT.Clear_cloud}
-                    disabled={!this.state.synchronize_btn_status}
-                    color="#e67e22"
-                    onPress={ ()=> {
-                      this.setState({synchronize_btn_status:false});
-                      this.backup.synch_history_clean().then(o=>{
-                        if(o===false && o>=0){
-                          alert(TXT.Cloud_history_cleaned_successfully + " ["+o+"]");
-                        }else{
-                          alert(TXT.Cloud_history_failed + " ["+o+"]");
-                        }
-                        this.setState({synchronize_btn_status:true});
-                      });
-                    }}
-                />
+            <View style={{flex:.3,backgroundColor:"#2c3e5066"}}></View>
+            <View style={{height:450,width:"100%",backgroundColor:"#646c78"}}>
+              
+                <Text style={styles_list.title_modals}> {TXT.Settings} : </Text>
+                <ScrollView style={{flex:1,marginTop:10,marginBottom:10,borderStyle : "solid",borderWidth : 1,borderColor:"white"}}>
+                  {this.state.backup_email!=null && this.state.backup_email!="" && this.state.backup_email!=undefined &&
+                  <View style={styles_list.row_view}>
+                    <Text style={styles_list.text_k}> {TXT.Logged_as} : </Text>
+                    <Text style={[styles_list.text_v,{color:"#55ff9d"}]} >{this.state.backup_email}</Text>
+                  </View>
                   }
-              </View>
-              </View>
+                  <View style={styles_list.row_view}>
+                    <Text style={styles_list.text_k}> {TXT.Language} : </Text>
+                    <Picker
+                    selectedValue={this.state.language}
+                    style={styles_list.text_v}
+                    onValueChange={(itemValue, itemIndex) =>
+                        this.saveConfig("language", itemValue)
+                        
+                    }>
+                        {this.get_languages()}
+                    </Picker>
+                  </View>
+                  <View style={styles_list.row_view}>
+                    <Text style={styles_list.text_k}> {TXT.Image_quality} : </Text>
+                    <Picker
+                    selectedValue={this.state.image_quality}
+                    style={styles_list.text_v}
+                    onValueChange={(itemValue, itemIndex) =>
+                        this.saveConfig("image_quality", itemValue)
+                        
+                    }>
+                        {this.get_Qualities()}
+                    </Picker>
+                  </View>
+                  <View style={styles_list.row_view}>
+                    <Text style={styles_list.text_k}> {TXT.Ratio} : </Text>
+                    <Picker
+                    selectedValue={this.state.ratio}
+                    style={styles_list.text_v}
+                    onValueChange={(itemValue, itemIndex) =>
+                        this.saveConfig("ratio", itemValue)
+                        
+                    }>
+                        {this.get_Ratios()}
+                    </Picker>
+                  </View>
+                  <View style={styles_list.row_view}>
+                    <Text style={styles_list.text_k}> {TXT.AutoFocus} : </Text>
+                    <View style={styles_list.text_v} >
+                      <Switch 
+                        style={{flex:1, alignSelf:"flex-start"}}
+                        value = {this.state.autoFocus}
+                        onValueChange={ (newValue)=> {
+                            this.saveConfig("autoFocus", newValue)
+                        }}
+                    />
+                    </View>
+                  </View>
+                  <View style={styles_list.row_view}>
+                    <Text style={styles_list.text_k}> {TXT.Clear_history} : </Text>
+                    <View style={[styles_list.text_v,{flexDirection:"row"}]} >
+                      <Button 
+                        style={{marginLeft:10}}
+                        title = {TXT.Clear_local}
+                        disabled={this.state.history_list!=-1 && (!this.state.history_list || this.state.history_list.length==0)}
+                        color="#f1c40f"
+                        onPress={ ()=> {
+                          this.History_ob.DB.empty().then(()=>{
+                            this.LS.clearHistory().then(()=>{
+                              this.loadHistory();
+                            });
+                          });
+                        }}
+                    />
+                    {this.state.backup_email!=null && this.state.backup_email!="" && this.state.backup_email!=undefined &&
+                      <Button 
+                        style={{marginLeft:10}}
+                        title = {TXT.Clear_cloud}
+                        disabled={!this.state.synchronize_btn_status}
+                        color="#e67e22"
+                        onPress={ ()=> {
+                          this.setState({synchronize_btn_status:false});
+                          this.backup.synch_history_clean().then(o=>{
+                            if(o===false && o>=0){
+                              alert(TXT.Cloud_history_cleaned_successfully + " ["+o+"]");
+                            }else{
+                              alert(TXT.Cloud_history_failed + " ["+o+"]");
+                            }
+                            this.setState({synchronize_btn_status:true});
+                          });
+                        }}
+                    />
+                      }
+                  </View>
+                  </View>
 
-              <View style={styles_list.row_view}>
-                <Text style={styles_list.text_k}> {TXT.Clear_database} : </Text>
-                <View style={styles_list.text_v} >
-                  <Button 
-                    style={{marginLeft:10,marginRight:30}}
-                    title = {TXT.Clear}
-                    color="orange"
-                    disabled={!this.state.clear_database}
-                    onPress={this.clearDatabase}
-                />
+                  <View style={styles_list.row_view}>
+                    <Text style={styles_list.text_k}> {TXT.Clear_database} : </Text>
+                    <View style={styles_list.text_v} >
+                      <Button 
+                        style={{marginLeft:10,marginRight:30}}
+                        title = {TXT.Clear}
+                        color="orange"
+                        disabled={!this.state.clear_database}
+                        onPress={this.clearDatabase}
+                    />
+                    </View>
+                  </View>
+                  {this.state.backup_email!=null && this.state.backup_email!="" && this.state.backup_email!=undefined &&
+                  <View style={styles_list.row_view}>
+                    <Text style={styles_list.text_k}> {TXT.Partners} : </Text>
+                    <View style={styles_list.text_v} >
+                      <Button 
+                        style={{marginLeft:10,marginRight:30}}
+                        title = {TXT.Manage}
+                        disabled={false}
+                        onPress={()=>{this.setState({modalVisible_partners:true});}}
+                    />
+                    </View>
+                  </View>
+                  }
+                  <View style={styles_list.row_view}>
+                    <Text style={styles_list.text_k}> {TXT.LastBackUp} : </Text>
+                    <Text style={styles_list.text_v}>{this.state.backup_lastActivity+""} </Text>
+                  </View>
+                  { this.state.backup_is_admin==true &&  
+                  <View style={styles_list.row_view}>
+                    <Text style={styles_list.text_k}> {TXT.Clear_remote_Backup} : </Text>
+                    <View style={styles_list.text_v} >
+                      <Switch
+                      style={{flex:1, alignSelf:"flex-start"}}
+                      value={this.state.backup_doClear}
+                      onValueChange={ (newValue)=> {
+                        if(newValue){
+                          Alert.alert(
+                            TXT.Confirmation,
+                            TXT.Are_you_sure_you_want_to_clear_backup+"?",
+                            [
+                              {
+                                text: TXT.Yes,
+                                onPress: () => {
+                                  this.backup.doClean = newValue;
+                                  this.setState({backup_doClear: newValue});
+                                },
+                                
+                              },
+                              {
+                                text: TXT.No, 
+                                onPress: () => {
+                                  this.backup.doClean = false;
+                                },
+                                style: 'cancel',
+                              },
+                            ],
+                          );
+                        }else{
+                          this.backup.doClean = newValue;
+                          this.setState({backup_doClear: newValue});
+                        }
+
+
+
+                      }}
+                      />
+                    </View>
+                  </View>
+                  }
+                  <View style={buttons_style.container_row}>
+                    <View style={buttons_style.view_btn_row}>
+                      <Button 
+                        style={[styles_list.small_elemnt,{marginLeft:10}]}
+                        title = {TXT.Sych_Now}
+                        disabled={!this.state.synchronize_btn_status}
+                        onPress={ ()=> this.synch_now()}
+                    />
+                    <View style={{width:10}}></View>
+                  </View>
+                  <View style={buttons_style.view_btn_row}>
+                    <Button 
+                        style={[styles_list.small_elemnt,{marginLeft:10}]}
+                        title = {TXT.Credents}
+                        disabled={!this.state.synchronize_btn_status}
+                        color="black"
+                        onPress={ ()=> {
+                          this.setState({modalVisible_credentails:true})
+                        }}
+                    />
+                    <View style={{width:10}}></View>
+                    </View>
+                    <View style={buttons_style.view_btn_row}>
+                    <Button 
+                        style={[styles_list.small_elemnt,{marginLeft:10}]}
+                        title = "Log"
+                        disabled={this.state.synchLog_modal}
+                        color="green"
+                        onPress={ ()=> {
+                          this.setState({synchLog_modal:true})
+                        }}
+                    />
+                  </View>
                 </View>
-              </View>
-              {this.state.backup_email!=null && this.state.backup_email!="" && this.state.backup_email!=undefined &&
-              <View style={styles_list.row_view}>
-                <Text style={styles_list.text_k}> {TXT.Partners} : </Text>
-                <View style={styles_list.text_v} >
-                  <Button 
-                    style={{marginLeft:10,marginRight:30}}
-                    title = {TXT.Manage}
-                    disabled={false}
-                    onPress={()=>{this.setState({modalVisible_partners:true});}}
-                />
-                </View>
-              </View>
-              }
-              <View style={styles_list.row_view}>
-                <Text style={styles_list.text_k}> {TXT.LastBackUp} : </Text>
-                <Text style={styles_list.text_v}>{this.state.backup_lastActivity+""} </Text>
-              </View>
-              { this.state.backup_is_admin==true &&  
-              <View style={styles_list.row_view}>
-                <Text style={styles_list.text_k}> {TXT.Clear_remote_Backup} : </Text>
-                <View style={styles_list.text_v} >
-                  <Switch
-                  style={{flex:1, alignSelf:"flex-start"}}
-                  value={this.state.backup_doClear}
-                  onValueChange={ (newValue)=> {
-                    if(newValue){
-                      Alert.alert(
-                        TXT.Confirmation,
-                        TXT.Are_you_sure_you_want_to_clear_backup+"?",
-                        [
-                          {
-                            text: TXT.Yes,
-                            onPress: () => {
-                              this.backup.doClean = newValue;
-                              this.setState({backup_doClear: newValue});
-                            },
-                            
-                          },
-                          {
-                            text: TXT.No, 
-                            onPress: () => {
-                              this.backup.doClean = false;
-                            },
-                            style: 'cancel',
-                          },
-                        ],
-                      );
-                    }else{
-                      this.backup.doClean = newValue;
-                      this.setState({backup_doClear: newValue});
-                    }
-
-
-
-                  }}
-                  />
-                </View>
-              </View>
-              }
+              </ScrollView>
               <View style={buttons_style.container_row}>
-                <View style={buttons_style.view_btn_row}>
-                  <Button 
-                    style={[styles_list.small_elemnt,{marginLeft:10}]}
-                    title = {TXT.Sych_Now}
-                    disabled={!this.state.synchronize_btn_status}
-                    onPress={ ()=> {
-                      this.setState({synchronize_btn_status:false,synchLog_modal:true,synchLog:[]});
-                      this.backup.synchronize(this.appendLog).then(out=>{
-                        /*
-                        this.setState({
-                          synchronize_btn_status:true,
-                          backup_lastActivity:this.backup.lastActivity,
-                          backup_email:this.backup.email,
-                        });
-                        */
-                        this.state.synchronize_btn_status = true;
-                        this.state.backup_lastActivity = this.backup.lastActivity;
-                        this.state.backup_email = this.backup.email;
-                        this.loadHistory();
-                      });
-                    }}
-                />
-                <View style={{width:10}}></View>
-              </View>
               <View style={buttons_style.view_btn_row}>
                 <Button 
                     style={[styles_list.small_elemnt,{marginLeft:10}]}
-                    title = {TXT.Credents}
-                    disabled={!this.state.synchronize_btn_status}
-                    color="black"
-                    onPress={ ()=> {
-                      this.setState({modalVisible_credentails:true})
-                    }}
-                />
-                <View style={{width:10}}></View>
-                </View>
-                <View style={buttons_style.view_btn_row}>
-                <Button 
-                    style={[styles_list.small_elemnt,{marginLeft:10}]}
-                    title = "Log"
-                    disabled={this.state.synchLog_modal}
-                    color="green"
-                    onPress={ ()=> {
-                      this.setState({synchLog_modal:true})
-                    }}
-                />
+                    title={TXT.Close}
+                    onPress={()=>this.setState({modalVisible:false}) }
+                  />
+                  </View>
+
               </View>
-            </View>
-            <View style={buttons_style.container_row}>
-            <View style={buttons_style.view_btn_row}>
-              <Button 
-                  style={[styles_list.small_elemnt,{marginLeft:10}]}
-                  title={TXT.Close}
-                  onPress={()=>this.setState({modalVisible:false}) }
-                />
-                </View>
-
-            </View>
-
+            
             </View>
             <View style={{flex:1,backgroundColor:"#2c3e5066"}}></View>
 
@@ -742,7 +798,7 @@ this.backup.client.callFunction("synch_history",[[],false,t9adya_key]).then(res=
       try {
         titles = Translation_.getTrans("New_update_available");
         bodies = Translation_.getTrans("Please_open_and_clode_the_app_to_auto_update");
-        const out = await this.backup.pushNotification(titles,bodies,{},"all","Notifications_lessImportant");
+        const out = await this.backup.pushNotification(titles,bodies,{"action":"update"},"all","Notifications_lessImportant");
         alert("Notified users : "+out);
       } catch (error) {
         console.log(error);
@@ -757,8 +813,8 @@ this.backup.client.callFunction("synch_history",[[],false,t9adya_key]).then(res=
                 <Text style={styles_list.text_k}> {TXT.Version} : </Text>
                 <Icon name="download" size={20} color="#0ad861" />
                 <Text style={[styles_list.text_k,{textAlign: 'left',width:"30%"}]} >
-                  <Text>  </Text>
                   {this.state.version}
+                  <Text sytle={{color:"#55ff9d"}}>  {this.state.appUpdated===true? "Updated":""}</Text>
                 </Text>
                 { this.state.backup_is_admin==true && this.state.synchronize_btn_status &&  
                   <Icon name="paper-plane" size={25} color="#fbc531"

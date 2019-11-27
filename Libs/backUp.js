@@ -89,9 +89,7 @@ class BackUp{
         try {
           this._loadClient();
         } catch (error) {
-          
         }
-        console.log(error)
         return new Promise(resolve=>{resolve(false);});
       }
       
@@ -99,6 +97,9 @@ class BackUp{
     executingQueued = async()=>{
       if(this.executingQueued_running){
         return ;
+      }
+      if( ! await this.checkCnx()){
+        return false;
       }
       this.executingQueued_running = true ;
       if(this.timer == undefined){
@@ -339,7 +340,10 @@ class BackUp{
         });
     }
     _loadClient = async () => {
-        
+        if(this.loadingClient){
+          return true;
+        }
+        this.loadingClient = true;
         if( ! await this.checkCnx(false)){
           return false;
         }
@@ -364,6 +368,7 @@ class BackUp{
               this.admin = !usingAnon ;
               
               console.log(`Successfully logged in as user ${this.email}` , this.lastActivity );
+              this.loadingClient = false;
               return this.setClientInfo();
             })
             .catch(err => {
@@ -371,7 +376,7 @@ class BackUp{
               this.currentUserId = undefined;
             });
 
-        });
+        }).catch(o=>console.log(o));
       }
     
     initDb = async ()=>{
@@ -425,14 +430,22 @@ class BackUp{
     insertMany= async (db, data) => {
       //await db.deleteMany({});
       return db.insertMany(data).catch(err=>{
-        this.appendLog ("    XXX Insert : "+err.message);
+        let names = [];
+        if(data && data[0].name){          
+          for (let p = 0; p < data.length; p++) {
+              names.push(data[p].name );
+          }
+        }
+        const prods_names = names.length>0 && names.length<=3 ? "("+names.join(",")+")" : "("+names.length+")";
+        this.appendLog ("    XXX Insert : "+err.message + " : "+prods_names);
         return err;
       });
     }
     updateOne= async (db, query, data) => {
       //await db.deleteMany({});
       return db.updateOne(query,data).catch(err=>{
-        this.appendLog ("    XXX rUpdate : "+err.message);
+        const name = data && data["name"] ? "("+data["name"]+")" : "";
+        this.appendLog ("    XXX rUpdate : "+err.message + name);
         return err;
       });
     }
@@ -565,9 +578,8 @@ class BackUp{
         bodies["fr"] += bodies2["fr"]
         bodies["dr"] += bodies2["dr"]
 
-        this.pushNotification (titles, bodies,{},"all","Notifications_lessImportant").then(res=>{
+        this.pushNotification (titles, bodies,{"action":"db_update"},"all","Notifications_lessImportant").then(res=>{
           this.appendLog ("----Notification pushed to : "+res);
-  
         });
       }
 
