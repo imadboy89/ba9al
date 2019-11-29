@@ -40,7 +40,7 @@ class ScanScreen extends React.Component {
       this.LS = new LocalStorage();
       this.History_ob = new History();
       this.lastNotifData = null;
-      const didBlurSubscription = this.props.navigation.addListener(
+      this.didBlurSubscription = this.props.navigation.addListener(
         'didFocus',
         payload => {
           Translation_.getTranslation().then(tr=>{
@@ -72,6 +72,17 @@ class ScanScreen extends React.Component {
         alert(error);        
       }
       
+      
+    }
+    componentWillUnmount(){
+      if(this.timer){
+        clearInterval(this.timer);
+      }
+      if(this.backup.timer){
+        clearInterval(this.backup.timer);
+      }
+      this.didBlurSubscription.remove();
+      this._notificationSubscription.remove();
       
     }
     componentDidMount = async()=>{
@@ -189,10 +200,11 @@ class ScanScreen extends React.Component {
       return false;
     }
     checkingRequests = async(notificationData=false)=>{
-      console.log("checkingRequests");
+      
       if(this.checkingRequests_inProcess){
         return ;
       }
+      
       this.checkingRequests_inProcess = true ;
       if(this.timer == undefined){
         this.timer = setInterval(()=> this.checkingRequests(), 10*1000);
@@ -201,28 +213,32 @@ class ScanScreen extends React.Component {
         this.checkingRequests_inProcess = false ;
         return false;
       }
-
+      
       if(!notificationData){
+        
         if(this.state.isVisible_modal_scan || this.state.scanned!=null || this.props.navigation.getParam("reqUpdated") == true){//reqUpdated
           this.checkingRequests_inProcess = false ;
           return false;
         }
+        
         if(this.state.items_list && this.state.items_list.length > 0 && this.state.items_list[0].is_send){
           this.checkingRequests_inProcess = false ;
           return false;
         }
       }
-
+      
       if(!this.backup_status && !notificationData){
         if(this.state.items_list.length == 0){
           this.loadLastP();
         }
+        
         const res_ = await this.checkClient();
         if(!res_){
           this.checkingRequests_inProcess = false ;
           return false;
         }
       }
+      
       const res = !notificationData ? await this.backup.requestT9adya("get",[],false) : false;
       const new_requestedT9dya_count = res && res["success"] == true && res["count"] ? res["count"] : 0;
       const new_requestedT9dya_read = res && res["success"] == true && res["output"] && res["output"]["viewed"] ? res["output"]["viewed"] : false;
@@ -244,10 +260,12 @@ class ScanScreen extends React.Component {
       }else{
         t9adya = false;
       }
+      
       if(t9adya){
         let items_list = [];
         const t9dya_entered = res ? res["output"]["entered"] : t9adya[0]["entered"] ;
-        if(t9dya_entered == this.last_requested_t9dya ){
+        
+        if(t9dya_entered == this.last_requested_t9dya && this.state.hist_label!=null){
           if(this.state.items_list.length == 0 || !this.state.items_list[0].is_hist){
             this.checkingRequests_inProcess = false ;
             return ;
@@ -268,7 +286,6 @@ class ScanScreen extends React.Component {
           prod_req.is_rscv = true;
           items_list.push(prod_req);  
         }
-
 
         this.state.items_list = items_list;
         if(items_list.length > 0){
@@ -292,6 +309,7 @@ class ScanScreen extends React.Component {
         return false;
       }
       const output1 = await this.requestT9adya();
+      this.checkingRequests();
     }
     deleteRequestedT9adya = async()=>{
       this.state.new_requestedT9dya_read = false;
@@ -338,7 +356,7 @@ class ScanScreen extends React.Component {
         req_type    : "rscv",
         hideT9dyaBtns:false
       });
-      
+      this.checkingRequests();
     }
     pushNotification_newOrder(t9adya,isReqeust=true){
       let bodies =  isReqeust ? TXT.Ordered_by + " : "+this.backup.email+"\n" : Translation_.getTrans("Total",  ": "+ this.state.Total + " dh");

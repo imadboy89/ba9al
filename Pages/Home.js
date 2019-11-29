@@ -47,7 +47,7 @@ class HomeScreen extends React.Component {
       });
       
       this.History_ob = new History();
-      const didBlurSubscription = this.props.navigation.addListener(
+      this.didBlurSubscription = this.props.navigation.addListener(
         'didFocus',
         payload => {
           Translation_.getTranslation().then(tr=>{
@@ -62,6 +62,14 @@ class HomeScreen extends React.Component {
           this.synch_history();
         }
       );
+    }
+    componentWillUnmount(){
+      if(this.backup.timer){
+        clearInterval(this.backup.timer);
+      }
+      this.didBlurSubscription.remove();
+      this._notificationSubscription.remove();
+      
     }
     checkVersion = async()=>{
       const currentVersion = await this.LS.getSettings("currentVersion");
@@ -724,14 +732,14 @@ this.backup.client.callFunction("synch_history",[[],false,t9adya_key]).then(res=
                 isOwner = prod.fields.owner.toLowerCase().trim() == this.backup.email.toLowerCase().trim() ;
                 const owner_color = isOwner ? "#afd4ca" : "#62da95";
                 const prod_color = prod.fields.price == 0 ? "#9da0a2" : "#bdc3c7"; 
-                owner_ = <View style={{flexDirection:"row",}}>
+                owner_ = <View style={{flexDirection:"row"}}>
                       {this.state.showDetails && this.state.showDetails==t9adya_key &&this.state.t9adya_total[t9adya_key]!=undefined && this.state.t9adya_total[t9adya_key]>0 && (isOwner==true || this.backup.admin==true )&&
                       <TouchableOpacity 
-                      style={{backgroundColor:"#9b59b65c"}} 
+                      style={{backgroundColor:"#95a5a6",borderRadius:15,width:30,height:30,borderColor:"black",borderWidth:1,justifyContent:"center",alignItems:"center"}} 
                         onPress={()=>this.deleteHistoryId(t9adya_key)}
                         disabled={!this.state.synchronize_btn_status}
                         >
-                        <Icon name="trash" color="#e84118" size={20} style={{padding:5}} />
+                        <Icon name="trash" color="#e84118" size={20} />
                       </TouchableOpacity>
                     }
                     <Text key={t9adya_key+prod.fields.owner } style={{color:owner_color,fontSize:18,marginLeft:5}}>{prod.fields.owner}</Text>
