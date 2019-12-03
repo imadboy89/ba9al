@@ -378,7 +378,7 @@ class ScanScreen extends React.Component {
       const chanelId = isReqeust ? false : "Notifications_lessImportant";
       return this.backup.pushNotification(titles,bodies,{data:t9adya,from:this.backup.email},false,chanelId);
     }
-    saveHistory = (is_send=false)=>{
+    saveHistory = async(is_send=false)=>{
       let items_list = [];
       const hist_id  = new History().DB.getDateTime();
       let is_req_list = false;
@@ -398,7 +398,7 @@ class ScanScreen extends React.Component {
         items_list.push(fields_);
         if(!is_send){
           const history_ = new History(fields_);
-          history_.save();
+          await history_.save();
         }
         
         if(!is_send){
@@ -428,6 +428,7 @@ class ScanScreen extends React.Component {
       this.props.navigation.setParams({showSaveBtn : false,})
       this.playNewOrder();
       this.pushNotification_newOrder([],false).then(o=>{this.playSend();});
+      this.backup.synch_history().then(o=>console.log(o)).catch(err=>{console.log(err)});
     }
     loadLastP = async(t9adya=false)=>{
       let items_list = [];

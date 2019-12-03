@@ -142,6 +142,8 @@ class BackUp{
       if(appendLog!=undefined){
         this.appendLog = appendLog ;
         this.appendLog("------synch History------");
+      }else{
+        this.appendLog = function (a){} ;
       }
       let results = {};
       if(!this.client || !this.client.callFunction){
