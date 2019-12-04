@@ -212,6 +212,9 @@ class History {
                     const hist = history[j];
                     //products_ids.push(history[j].product_id);
                     let product_hist = ( history[j].fields.product_id in  products) ? products[history[j].fields.product_id] : null;
+                    if(product_hist == null ){
+                        product_hist = { fields:{id:history[j].fields.product_id,name : history[j].fields.product_id}}
+                    }
                     product_hist . is_hist = true;
                     product_hist . quantity = history[j].fields.quantity ;
                     product_hist . fields.price = history[j].fields.price; 

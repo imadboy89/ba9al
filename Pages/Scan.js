@@ -280,7 +280,14 @@ class ScanScreen extends React.Component {
         
         for (let i = 0; i < t9adya.length; i++) {
           const prod_req = new Product();
-          await prod_req.get({id : t9adya[i].product_id});
+          const res = await prod_req.get({id : t9adya[i].product_id});
+          if(res["res"]==false){
+            prod_req.fields.id = t9adya[i].product_id;
+            prod_req.fields.name = t9adya[i].product_id;
+            prod_req.fields.company = " ";
+            
+            
+          }
           prod_req.quantity        = t9adya[i].quantity;
           prod_req.fields.price    = t9adya[i].price;
           prod_req.is_rscv = true;
@@ -447,6 +454,7 @@ class ScanScreen extends React.Component {
 
         for (let i = 0; i < lastPurchaseList.length; i++) {
           const prod_h = lastPurchaseList[i];
+          prod_h.fields.company = " ";
           items_list.push(prod_h);
         }
         if(this.state.items_list != items_list  && ( this.state.items_list.length==0 ||  this.state.items_list[0].fields.entered !=items_list[0].fields.entered ) ){
