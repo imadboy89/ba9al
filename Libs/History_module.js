@@ -120,6 +120,7 @@ class History {
         let prods_id = [];
         for (let k = 0; k < output["list"].length; k++) {
             const hist = output["list"][k];
+            if( ! hist.fields.product_id )continue ;
             prods_id.push(hist.fields.product_id)
         }
         if(prods_id.length && prods_id.length>0){
@@ -223,6 +224,26 @@ class History {
                 }
                 return history;
             }else{
+                if(products_ids && products_ids.length>0){
+                    try {
+                        for (let i = 0; i < history.length; i++) {
+                            const prod_hist = new Product();
+                            prod_hist . is_hist    = true;
+                            prod_hist.fields.id    = history[i].fields.product_id ;
+                            prod_hist.fields.name  = history[i].fields.product_id ;
+                            prod_hist.fields.company= history[i].fields.product_id ? (""+history[i].fields.product_id).slice(0,8) : "." ;
+                            prod_hist.fields.price = history[i].fields.price ;
+                            prod_hist.quantity     = history[i].fields.quantity ;
+                            prod_hist.hist_id      = history[i].fields.hist_id ;
+                            history[i] = prod_hist;
+                        }
+                        return history;
+                    } catch (error) {
+                        console.log(error);
+                        return false
+                    }
+
+                }
                 return false;
             }
 

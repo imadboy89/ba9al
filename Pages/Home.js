@@ -30,7 +30,7 @@ class HomeScreen extends React.Component {
         synchLog : [],
         clear_database:true,
         modalVisible_partners : false,
-        version : "0.8.5.5",
+        version : "0.9.1",
 
       };
       this.LS = new LocalStorage();
@@ -45,7 +45,7 @@ class HomeScreen extends React.Component {
           this.synch_now();
         }
       });
-      
+      this.Unmounted = false;
       this.History_ob = new History();
       this.didBlurSubscription = this.props.navigation.addListener(
         'didFocus',
@@ -58,12 +58,13 @@ class HomeScreen extends React.Component {
             this.setState({language:Translation_.language});
           }
           });
-          this.loadHistory();
+          //this.loadHistory();
           this.synch_history();
         }
       );
     }
     componentWillUnmount(){
+      this.Unmounted = true;
       if(this.backup.timer){
         clearInterval(this.backup.timer);
       }
@@ -73,7 +74,6 @@ class HomeScreen extends React.Component {
     }
     checkVersion = async()=>{
       const currentVersion = await this.LS.getSettings("currentVersion");
-      console.log(currentVersion, currentVersion == this.state.version);
       if(currentVersion=="0"){
         this.do_synch_now = true;
       }
@@ -108,8 +108,10 @@ class HomeScreen extends React.Component {
     }
 
     synch_now = ()=>{
+      if(this.Unmounted)return;
       this.setState({synchronize_btn_status:false,synchLog:[]});
       this.backup.synchronize(this.appendLog).then(out=>{
+        if(this.Unmounted)return;
         this.state.synchronize_btn_status = true;
         this.state.backup_lastActivity = this.backup.lastActivity;
         this.state.backup_email = this.backup.email;
@@ -120,7 +122,6 @@ class HomeScreen extends React.Component {
     _handleNotification = notification => {
       let screen = "Home";
       let params = {};
-      console.log("Home _handleNotification : ",notification);
       try {
         if(notification.data && notification.data.data && notification.data.data.length  && notification.data.data.length > 0 && notification.data.data[0].hist_id){
           screen = "Scan_";
@@ -129,7 +130,6 @@ class HomeScreen extends React.Component {
           this.do_synch_now = true;
           if(this.backup.email){
             try {
-              console.log("_handleNotification synchnow start");
               this.synch_now();
             } catch (error) { console.log("_handleNotification synchno ",error);}
           }
@@ -171,6 +171,7 @@ class HomeScreen extends React.Component {
           return false;
         }
         this.props.navigation.setParams({ items_count:output[3]});
+        if(this.Unmounted)return;
         this.setState({
           backup_doClear     : false,
           history_list       : output[0],
@@ -183,13 +184,15 @@ class HomeScreen extends React.Component {
       if(this.state.synchronize_btn_status===false){
         return false;
       }
+      if(this.Unmounted)return;
       this.setState({synchronize_btn_status:false,synchLog:[]});
       this.props.navigation.setParams({disabled:true});
       this.backup.synch_history(undefined,this.appendLog).then(o=>{
         this.state.synchronize_btn_status = true;
-        this.loadHistory();
         this.props.navigation.setParams({disabled:false});
-      });
+        this.loadHistory();
+      })
+      .catch(erro=>{console.log(erro); this.loadHistory(); });
     }
     componentDidMount = async()=>{
       Notifications.createChannelAndroidAsync('Notifications', 
@@ -725,14 +728,15 @@ this.backup.client.callFunction("synch_history",[[],false,t9adya_key]).then(res=
               let isOwner = false;
               let list_details = t9adya.map((prod,k)=>{
           
-                if(prod.fields.product_id==null){
+                if(prod.fields.product_id==null && 1==2){
                   is_OK = false;
-                  return <Text>Not Found</Text>;
+                  return true;
                 }
                 isOwner = prod.fields.owner.toLowerCase().trim() == this.backup.email.toLowerCase().trim() ;
                 const owner_color = isOwner ? "#afd4ca" : "#62da95";
                 const prod_color = prod.fields.price == 0 ? "#9da0a2" : "#bdc3c7"; 
-                owner_ = <View style={{flexDirection:"row"}}>
+                owner_ = 
+                  <View style={{flexDirection:"row"}}>
                       {this.state.showDetails && this.state.showDetails==t9adya_key &&this.state.t9adya_total[t9adya_key]!=undefined && this.state.t9adya_total[t9adya_key]>0 && (isOwner==true || this.backup.admin==true )&&
                       <TouchableOpacity 
                       style={{backgroundColor:"#95a5a6",borderRadius:15,width:30,height:30,borderColor:"black",borderWidth:1,justifyContent:"center",alignItems:"center"}} 
@@ -814,7 +818,7 @@ this.backup.client.callFunction("synch_history",[[],false,t9adya_key]).then(res=
       this.setState({synchronize_btn_status:true});
     }
     render() {
-      
+      console.log("render");
         return (
           <View style={styles.container} >   
               <View style={[styles_list.row_view,{alignItems: 'flex-start',justifyContent:"flex-start"}]}>

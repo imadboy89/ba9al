@@ -63,7 +63,7 @@ class ItemRow_ extends React.Component {
                       <Text style={styles_itemRow.description}>{desc}</Text>
                     </View>
                     {this.props.showProducts==undefined && 
-                      <Text style={styles_itemRow.leftTxt}>{leftTxt}</Text>
+                      <Text style={[styles_itemRow.leftTxt, {textAlign:"right"}]}>{leftTxt}</Text>
                     }
                     {this.props.showProducts && 
                       <TouchableOpacity 
@@ -73,7 +73,7 @@ class ItemRow_ extends React.Component {
                           this.props.showProducts(this.props.item)}
                         }
                         } 
-                        style={[styles_itemRow.leftTxt,{backgroundColor:"#4694c885"}]}
+                        style={[styles_itemRow.leftTxt,{backgroundColor:"#4694c885",height:"100%",justifyContent:"center",alignItems:"center"}]}
                         >
                           <Text style={{color:"white",fontSize:20,textAlign:"right",alignSelf: 'stretch'}} >
                             {leftTxt}

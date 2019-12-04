@@ -116,7 +116,6 @@ class ScanScreen extends React.Component {
 
     }
     _handleNotification = notification => {
-      console.log("notif");
       let screen = "Home";
       let params = {};
       if(notification.data && notification.data.data && notification.data.data.length  && notification.data.data.length > 0 && notification.data.data[0].hist_id){
@@ -260,12 +259,11 @@ class ScanScreen extends React.Component {
       }else{
         t9adya = false;
       }
-      
       if(t9adya){
         let items_list = [];
         const t9dya_entered = res ? res["output"]["entered"] : t9adya[0]["entered"] ;
         
-        if(t9dya_entered == this.last_requested_t9dya && this.state.hist_label!=null){
+        if(t9dya_entered == this.last_requested_t9dya && this.state.hist_label!=null){console.log("debug 2");
           if(this.state.items_list.length == 0 || !this.state.items_list[0].is_hist){
             this.checkingRequests_inProcess = false ;
             return ;
@@ -277,7 +275,6 @@ class ScanScreen extends React.Component {
           this.actual_t9dya_id = actual_t9dya_id;
         }
         this.last_requested_t9dya = t9dya_entered;
-        
         for (let i = 0; i < t9adya.length; i++) {
           const prod_req = new Product();
           const res = await prod_req.get({id : t9adya[i].product_id});
@@ -285,15 +282,12 @@ class ScanScreen extends React.Component {
             prod_req.fields.id = t9adya[i].product_id;
             prod_req.fields.name = t9adya[i].product_id;
             prod_req.fields.company = " ";
-            
-            
           }
           prod_req.quantity        = t9adya[i].quantity;
           prod_req.fields.price    = t9adya[i].price;
           prod_req.is_rscv = true;
           items_list.push(prod_req);  
         }
-
         this.state.items_list = items_list;
         if(items_list.length > 0){
           this.state.hist_label = !notificationData ? res["output"]["owner"] : notificationData["from"];
@@ -333,7 +327,7 @@ class ScanScreen extends React.Component {
     requestT9adya = async()=>{
       this.state.new_requestedT9dya_read = false;
       this.props.navigation.setParams({hideT9dyaBtns:true,reqUpdated:false});
-      let t9adya = this.saveHistory(is_send=true);
+      let t9adya = await this.saveHistory(is_send=true);
       let title = TXT.New_order_X_items__Total.replace("X",this.state.items_list.length) +": "+ this.state.Total + " dh";
       
       let body =  TXT.Ordered_by + " : "+this.backup.email+"\n";
@@ -451,7 +445,6 @@ class ScanScreen extends React.Component {
         if(this.state.hist_label != lastPurchaseList[0].hist_id){
           this.setState({hist_label:lastPurchaseList[0].hist_id , new_requestedT9dya_read:false});
         }
-
         for (let i = 0; i < lastPurchaseList.length; i++) {
           const prod_h = lastPurchaseList[i];
           prod_h.fields.company = " ";
