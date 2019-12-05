@@ -347,6 +347,7 @@ class BackUp{
         }
         this.loadingClient = true;
         if( ! await this.checkCnx(false)){
+          this.loadingClient = false;
           return false;
         }
         const credents = await this.LS.getCredentials();
