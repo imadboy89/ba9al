@@ -1,5 +1,5 @@
 import React from 'react';
-import { Switch, Text, View, Button, TouchableOpacity,Picker,ScrollView,Modal,TextInput, Alert,ActivityIndicator } from 'react-native';
+import { Switch, Text, View, Button, TouchableOpacity,Picker,ScrollView,Modal,TextInput, Alert,ActivityIndicator,Platform } from 'react-native';
 import {buttons_style,styles_list,styles_itemRow,styles} from "../Styles/styles";
 import LocalStorage from "../Libs/LocalStorage";
 import HeaderButton from "../Components/HeaderButton";
@@ -30,7 +30,7 @@ class HomeScreen extends React.Component {
         synchLog : [],
         clear_database:true,
         modalVisible_partners : false,
-        version : "0.9.1",
+        version : "0.9.2",
 
       };
       this.LS = new LocalStorage();
@@ -109,6 +109,7 @@ class HomeScreen extends React.Component {
 
     synch_now = ()=>{
       if(this.Unmounted)return;
+      this.props.navigation.setParams({disabled:true});
       this.setState({synchronize_btn_status:false,synchLog:[]});
       this.backup.synchronize(this.appendLog).then(out=>{
         if(this.Unmounted)return;
@@ -117,6 +118,7 @@ class HomeScreen extends React.Component {
         this.state.backup_email = this.backup.email;
         this.do_synch_now = false;
         this.loadHistory();
+        this.props.navigation.setParams({disabled:false});
       });
     }
     _handleNotification = notification => {
@@ -230,6 +232,9 @@ class HomeScreen extends React.Component {
         const {params = {}} = navigation.state;
         return (
           <View style={{flexDirection:"row"}}>
+            { params.disabled==true && 
+              <ActivityIndicator size={ Platform.OS === 'ios' ? "large" : 28 } color="#ecf0f1" />
+            }
             <HeaderButton 
               name="refresh"
               onPress={params.synch_history}
@@ -357,14 +362,16 @@ class HomeScreen extends React.Component {
       this.setState({modalVisible_partners:false});
     }
     saveCredents =(email,password)=>{
+      this.props.navigation.setParams({disabled:true});
       this.setState({savingCredents:true});
       this.LS.setCredentials(email,password).then(output=>{
         if(output==false){
+          this.props.navigation.setParams({disabled:false});
           return false;
         }
         this.backup.changeClient().then(()=>{
           this.History_ob.DB.empty().then(()=>{
-              this.loadHistory();
+              this.synch_history();
           });
           this.closeModal_credents();
           this.setState({
@@ -374,14 +381,17 @@ class HomeScreen extends React.Component {
             backup_is_admin:this.backup.admin,
             savingCredents:false,
           });
+          this.props.navigation.setParams({disabled:false});
         });
         
       });
     }
     signUp =(email,password)=>{
+      this.props.navigation.setParams({disabled:true});
       this.setState({savingCredents:true});
       this.backup.newUser(email,password).then(()=>{
         this.saveCredents(email,password);
+        this.props.navigation.setParams({disabled:false});
       });
     }
     render_modal_credentials(){
