@@ -270,10 +270,7 @@ class ScanScreen extends React.Component {
           }
 
         }
-        if(!notificationData){
-          this.playNotification();
-          this.actual_t9dya_id = actual_t9dya_id;
-        }
+
         this.last_requested_t9dya = t9dya_entered;
         for (let i = 0; i < t9adya.length; i++) {
           const prod_req = new Product();
@@ -290,9 +287,14 @@ class ScanScreen extends React.Component {
         }
         this.state.items_list = items_list;
         if(items_list.length > 0){
-          this.state.hist_label = !notificationData ? res["output"]["owner"] : notificationData["from"];
-          this.state.hist_label = this.state.hist_label.split("@")[0];
-          
+          const hist_label = !notificationData ? res["output"]["owner"] : notificationData["from"];
+          this.state.hist_label = hist_label.split("@")[0];
+          if(!notificationData){
+            if(hist_label.trim().toLowerCase()  != this.backup.email .trim().toLowerCase() ){
+              this.playNotification();
+            }
+            this.actual_t9dya_id = actual_t9dya_id;
+          }
           this.Total(2);
         }
         this.props.navigation.setParams({hideT9dyaBtns:false});
@@ -321,7 +323,12 @@ class ScanScreen extends React.Component {
       }
       this.actual_t9dya_id= false;
       this.playDelete();
-      this.setState({items_list:[]});
+      this.setState({
+        items_list:[],
+        Total : 0,
+        hist_label : null,
+        new_requestedT9dya_read:false,
+      });
       this.checkingRequests();
     }
     requestT9adya = async()=>{
