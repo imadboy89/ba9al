@@ -30,7 +30,7 @@ class HomeScreen extends React.Component {
         synchLog : [],
         clear_database:true,
         modalVisible_partners : false,
-        version : "0.9.2",
+        version : "0.9.3",
 
       };
       this.LS = new LocalStorage();
