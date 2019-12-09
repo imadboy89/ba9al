@@ -134,14 +134,11 @@ class HomeScreen extends React.Component {
           screen = "Scan_";
           params = {"action":"requestedT9dya","data":notification.data} ;
         }else if(notification.data && notification.data.action && notification.data.action=="db_update"){
-          console.log("notification",notification);
           this.do_synch_now = true;
           if(this.backup.email && this.backup.email!=notification.data.by){
             try {
               this.synch_now();
             } catch (error) { console.log("_handleNotification synchno ",error);}
-          }else {
-            console.log("notif for current ");
           }
           return ;
         }
