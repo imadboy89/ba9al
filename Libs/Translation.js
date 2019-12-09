@@ -5,6 +5,7 @@ class translation{
         this.language = "en";
         this.translation = {
             
+            "Admin_tmp"                : {"ar":"Admin_tmp"        ,"fr":"Admin_tmp","dr":"Admin_tmp",},
             "New_purchase_by"                : {"ar":"شراء جديد من قبل"        ,"fr":"Nouvel achat par","dr":"T9adya jdida mn",},
 "Please_open_and_clode_the_app_to_auto_update"                : {"ar":"الرجاء فتح التطبيق وإغلاقه للتحديث التلقائي."        ,"fr":"S'il vous plaît ouvrir et fermer l'application pour la mise à jour automatique","dr":"pls chod w fta7 l app bach t3ml ta7dit .",},
             "New_update_available"                : {"ar":"تحديث جديد متاح"        ,"fr":"Nouvelle mise à jour disponible","dr":"ta7dit jdid",},
@@ -25,7 +26,8 @@ class translation{
             "Partner"             : {"ar":"شريك"         ,"fr":"Partenaire","dr":"charik",},
             "You_need_internet_connection_for_this_action"             : {"ar":"تحتاج إلى اتصال بالإنترنت لهذا الإجراء"         ,"fr":"Vous avez besoin d'une connexion Internet pour cette action","dr":"Khask connexion bach t3mel hadchi",},
             "You_need_internet_connection_to"             : {"ar":"تحتاج إلى اتصال بالإنترنت ل"         ,"fr":"Vous avez besoin d'une connexion Internet pour ","dr":"Khask connexion bach ",},
-            "User_name"             : {"ar":"اسم المستخدم"         ,"fr":"Nom d'utilisateur","dr":"Ism lmosta3min",},
+            "User_name"             : {"ar":"اسم المستخدم"         ,"fr":"Nom d'utilisateur","dr":"Ism lmosta3mil",},
+            "Users"             : {"ar":"المستخدمين"         ,"fr":"Utilisateurs","dr":"lmosta3milin",},
             "Are_you_sure_you_want_to_clear_database"             : {"ar":"هل أنت متأكد أنك تريد مسح قاعدة البيانات؟"         ,"fr":"Êtes-vous sûr de vouloir effacer la base de données?","dr":"M2aked baghi tmsa7 base donee ?",},
             "This_will_remove_all_the_products_and_companies"             : {"ar":"سيؤدي هذا إلى إزالة جميع المنتجات والشركات"         ,"fr":"Cela supprimera tous les produits et sociétés","dr":"Ghadi tmsa7 prouiyat w charikat kamlin ",},
             "Requesting_for_camera_permission"  : {"ar":"طلب إذن الكاميرا"         ,"fr":"Demander l'autorisation de la caméra","dr":"Activi camera n ba9Al App",},

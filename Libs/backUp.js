@@ -581,7 +581,7 @@ class BackUp{
         bodies["fr"] += bodies2["fr"]
         bodies["dr"] += bodies2["dr"]
 
-        this.pushNotification (titles, bodies,{"action":"db_update"},"all","Notifications_lessImportant").then(res=>{
+        this.pushNotification (titles, bodies,{"action":"db_update",by:this.email},"all","Notifications_lessImportant").then(res=>{
           this.appendLog ("----Notification pushed to : "+res);
         });
       }
@@ -616,8 +616,8 @@ class BackUp{
       this.appendLog("------synch Photos------");
       await this.synchronize_item(this.photos_mdb, Photo,true);
       
-      this.appendLog("------synch History------");
-      await this.synch_history();
+      //this.appendLog("------synch History------");
+      //await this.synch_history();
       
       return true;
     }

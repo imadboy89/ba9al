@@ -7,6 +7,8 @@ import backUp from "../Libs/backUp";
 import History from "../Libs/History_module";
 import Credentials from "../Components/Credentials";
 import Partners from "../Components/Partners";
+import Users from "../Components/Users";
+
 import Icon from 'react-native-vector-icons/FontAwesome';
 import { Notifications } from 'expo';
 
@@ -41,8 +43,10 @@ class HomeScreen extends React.Component {
       //this.backup.Company.DB.updateTables();
       this.backup._loadClient().then(output=>{
         this.setState({backup_email:this.backup.email,backup_lastActivity:this.backup.lastActivity, backup_is_admin:this.backup.admin});
-        if(this.do_synch_now){
-          this.synch_now();
+        if(this.do_synch_now && this.backup.email && this.backup.email!=notification.data.by){
+          try {
+            this.synch_now();
+          } catch (error) { console.log("this.backup._loadClient synchnow ",error);}
         }
       });
       this.Unmounted = false;
@@ -87,7 +91,8 @@ class HomeScreen extends React.Component {
       if(action && action !="requestedT9dya"){
         try {
           let notificationData = this.props["navigation"].getParam("data",false);
-          if(notificationData != this.lastNotifData){
+          console.log("notificationData",notificationData);
+          if(notificationData != this.lastNotifData && this.backup.email && this.backup.email!=notificationData.by){
             this.synch_now();
           }else{
 
@@ -117,7 +122,7 @@ class HomeScreen extends React.Component {
         this.state.backup_lastActivity = this.backup.lastActivity;
         this.state.backup_email = this.backup.email;
         this.do_synch_now = false;
-        this.loadHistory();
+        //this.loadHistory();
         this.props.navigation.setParams({disabled:false});
       });
     }
@@ -129,11 +134,14 @@ class HomeScreen extends React.Component {
           screen = "Scan_";
           params = {"action":"requestedT9dya","data":notification.data} ;
         }else if(notification.data && notification.data.action && notification.data.action=="db_update"){
+          console.log("notification",notification);
           this.do_synch_now = true;
-          if(this.backup.email){
+          if(this.backup.email && this.backup.email!=notification.data.by){
             try {
               this.synch_now();
             } catch (error) { console.log("_handleNotification synchno ",error);}
+          }else {
+            console.log("notif for current ");
           }
           return ;
         }
@@ -361,6 +369,9 @@ class HomeScreen extends React.Component {
     closeModal_partners =()=>{
       this.setState({modalVisible_partners:false});
     }
+    closeModal_users =()=>{
+      this.setState({modalVisible_users:false});
+    }
     saveCredents =(email,password)=>{
       this.props.navigation.setParams({disabled:true});
       this.setState({savingCredents:true});
@@ -441,6 +452,34 @@ class HomeScreen extends React.Component {
             >
 
             </Partners>
+          </View>
+          <View style={{flex:1,backgroundColor:"#2c3e5066"}}></View>
+
+          </Modal>
+          );
+    }
+    render_modal_users(){
+      if( ! this.state.modalVisible_users) return false;
+      console.log("this.state.modalVisible_users",this.state.modalVisible_users)
+
+      return (          
+          <Modal 
+            animationType="slide"
+            transparent={true}
+            visible={this.state.modalVisible_users}
+            onRequestClose={() => { 
+                this.setState({ modalVisible_users:false,});
+            } }
+          >
+          <View style={{flex:.4,backgroundColor:"#2c3e5066"}}></View>
+          <View style={{height:350,width:"100%",backgroundColor:"#646c78"}}>
+            <Text style={styles_list.title_modals}> {TXT.Users}: </Text>
+            <Users
+              closeModal={this.closeModal_users}
+              backup = {this.backup}
+            >
+
+            </Users>
           </View>
           <View style={{flex:1,backgroundColor:"#2c3e5066"}}></View>
 
@@ -579,6 +618,19 @@ class HomeScreen extends React.Component {
                     </View>
                   </View>
                   }
+                  {this.state.backup_email!=null && this.state.backup_email!="" && this.state.backup_email!=undefined && this.backup.admin==true &&
+                  <View style={styles_list.row_view}>
+                    <Text style={styles_list.text_k}> {TXT.Users} : </Text>
+                    <View style={styles_list.text_v} >
+                      <Button 
+                        style={{marginLeft:10,marginRight:30}}
+                        title = {TXT.Manage}
+                        disabled={false}
+                        onPress={()=>{this.setState({modalVisible_users:true});}}
+                    />
+                    </View>
+                  </View>
+                  }
                   <View style={styles_list.row_view}>
                     <Text style={styles_list.text_k}> {TXT.LastBackUp} : </Text>
                     <Text style={styles_list.text_v}>{this.state.backup_lastActivity+""} </Text>
@@ -677,6 +729,7 @@ class HomeScreen extends React.Component {
 
           {this.render_modal_credentials()}
           {this.render_modal_partners()}
+          {this.render_modal_users()}
           {this.getLoadingModal()}
         </Modal>
       );
@@ -828,7 +881,6 @@ this.backup.client.callFunction("synch_history",[[],false,t9adya_key]).then(res=
       this.setState({synchronize_btn_status:true});
     }
     render() {
-      console.log("render");
         return (
           <View style={styles.container} >   
               <View style={[styles_list.row_view,{alignItems: 'flex-start',justifyContent:"flex-start"}]}>
