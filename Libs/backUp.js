@@ -33,6 +33,7 @@ class BackUp{
 
         this.executingQueued_running = false;
         this.queue = [];
+        this.last_notification_time = false;
         
     }
     registerForPushNotificationsAsync = async () => {
@@ -230,6 +231,10 @@ class BackUp{
       if(title=="" || body==""){
         return false;
       }
+      const time = new Date() .getTime();
+      if(this.last_notification_time && time -this.last_notification_time  < 5*1000){
+        return;
+      }
       const datetime = this.Product.DB.getDateTime();
       let results = {};
       let args = [partner,title,body , data,datetime] ;
@@ -238,6 +243,7 @@ class BackUp{
       }
       try {
         results = await this.client.callFunction("pushNotification",args);
+        this.last_notification_time = new Date() .getTime();
         let pushednotifto=0;
         if(results && results["data"] && results["data"].length>0){
           for (let i = 0; i < results["data"].length; i++) {
