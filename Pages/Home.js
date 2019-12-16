@@ -32,7 +32,7 @@ class HomeScreen extends React.Component {
         synchLog : [],
         clear_database:true,
         modalVisible_partners : false,
-        version : "0.9.5",
+        version : "0.9.8",
 
       };
       this.LS = new LocalStorage();
@@ -746,10 +746,14 @@ class HomeScreen extends React.Component {
 this.setState({synchronize_btn_status:false});
 this.backup.client.callFunction("synch_history",[[],false,t9adya_key]).then(res=>{
   if(res["deleted"]>=1){
+    this.state.synchronize_btn_status = true;
     this.History_ob.DB.empty().then(()=>{
         this.synch_history();
     });
     alert("history ["+t9adya_key+"] is deleted !");
+  }else{
+    alert("cannot delete ["+t9adya_key+"] !");
+    this.setState({synchronize_btn_status:true});
   }
 }).catch(err=>{
   console.log(err);
