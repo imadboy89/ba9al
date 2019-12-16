@@ -4,7 +4,8 @@ class translation{
     constructor(LS){
         this.language = "en";
         this.translation = {
-            
+            "Send"                : {"ar":"إرسال"        ,"fr":"Envoyer","dr":"Sayfet",},
+            "Message_to"                : {"ar":"رسالة إلى"        ,"fr":"Message à","dr":"Message l ",},
             "Admin_tmp"                : {"ar":"Admin_tmp"        ,"fr":"Admin_tmp","dr":"Admin_tmp",},
             "New_purchase_by"                : {"ar":"شراء جديد من قبل"        ,"fr":"Nouvel achat par","dr":"T9adya jdida mn",},
 "Please_open_and_clode_the_app_to_auto_update"                : {"ar":"الرجاء فتح التطبيق وإغلاقه للتحديث التلقائي."        ,"fr":"S'il vous plaît ouvrir et fermer l'application pour la mise à jour automatique","dr":"pls chod w fta7 l app bach t3ml ta7dit .",},

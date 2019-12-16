@@ -1,5 +1,5 @@
 import React from 'react';
-import { Switch, Text, View, Button, TouchableOpacity,Picker,ScrollView,Modal,TextInput, Alert,ActivityIndicator,Platform } from 'react-native';
+import { Switch, Text, View, Button, TouchableOpacity,Picker,ScrollView,Modal,TextInput, Alert,ActivityIndicator,Platform, AppState } from 'react-native';
 import {buttons_style,styles_list,styles_itemRow,styles} from "../Styles/styles";
 import LocalStorage from "../Libs/LocalStorage";
 import HeaderButton from "../Components/HeaderButton";
@@ -88,9 +88,13 @@ class HomeScreen extends React.Component {
     }
     handle_navigation_notification(){
       const action = this.props["navigation"].getParam("action",false);
+      
       if(action && action !="requestedT9dya"){
+        let notificationData = this.props["navigation"].getParam("data",false);
+        if(action=="msg"){
+          console.log(action,notificationData);
+        }
         try {
-          let notificationData = this.props["navigation"].getParam("data",false);
           console.log("notificationData",notificationData);
           if(notificationData != this.lastNotifData && this.backup.email && this.backup.email!=notificationData.by){
             this.synch_now();
@@ -141,6 +145,20 @@ class HomeScreen extends React.Component {
             } catch (error) { console.log("_handleNotification synchno ",error);}
           }
           return ;
+        }else if(notification.data && notification.data.action && notification.data.action=="msg"){
+          console.log("AppState.currentState",AppState.currentState);
+          if(notification.origin == "selected"){
+            this.backup.pushNotification("Messge Read!","Msg read by "+notification.data.by+" \n At : "+this.backup.Product.DB.getDateTime(),{},[notification.data.by,]).then(o=>console.log("o",o));
+          }
+          Alert.alert(
+            notification.data.by,
+            notification.data.msg,
+            [
+              {
+                text: TXT.Ok,
+              },
+            ],
+          );
         }
       } catch (error) {
         console.log(error);
@@ -457,7 +475,6 @@ class HomeScreen extends React.Component {
     }
     render_modal_users(){
       if( ! this.state.modalVisible_users) return false;
-      console.log("this.state.modalVisible_users",this.state.modalVisible_users)
 
       return (          
           <Modal 

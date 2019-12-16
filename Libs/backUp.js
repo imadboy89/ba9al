@@ -233,7 +233,7 @@ class BackUp{
       }
       const time = new Date() .getTime();
       if(this.last_notification_time && time -this.last_notification_time  < 5*1000){
-        return;
+        return "Can't send 2 Notif in 5s";
       }
       const datetime = this.Product.DB.getDateTime();
       let results = {};

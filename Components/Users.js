@@ -1,5 +1,5 @@
 import React from 'react';
-import {  Text, View, Button,TextInput, ActivityIndicator,ScrollView } from 'react-native';
+import {  Text, View, Button,TextInput, Modal, ActivityIndicator,ScrollView } from 'react-native';
 import {buttons_style,styles_list} from "../Styles/styles";
 import Icon from 'react-native-vector-icons/FontAwesome';
 
@@ -14,22 +14,27 @@ class Users extends React.Component{
         users : [],
         usersLoading : true,
         actionRunning : false,
+        msg_text : "",
+        modalVisible_msg : false,
+
       };
       this.loadUsers();
     } 
     setUser_admin_tmp(user_username,action="tmp_admin"){
-        console.log(user_username,action);
       this.setState({actionRunning:true});
       this.props.backup.partnersManager(action,user_username).then(res=>{
         this.setState({actionRunning:false,usersLoading:true});
-        console.log(res);
         this.loadUsers();
         if (res[1] && res[1]!=""){
           alert(res[1]); 
         }
       }); 
     }
-
+    sendMsg = async()=>{
+      this.setState({actionRunning:true});
+      const out = await this.props.backup.pushNotification(this.props.backup.email,this.state.msg_text,{"action":"msg","msg":this.state.msg_text,"by":this.props.backup.email},[this.msg_user,]);
+      this.setState({actionRunning:false,modalVisible_msg:false});
+    }
     loadUsers(){
       this.props.backup.partnersManager("getAll").then(res=>{
         if (res[1] && res[1]!=""){
@@ -48,15 +53,15 @@ class Users extends React.Component{
       return this.state.users.map( (value,i) =>{
         const user = value.email ;
         const is_tmp_admin = value.is_tmp_adm ? value.is_tmp_adm : false ;
-        console.log(user,value.is_active);
         //return (<View></View>);
         return (
           <View style={{flexDirection:"row",width:"100%"}} key={user+i}>
             <Text style={styles_list.text_v}> {user} </Text>
         
-
-                <View >
+                { !this.state.actionRunning && 
+                <View style={{flexDirection:"row"}}>
                   <Icon
+                      style={{marginLeft:4,marginRight:4}}
                       name={ is_tmp_admin ? "minus" : "plus"}
                       disabled={this.state.actionRunning}
                       size ={28}
@@ -70,19 +75,67 @@ class Users extends React.Component{
                       }
                       }
                   />
+                  <Icon
+                      style={{marginLeft:4,marginRight:4}}
+                      name="paper-plane"
+                      disabled={this.state.actionRunning}
+                      size ={28}
+                      color="#3498db"
+                      onPress={()=>{
+                        this.msg_user = user;
+                        this.setState({modalVisible_msg:true});
+                      }
+                      }
+                  />
                 </View>
+                }
           </View>
         );
       });
 
     }
+      render_modal_msg(){
+        return (          
+          <Modal 
+            animationType="slide"
+            transparent={true}
+            visible={this.state.modalVisible_msg}
+            onRequestClose={() => { 
+                this.setState({ modalVisible_msg:false,});
+            } }
+          >
+          <View style={{flex:.4,backgroundColor:"#2c3e5066"}}></View>
+          <View style={{height:350,width:"100%",backgroundColor:"#646c78",alignItems:"center"}}>
+            <Text style={styles_list.title_modals}> {TXT.Message_to} : {this.msg_user}</Text>
+            <TextInput
+              style={{width:"95%",height:200,backgroundColor:"#95a5a6",padding:5,marginBottom:10,fontSize:25,color:"white",textAlignVertical: 'top'}}
+              multiline={true}
+              editable
+              maxLength={40}
+              onChangeText={text => this.setState({msg_text : text})}
+              value={this.state.msg_text}
+            />
+
+            <Icon.Button 
+              name="paper-plane"
+              disabled={this.state.actionRunning}
+              onPress={()=>{
+                this.sendMsg();
+              }}
+            >{TXT.Send}</Icon.Button>
+          </View>
+          <View style={{flex:1,backgroundColor:"#2c3e5066"}}></View>
+
+          </Modal>
+          );
+      }
 
       render(){
         //return (<View></View>);
         return (
           <View style={{height:"100%",width:"100%",backgroundColor:"#646c78"}}>
 
-            <View style={{width:"100%",height:200}}>
+            <View style={{width:"100%",height:250}}>
               <ScrollView style={{width:"100%",backgroundColor:"#646c78"}}>
                 {this.render_users()}
               </ScrollView> 
@@ -103,7 +156,9 @@ class Users extends React.Component{
                 ></Button>
               </View>
               </View>
-  
+                  
+
+              {this.render_modal_msg()}
           </View>
         );
       }
