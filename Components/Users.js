@@ -47,6 +47,11 @@ class Users extends React.Component{
     updateUserStatus(user){
       this.setState({actionRunning:true});
       this.props.backup.usersManager(user.email,user.disabled).then(res=>{
+        if(res && res.length==2){
+          if (res[0]==false){
+            alert(res[1]);
+          }
+        }
         this.loadUsers();
       });
     }
