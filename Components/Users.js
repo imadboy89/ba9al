@@ -2,6 +2,7 @@ import React from 'react';
 import {  Text, View, Button,TextInput, Modal, ActivityIndicator,ScrollView } from 'react-native';
 import {buttons_style,styles_list} from "../Styles/styles";
 import Icon from 'react-native-vector-icons/FontAwesome';
+import HeaderButton from "../Components/HeaderButton";
 
 TXT = null;
 
@@ -23,7 +24,7 @@ class Users extends React.Component{
     setUser_admin_tmp(user_username,action="tmp_admin"){
       this.setState({actionRunning:true});
       this.props.backup.partnersManager(action,user_username).then(res=>{
-        this.setState({actionRunning:false,usersLoading:true});
+        this.setState({actionRunning:false});
         this.loadUsers();
         if (res[1] && res[1]!=""){
           alert(res[1]); 
@@ -40,7 +41,13 @@ class Users extends React.Component{
         if (res[1] && res[1]!=""){
           alert(res[1]);
         }
-        this.setState({users:res[0],usersLoading:false});
+        this.setState({users:res[0],usersLoading:false,actionRunning:false});
+      });
+    }
+    updateUserStatus(user){
+      this.setState({actionRunning:true});
+      this.props.backup.usersManager(user.email,user.disabled).then(res=>{
+        this.loadUsers();
       });
     }
     render_users(){
@@ -55,17 +62,15 @@ class Users extends React.Component{
         const is_tmp_admin = value.is_tmp_adm ? value.is_tmp_adm : false ;
         //return (<View></View>);
         return (
-          <View style={{flexDirection:"row",width:"100%"}} key={user+i}>
-            <Text style={styles_list.text_v}> {user} </Text>
+          <View style={{flexDirection:"row",width:"95%",height:40,borderStyle:"solid",borderWidth:1,margin:3}} key={user+i}>
+            <Text style={[styles_list.text_v,{color: value.disabled  ? "#95a5a6" : styles_list.text_v.color}]}> {user} </Text>
         
-                { !this.state.actionRunning && 
-                <View style={{flexDirection:"row"}}>
-                  <Icon
-                      style={{marginLeft:4,marginRight:4}}
+                <View style={{flexDirection:"row",alignSelf: 'center',}}>
+                  <HeaderButton
                       name={ is_tmp_admin ? "minus" : "plus"}
                       disabled={this.state.actionRunning}
                       size ={28}
-                      color={ is_tmp_admin ? "#e74c3c" : "#2ecc71"}
+                      color={ this.state.actionRunning ? "#bdc3c7" : (is_tmp_admin ? "#e74c3c" : "#2ecc71")}
                       onPress={()=>{
                         if(is_tmp_admin){
                             this.setUser_admin_tmp(user,"remove_tmp_admin");
@@ -75,20 +80,27 @@ class Users extends React.Component{
                       }
                       }
                   />
-                  <Icon
-                      style={{marginLeft:4,marginRight:4}}
+                  <HeaderButton
                       name="paper-plane"
                       disabled={this.state.actionRunning}
                       size ={28}
-                      color="#3498db"
+                      color={this.state.actionRunning ? "#bdc3c7" : "#3498db"}
                       onPress={()=>{
                         this.msg_user = user;
                         this.setState({modalVisible_msg:true});
                       }
                       }
                   />
+
+                  <HeaderButton 
+                    name={ value.disabled  ? "unlock" : "lock"}
+                    onPress={()=>this.updateUserStatus(value)}
+                    size={28} 
+                    color={this.state.actionRunning ? "#bdc3c7" : "#3498db"}
+                    disabled={this.state.actionRunning}
+                    />
                 </View>
-                }
+                
           </View>
         );
       });

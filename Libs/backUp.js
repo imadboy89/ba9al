@@ -277,6 +277,20 @@ class BackUp{
       }
       return results;
     }
+    usersManager = async(user_email,new_status) => {
+      if( ! await this.checkCnx()){
+        alert(TXT.You_need_internet_connection_for_this_action);
+        return false;
+      }
+      let results = {};
+      try {
+        results = await this.client.callFunction("Users_managements",[user_email,new_status]);
+      } catch (error) {
+        alert(error.message ? error.message : error);
+        return false;
+      }
+      return results;
+    }
     checkConnectedUserChange = async()=>{
       const credents = await this.LS.getCredentials();
       if(credents["email"].trim().toLowerCase()!=this.email ){
