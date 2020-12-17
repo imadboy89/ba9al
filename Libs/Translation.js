@@ -4,6 +4,11 @@ class translation{
     constructor(LS){
         this.language = "en";
         this.translation = {
+            "Your_invitation_has_been_accepted"                : {"ar":"تم قبول دعوتك"        ,"fr":"Votre invitation a été acceptée","dr":"da3wa dyalk t9blat",},
+            "Accepted_by"                : {"ar":"تم قبول دعوتك بواسطة"        ,"fr":"Accepté par","dr":"9bela",},
+
+            "Invitation_for_partnership"                : {"ar":"دعوة للشراكة"        ,"fr":"Invitation au partenariat","dr":"da3wa li charaka",},
+            "Invitation_from"                : {"ar":"دعوة من"        ,"fr":"Invitation de","dr":"d3wa men",},
             "Send"                : {"ar":"إرسال"        ,"fr":"Envoyer","dr":"Sayfet",},
             "Message_to"                : {"ar":"رسالة إلى"        ,"fr":"Message à","dr":"Message l ",},
             "Admin_tmp"                : {"ar":"Admin_tmp"        ,"fr":"Admin_tmp","dr":"Admin_tmp",},

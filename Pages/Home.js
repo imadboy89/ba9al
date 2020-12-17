@@ -32,7 +32,7 @@ class HomeScreen extends React.Component {
         synchLog : [],
         clear_database:true,
         modalVisible_partners : false,
-        version : "0.9.8",
+        version : "1.0",
 
       };
       this.LS = new LocalStorage();
@@ -134,6 +134,7 @@ class HomeScreen extends React.Component {
       let screen = "Home";
       let params = {};
       try {
+        
         if(notification.data && notification.data.data && notification.data.data.length  && notification.data.data.length > 0 && notification.data.data[0].hist_id){
           screen = "Scan_";
           params = {"action":"requestedT9dya","data":notification.data} ;
@@ -146,7 +147,7 @@ class HomeScreen extends React.Component {
           }
           return ;
         }else if(notification.data && notification.data.action && notification.data.action=="msg"){
-          console.log("AppState.currentState",AppState.currentState);
+          
           if(notification.origin == "selected"){
             this.backup.pushNotification("Messge Read!","Msg read by "+notification.data.by+" \n At : "+this.backup.Product.DB.getDateTime(),{},[notification.data.by,]).then(o=>console.log("o",o));
           }
@@ -159,6 +160,9 @@ class HomeScreen extends React.Component {
               },
             ],
           );
+        }else if(notification.data && notification.data.action && notification.data.action=="partner"){
+          
+          this.setState({modalVisible_partners:true});
         }
       } catch (error) {
         console.log(error);
@@ -742,7 +746,6 @@ class HomeScreen extends React.Component {
 
 
           {this.render_modal_credentials()}
-          {this.render_modal_partners()}
           {this.render_modal_users()}
           {this.getLoadingModal()}
         </Modal>
@@ -933,6 +936,7 @@ this.backup.client.callFunction("synch_history",[[],false,t9adya_key]).then(res=
               }
 
               {this.render_modal_Settings()}
+              {this.render_modal_partners()}
 
           </View>
         );

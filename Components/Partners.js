@@ -23,6 +23,10 @@ class Partners extends React.Component{
         this.loadPartners();
         if (res[1] && res[1]!=""){
           alert(res[1]); 
+        }else{
+          let titles = Translation_.getTrans("Invitation_for_partnership")
+          let bodies = Translation_.getTrans("Invitation_from"," : "+this.props.backup.email)
+          this.props.backup.pushNotification(titles,bodies,{action:"partner"},[partner_username,]).then(o=>console.log("o",o));
         }
       }); 
     }
@@ -43,6 +47,10 @@ class Partners extends React.Component{
         this.loadPartners();
         if (res[1] && res[1]!=""){
           alert(res[1]); 
+        }else{
+          let titles = Translation_.getTrans("Your_invitation_has_been_accepted")
+          let bodies = Translation_.getTrans("Accepted_by"," : "+this.props.backup.email)
+          this.props.backup.pushNotification(titles,bodies,{action:"partner"},[partner_username,]).then(o=>console.log("o",o));
         }
       });
     }
